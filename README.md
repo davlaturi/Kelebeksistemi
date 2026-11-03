@@ -57,6 +57,16 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 - Sınıf adı şu yerlerden okunur: sayfa başlığı ("9. Sınıf / A Şubesi"), her satırdaki "Sınıfı" sütunu ("9/A") ya da dosya adı.
 - **3. Dağıtım** adımında hangi şubelerin dağıtıma gireceğini elle seçersiniz. Tek tek şube seçebilir ya da bir düzeyin hepsini birden açıp kapatabilirsiniz. Seçilen her şube aynı zamanda salon olur.
 
+## Salon kapasitesi
+
+3. Dağıtım adımında iki seçenekten birini seçersiniz:
+
+- **Sınıf mevcuduna göre** (varsayılan): Her şube salonuna, o şubenin mevcudu kadar öğrenci oturur. 30 kişilik 9/A'ya 30 öğrenci oturur.
+- **Benim belirlediğim mevcuda göre:** Her salona kaç öğrenci oturacağını siz yazarsınız. "Tüm salonlara" kutusuyla hepsine aynı sayıyı da verebilirsiniz.
+  - 0 yazdığınız sınıf salon olarak kullanılmaz; o şubenin öğrencileri yine de başka salonlara dağıtılır.
+  - Koltuk sayısı öğrenci sayısından fazlaysa salonlar orantılı doldurulur. Boş kalan koltuklar aynı düzeydeki öğrencileri ayırmak için kullanılır ve planda "Boş" olarak görünür.
+  - Koltuk sayısı yetmezse uygulama dağıtımı başlatmaz ve kaç öğrenci için yer eksik olduğunu söyler.
+
 ## Kayıt ve yedek
 
 Yüklediğiniz şubeler, ayarlar ve son dağıtım **otomatik olarak bu tarayıcıya kaydedilir**. Uygulamayı kapatıp açtığınızda listeleri yeniden yüklemeniz gerekmez.

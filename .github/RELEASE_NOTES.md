@@ -6,12 +6,19 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.2.0)
+## Bu sürümde (v1.3.0)
+
+- **Salon kapasitesi seçimi.** Dağıtımı iki şekilde yapabilirsiniz:
+  - sınıf mevcuduna göre,
+  - sizin belirlediğiniz mevcuda göre: her salona istediğiniz sayıyı yazın, 0 yazdığınız sınıf salon olmaz.
+- **Boş koltuklar.** Koltuk sayısı fazla olursa boş koltuklar aynı düzeydeki öğrencileri ayırmak için kullanılıyor. Planda bir öğrenciyi boş koltuğa da taşıyabilirsiniz.
+
+## Önceki sürümde (v1.2.0)
 
 - **Sınıflara göre sınav yerleri listesi.** Her şube için ayrı bir sayfa hazırlanıyor. Her öğrencinin salonu, dizisi, sırası ve sırada sol mu sağ mı oturacağı yazıyor. Sayfalar yazdırılabiliyor ve Excel'e aktarılabiliyor.
 - **Yedek al / Yedekten yükle.** Veriler zaten tarayıcıya otomatik kaydediliyor. Artık bir dosyaya yedeklenip başka bir bilgisayara da taşınabiliyor.
 
-## Önceki sürümde (v1.1.0)
+## Daha önce (v1.1.0)
 
 - **PDF okuma düzeltildi.** Türkçe harflerin parça parça yazıldığı e-Okul PDF'leri doğru okunuyor. Tek dosyadaki şubeler ayrı ayrı tanınıyor.
 - **Şubeler gruplanıyor.** Şubeler düzeylere göre gruplanıyor ve dağıtıma girecekler elle seçilebiliyor.

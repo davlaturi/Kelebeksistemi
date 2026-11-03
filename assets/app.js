@@ -14,7 +14,7 @@
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '',
-    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false,
+    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class',
   };
   let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false };
   let view = 'plan';
@@ -261,7 +261,7 @@
     box.innerHTML = `
       <div class="pick-head">
         <strong>Dağıtıma girecek şubeler</strong>
-        <span class="hint">${inc.length} şube seçili · ${total} öğrenci · ${inc.length} salon</span>
+        <span class="hint">${inc.length} şube seçili · ${total} öğrenci</span>
         <span class="spacer"></span>
         <button type="button" class="btn ghost small" data-pick="all">Tümünü seç</button>
         <button type="button" class="btn ghost small" data-pick="none">Hiçbirini seçme</button>
@@ -276,6 +276,58 @@
         </div>`;
       }).join('')}`;
     box.querySelectorAll('[data-mixed]').forEach((el) => { el.indeterminate = true; });
+    renderCapacity();
+  }
+
+  // ---------- salon kapasitesi ----------
+  const isCustomCap = () => state.settings.capacityMode === 'custom';
+  function capOf(c) {
+    if (!isCustomCap() || c.roomCap == null || c.roomCap === '') return c.students.length;
+    return Math.max(0, Math.floor(Number(c.roomCap)) || 0);
+  }
+  function capTotals() {
+    const inc = included();
+    return { seats: inc.reduce((a, c) => a + capOf(c), 0), students: inc.reduce((a, c) => a + c.students.length, 0), rooms: inc.filter((c) => capOf(c) > 0).length };
+  }
+  function capSummaryHtml() {
+    const t = capTotals();
+    const diff = t.seats - t.students;
+    const kind = diff < 0 ? 'bad' : diff > 0 ? 'warn' : 'ok';
+    const msg = diff < 0 ? `${-diff} öğrenci için yer yok. Kapasiteleri artırın.`
+      : diff > 0 ? `${diff} koltuk boş kalacak. Boş koltuklar aynı düzeydeki öğrencileri ayırmak için kullanılır.`
+      : 'Koltuk sayısı öğrenci sayısına eşit.';
+    return `<span class="pill ${kind}">Toplam koltuk: <b>${t.seats}</b></span><span class="pill">Öğrenci: <b>${t.students}</b></span><span class="pill">Salon: <b>${t.rooms}</b></span><span class="cap-msg ${kind}">${msg}</span>`;
+  }
+  function renderCapacity() {
+    const box = $('#capacity');
+    const inc = included();
+    if (!inc.length) { box.innerHTML = ''; return; }
+    const custom = isCustomCap();
+    let html = `
+      <div class="pick-head"><strong>Salon kapasitesi</strong></div>
+      <div class="cap-modes" role="radiogroup">
+        <label class="check"><input type="radio" name="capMode" value="class" ${custom ? '' : 'checked'}> <span><b>Sınıf mevcuduna göre</b><br><span class="hint">Her şube salonuna, o şubenin mevcudu kadar öğrenci oturur.</span></span></label>
+        <label class="check"><input type="radio" name="capMode" value="custom" ${custom ? 'checked' : ''}> <span><b>Benim belirlediğim mevcuda göre</b><br><span class="hint">Her salona kaç öğrenci oturacağını siz yazarsınız. 0 yazarsanız o sınıf salon olarak kullanılmaz.</span></span></label>
+      </div>`;
+    if (custom) {
+      html += `
+      <div class="cap-all">
+        <label for="cap-all-n">Tüm salonlara</label>
+        <input type="number" id="cap-all-n" min="0" max="200" inputmode="numeric" placeholder="Örn. 30">
+        <button type="button" class="btn small" id="cap-all-btn">Uygula</button>
+        <button type="button" class="btn ghost small" id="cap-reset">Mevcutlara döndür</button>
+      </div>
+      ${byLevel(inc).map((g) => `<div class="cap-row">
+        <span class="pick-level">${esc(g.label)}</span>
+        <div class="cap-items">${g.classes.map((c) => `
+          <label class="cap-item" style="--h:${levelHue(c.name)}"><span>${esc(c.name)}</span>
+            <input type="number" min="0" max="200" inputmode="numeric" data-cap="${esc(c.id)}" value="${capOf(c)}" aria-label="${esc(c.name)} salon kapasitesi">
+            <small>mevcut ${c.students.length}</small></label>`).join('')}
+        </div>
+      </div>`).join('')}`;
+    }
+    html += `<div class="cap-sum" id="cap-sum">${capSummaryHtml()}</div>`;
+    box.innerHTML = html;
   }
 
   // ---------- düzenleyici ----------
@@ -380,7 +432,10 @@
     const inc = included();
     if (!inc.length) { toast(state.classes.length ? 'Dağıtıma girecek en az bir şube seçin.' : 'Önce sınıf listelerini yükleyin.'); return; }
     try {
+      const t = capTotals();
+      if (t.seats < t.students) { toast(`Salon kapasitesi yetmiyor: ${t.students} öğrenci için ${t.seats} koltuk var.`); return; }
       const r = A.distribute(inc, {
+        capacityMode: state.settings.capacityMode,
         deskCols: state.settings.deskCols,
         seatsPerDesk: state.settings.seatsPerDesk,
         avoidOwnRoom: state.settings.avoidOwnRoom,
@@ -390,7 +445,7 @@
       selectedSeat = null;
       save();
       renderResult();
-      toast(inc.reduce((a, c) => a + c.students.length, 0) + ' öğrenci ' + inc.length + ' salona yerleştirildi.');
+      toast(inc.reduce((a, c) => a + c.students.length, 0) + ' öğrenci ' + r.rooms.length + ' salona yerleştirildi.');
     } catch (e) {
       console.error(e);
       toast('Dağıtım yapılamadı: ' + e.message);
@@ -402,7 +457,7 @@
     const r = state.result;
     if (!r) return false;
     const si = studentIndex();
-    return r.rooms.every((room) => room.seats.every((s) => si.has(s.studentId)));
+    return r.rooms.every((room) => room.seats.every((s) => s.empty || si.has(s.studentId)));
   }
 
   function recomputeStats() {
@@ -498,6 +553,11 @@
           const idx = d * spd + k;
           const seat = room.seats[idx];
           if (!seat) { cells.push('<span class="seat empty-seat"></span>'); continue; }
+          if (seat.empty) {
+            const isSelE = selectedSeat && selectedSeat.roomIdx === ri && selectedSeat.seatIdx === idx;
+            cells.push(`<button type="button" class="seat vacant${isSelE ? ' sel' : ''}" data-room="${ri}" data-seat="${idx}"><span class="who">Boş</span></button>`);
+            continue;
+          }
           const stu = si.get(seat.studentId);
           const c = ci.get(seat.classId);
           const isSel = selectedSeat && selectedSeat.roomIdx === ri && selectedSeat.seatIdx === idx;
@@ -524,7 +584,7 @@
     const ci = classIndex();
     const si = studentIndex();
     return r.rooms.map((room, ri) => {
-      const rows = room.seats.map((seat) => {
+      const rows = room.seats.filter((seat) => !seat.empty).map((seat) => {
         const stu = si.get(seat.studentId);
         return `<tr><td>${esc(stu.s.name)}</td><td>${esc(ci.get(seat.classId).c.name)}</td><td class="sign"></td></tr>`;
       }).join('');
@@ -558,6 +618,7 @@
       const spd = room.spd || 2;
       const cols = room.cols || 3;
       room.seats.forEach((s, idx) => {
+        if (s.empty) return;
         const desk = Math.floor(idx / spd);
         const row = s.row != null ? s.row : Math.floor(desk / cols);
         const col = s.col != null ? s.col : desk % cols;
@@ -633,6 +694,7 @@
     const b = state.result.rooms[ri].seats[si];
     [a.studentId, b.studentId] = [b.studentId, a.studentId];
     [a.classId, b.classId] = [b.classId, a.classId];
+    [a.empty, b.empty] = [b.empty, a.empty];
     selectedSeat = null;
     recomputeStats();
     save();
@@ -754,6 +816,34 @@
     form.addEventListener('input', readSettings);
     form.addEventListener('change', readSettings);
     form.addEventListener('submit', (e) => e.preventDefault());
+
+    // salon kapasitesi
+    const capBox = $('#capacity');
+    capBox.addEventListener('change', (e) => {
+      if (e.target.name === 'capMode') {
+        state.settings.capacityMode = e.target.value;
+        markStale(); save(); renderCapacity(); renderResult();
+      }
+    });
+    capBox.addEventListener('input', (e) => {
+      const id = e.target.dataset.cap;
+      if (!id) return;
+      const c = state.classes.find((x) => x.id === id);
+      if (!c) return;
+      c.roomCap = e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10) || 0);
+      markStale(); save();
+      $('#cap-sum').innerHTML = capSummaryHtml();
+    });
+    capBox.addEventListener('click', (e) => {
+      if (e.target.id === 'cap-all-btn') {
+        const n = parseInt($('#cap-all-n').value, 10);
+        if (!(n >= 0)) { toast('Önce bir sayı yazın.'); return; }
+        for (const c of included()) c.roomCap = n;
+      } else if (e.target.id === 'cap-reset') {
+        for (const c of state.classes) c.roomCap = null;
+      } else return;
+      markStale(); save(); renderCapacity();
+    });
 
     // şube seçimi
     $('#picker').addEventListener('change', (e) => {

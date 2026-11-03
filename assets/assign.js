@@ -115,7 +115,9 @@
     const G = Math.max(0, ...group) + 1;
     const N = sizes.reduce((a, b) => a + b, 0);
     const C = caps.reduce((a, b) => a + b, 0);
-    if (N !== C) throw new Error('Toplam öğrenci sayısı (' + N + ') toplam salon kapasitesine (' + C + ') eşit değil.');
+    if (C < N) throw new Error('Toplam salon kapasitesi (' + C + ') öğrenci sayısından (' + N + ') az. ' + (N - C) + ' öğrenci için daha yer gerekiyor.');
+    // Kapasite öğrenci sayısından fazlaysa salonlar orantılı doldurulur.
+    const fill = caps.map((c) => (c * N) / C);
     const deskCap = caps.map((c) => Math.ceil(c / 2));
     const own = (i, j) => opts.avoidOwnRoom && owner[j] === i;
     const neff = caps.map((_, j) => {
@@ -136,7 +138,7 @@
       for (const j of roomOrder) {
         const base = own(i, j) ? COST_OWN : 0;
         const ub = Math.min(caps[j], sizes[i]);
-        const target = own(i, j) ? 0 : Math.min(ub, Math.ceil((sizes[i] * caps[j]) / neff[j]));
+        const target = own(i, j) ? 0 : Math.min(ub, Math.ceil((sizes[i] * fill[j]) / neff[j]));
         const t2 = Math.min(ub, target + 2);
         const es = [];
         for (const [cap, cost] of [[target, base], [t2 - target, base + 3], [ub - t2, base + 12]]) {
@@ -149,7 +151,11 @@
       mcf.addEdge(GR(g, j), RM(j), deskCap[j], 0);
       if (caps[j] > deskCap[j]) mcf.addEdge(GR(g, j), RM(j), caps[j] - deskCap[j], COST_DESK);
     }
-    for (const j of roomOrder) mcf.addEdge(RM(j), T, caps[j], 0);
+    for (const j of roomOrder) {
+      const f = Math.min(caps[j], Math.ceil(fill[j]));
+      if (f > 0) mcf.addEdge(RM(j), T, f, 0);
+      if (caps[j] > f) mcf.addEdge(RM(j), T, caps[j] - f, 6);
+    }
     const res = mcf.run(S, T, N);
     if (res.flow !== N) throw new Error('Dağıtım bulunamadı.');
 
@@ -216,7 +222,9 @@
     const cap = layout.seats.length;
     const rnd = opts.rnd;
     const levelFactor = opts.avoidSameLevel ? 0.12 : 0;
+    const EMPTY = opts.empty;
     const pairCost = (x, y, w) => {
+      if (EMPTY != null && (x === EMPTY || y === EMPTY)) return 0;
       if (x === y) return w;
       if (levelFactor && levels[x] === levels[y]) return w * levelFactor;
       return 0;
@@ -317,29 +325,40 @@
     if (list.length === 0) throw new Error('Dağıtım için en az bir sınıf listesi gerekli.');
 
     const sizes = list.map((c) => c.students.length);
-    const caps = sizes.slice();
-    const owner = list.map((_, i) => i);
+    // Salon kapasitesi: sınıf mevcudu (varsayılan) ya da öğretmenin belirlediği sayı.
+    const custom = settings.capacityMode === 'custom';
+    const capOf = (c) => {
+      if (!custom || c.roomCap == null || c.roomCap === '') return c.students.length;
+      return Math.max(0, Math.floor(Number(c.roomCap)) || 0);
+    };
+    const roomIdx = list.map((_, i) => i).filter((i) => capOf(list[i]) > 0);
+    if (!roomIdx.length) throw new Error('Kapasitesi 0\'dan büyük en az bir salon gerekli.');
+    const caps = roomIdx.map((i) => capOf(list[i]));
+    const owner = roomIdx.slice();
     const levels = list.map((c) => levelOf(c.name));
     const levelNames = [...new Set(levels)];
     const group = levels.map((l) => levelNames.indexOf(l));
     if (levelNames.length === 1) warnings.push('Tüm sınıflar aynı düzeyde (' + levelNames[0] + '); aynı düzeyden öğrencilerin yan yana oturması kaçınılmaz.');
 
     const alloc = allocate(sizes, caps, owner, group, { avoidOwnRoom: !!settings.avoidOwnRoom, rnd });
-    if (alloc.ownRoomCount > 0) warnings.push(alloc.ownRoomCount + ' öğrenci kendi sınıfında sınava giriyor; sınıf mevcutları bunu tamamen önlemeye izin vermiyor.');
-    if (alloc.deskOverflow > 0) warnings.push('Bir sınıf düzeyinin öğrenci sayısı diğer düzeylerin toplamından fazla; bazı sıralarda aynı düzeyden iki öğrenci oturmak zorunda (' + alloc.deskOverflow + ' sıra).');
+    if (alloc.ownRoomCount > 0) warnings.push(alloc.ownRoomCount + ' öğrenci kendi sınıfında sınava giriyor; salon kapasiteleri bunu tamamen önlemeye izin vermiyor.');
+    if (alloc.deskOverflow > 0) warnings.push('Bir sınıf düzeyinin öğrenci sayısı salonlardaki sıra sayısına sığmıyor; bazı sıralarda aynı düzeyden iki öğrenci oturmak zorunda (' + alloc.deskOverflow + ' sıra).');
 
     // Her sınıfın öğrencilerini karıştırıp salonlara paylaştır.
     const pools = list.map((c) => shuffle(c.students, rnd));
     const takeIdx = list.map(() => 0);
+    const EMPTY = levelNames.length;
 
-    const rooms = list.map((room, j) => {
+    const rooms = roomIdx.map((ci, j) => {
+      const room = list[ci];
       const counts = list.map((_, i) => alloc.matrix[i][j]);
       const roomCols = Math.max(1, room.deskCols || cols);
       const layout = seatLayout(caps[j], roomCols, spd);
-      // Yerleşim düzey bazında yapılır: etiketler düzey indeksidir.
+      // Yerleşim düzey bazında yapılır: etiketler düzey indeksidir; boş koltuk ayrı etiket.
       const gCounts = levelNames.map(() => 0);
       for (let i = 0; i < list.length; i++) gCounts[group[i]] += counts[i];
-      const labels = arrangeRoom(layout, gCounts, levelNames, { rnd, avoidSameLevel: false });
+      gCounts.push(caps[j] - gCounts.reduce((a, b) => a + b, 0));
+      const labels = arrangeRoom(layout, gCounts, levelNames.concat(['']), { rnd, avoidSameLevel: false, empty: EMPTY });
       // Her düzeyin koltuklarına o düzeydeki sınıfların öğrencilerini karışık ver
       const byGroup = levelNames.map(() => []);
       for (let i = 0; i < list.length; i++) {
@@ -348,12 +367,17 @@
       }
       const queues = byGroup.map((arr) => shuffle(arr, rnd));
       const seats = labels.map((g, s) => {
-        const { st, k } = queues[g].pop();
         const geo = layout.seats[s];
-        return { seatNo: s + 1, classId: list[k].id, studentId: st.id, desk: geo.desk + 1, side: geo.side, row: geo.row, col: geo.col };
+        const base = { seatNo: s + 1, desk: geo.desk + 1, side: geo.side, row: geo.row, col: geo.col };
+        if (g === EMPTY) return { ...base, empty: true, classId: null, studentId: null };
+        const { st, k } = queues[g].pop();
+        return { ...base, classId: list[k].id, studentId: st.id };
       });
       return { roomId: room.id, name: room.name, capacity: caps[j], rows: layout.rows, cols: roomCols, spd, seats };
     });
+    const placed = rooms.reduce((a, r) => a + r.seats.filter((x) => !x.empty).length, 0);
+    const empty = rooms.reduce((a, r) => a + r.seats.length, 0) - placed;
+    if (empty > 0) warnings.push(empty + ' koltuk boş kaldı; boş koltuklar aynı düzeyden öğrencileri ayırmak için kullanıldı.');
 
     const stats = evaluate(rooms, list, { cols, spd });
     return { seed, rooms, warnings, stats, createdAt: new Date().toISOString() };
@@ -368,13 +392,13 @@
       const layout = seatLayout(room.seats.length, room.cols || geo.cols, room.spd || geo.spd);
       for (const e of layout.edges) {
         const a = room.seats[e.a].classId, b = room.seats[e.b].classId;
-        if (lvl[a] !== lvl[b]) continue;
+        if (!a || !b || lvl[a] !== lvl[b]) continue;
         if (e.kind === 'desk' || e.kind === 'side') { out.deskmate++; if (a === b) out.sameClassDeskmate++; }
         else if (e.kind === 'front') out.frontBack++;
         else if (e.kind === 'aisle') out.aisle++;
         else out.diagonal++;
       }
-      for (const s of room.seats) if (s.classId === room.roomId) out.ownRoom++;
+      for (const s of room.seats) if (s.classId && s.classId === room.roomId) out.ownRoom++;
     }
     return out;
   }

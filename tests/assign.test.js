@@ -86,4 +86,33 @@ assert.strictEqual(A.levelOf('9/A'), '9');
 assert.strictEqual(A.levelOf('10-B (örnek)'), '10');
 assert.strictEqual(A.levelOf('Hazırlık/A'), A.levelOf('Hazırlık-B'));
 
+// Öğretmenin belirlediği kapasite
+function custom(spec, capsList, extra) {
+  const classes = spec.map(([name, n], i) => ({ ...mk(name, n), roomCap: capsList[i] }));
+  return A.distribute(classes, { seed: 5, capacityMode: 'custom', ...extra });
+}
+const spec4 = [['9/A', 30], ['9/B', 30], ['10/A', 30], ['11/A', 30]];
+// Kapasite fazla: herkes yerleşir, boş koltuk kalır, aynı düzey yan yana olmaz
+const more = custom(spec4, [36, 36, 36, 36]);
+const placedIds = more.rooms.flatMap((r) => r.seats.filter((x) => !x.empty).map((x) => x.studentId));
+assert.strictEqual(new Set(placedIds).size, 120);
+assert.deepStrictEqual(more.rooms.map((r) => r.seats.length), [36, 36, 36, 36]);
+assert.strictEqual(more.rooms.flatMap((r) => r.seats).filter((x) => x.empty).length, 24);
+assert.strictEqual(more.stats.deskmate, 0);
+// Salonlar orantılı dolar (her biri ~30)
+for (const r of more.rooms) assert.ok(Math.abs(r.seats.filter((x) => !x.empty).length - 30) <= 2);
+// 0 kapasiteli şube salon olmaz ama öğrencileri dağıtılır
+const zero = custom(spec4, [40, 40, 0, 40]);
+assert.strictEqual(zero.rooms.length, 3);
+assert.strictEqual(zero.rooms.flatMap((r) => r.seats).filter((x) => !x.empty).length, 120);
+assert.strictEqual(zero.stats.deskmate, 0);
+// Kapasite yetersiz: anlaşılır hata
+assert.throws(() => custom(spec4, [20, 20, 20, 20]), /kapasitesi \(80\) öğrenci sayısından \(120\) az/);
+// Belirtilmeyen kapasite mevcut sayılır
+const partial = custom(spec4, [null, '', 34, 30]);
+assert.deepStrictEqual(partial.rooms.map((r) => r.seats.length), [30, 30, 34, 30]);
+// Tek düzeyde kalabalık: boş koltuklar ayırıcı olur (9'lar 60, kapasite 120 -> ihlal yok)
+const sep = custom([['9/A', 30], ['9/B', 30], ['10/A', 10]], [40, 40, 40]);
+assert.strictEqual(sep.stats.deskmate, 0);
+
 console.log('Dağıtım testleri geçti.');

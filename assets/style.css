@@ -171,6 +171,32 @@ main.wrap { display: grid; gap: 22px; padding-block: 24px 8px; }
 .picker input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
 @media (max-width: 560px) { .pick-row { grid-template-columns: 1fr; } }
 
+/* Salon kapasitesi */
+.cap-modes { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.cap-modes .check { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: pointer; }
+.cap-modes .check:has(input:checked) { border-color: var(--accent); }
+.cap-all { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.9rem; }
+.cap-all input { width: 6.5em; min-height: 32px; padding: 5px 8px; }
+.cap-row { display: grid; grid-template-columns: 9.5em 1fr; gap: 8px 12px; align-items: start; }
+.cap-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.cap-item {
+  --h: 200;
+  display: grid; grid-template-columns: auto 4.5em; grid-template-rows: auto auto; gap: 0 8px; align-items: center;
+  padding: 6px 8px; border-radius: 8px; border: 1px solid hsl(var(--h) 45% 55% / 45%);
+  background: hsl(var(--h) var(--seat-s) var(--seat-l)); color: hsl(var(--h) 60% var(--seat-ink-l));
+}
+.cap-item > span { font-weight: 600; }
+.cap-item input { grid-row: span 2; min-height: 34px; padding: 4px 6px; text-align: center; font-variant-numeric: tabular-nums; }
+.cap-item small { font-size: 0.75rem; opacity: 0.85; }
+.cap-sum { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cap-msg { font-size: 0.88rem; }
+.cap-msg.bad { color: var(--bad); font-weight: 600; }
+.cap-msg.warn { color: var(--warn); }
+.cap-msg.ok { color: var(--ok); }
+.seat.vacant { background: transparent; border: 1px dashed var(--line); color: var(--ink-soft); }
+.seat.vacant .who { font-weight: 400; font-style: italic; }
+@media (max-width: 560px) { .cap-row { grid-template-columns: 1fr; } }
+
 /* Ayarlar */
 .settings { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 16px; }
 .field { display: grid; gap: 5px; min-width: 0; }
