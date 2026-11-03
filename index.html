@@ -11,24 +11,41 @@
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <header class="masthead no-print">
-    <div class="wrap masthead-inner">
-      <svg class="logo" viewBox="0 0 64 48" aria-hidden="true">
-        <path d="M32 24 C22 4, 4 2, 4 14 C4 24, 16 26, 30 25 C16 28, 8 36, 14 43 C20 48, 30 38, 32 27 Z" />
-        <path d="M32 24 C42 4, 60 2, 60 14 C60 24, 48 26, 34 25 C48 28, 56 36, 50 43 C44 48, 34 38, 32 27 Z" />
-        <rect x="31" y="14" width="2" height="24" rx="1" />
-      </svg>
-      <div class="masthead-text">
-        <h1>Kelebek Sınav Dağıtımı</h1>
-        <p class="lede">Sınıf listelerini yükleyin; her sınıf aynı zamanda sınav salonu olur ve mevcudu kadar öğrenci alır. Aynı sınıf düzeyindeki (9'lar, 10'lar…) öğrenciler yan yana oturmaz.</p>
+  <div class="shell">
+    <aside class="sidebar no-print" aria-label="Menü">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 64 48" aria-hidden="true">
+          <path d="M32 24 C22 4, 4 2, 4 14 C4 24, 16 26, 30 25 C16 28, 8 36, 14 43 C20 48, 30 38, 32 27 Z" />
+          <path d="M32 24 C42 4, 60 2, 60 14 C60 24, 48 26, 34 25 C48 28, 56 36, 50 43 C44 48, 34 38, 32 27 Z" />
+          <rect x="31" y="14" width="2" height="24" rx="1" />
+        </svg>
+        <div class="brand-name">Kelebek Sınav <br>Dağıtımı</div>
       </div>
-      <button type="button" class="btn" id="btn-archive-top" hidden>Kayıtlı sınavlar</button>
-    </div>
-  </header>
+      <nav class="side-nav" id="side-nav">
+        <button type="button" class="nav-item" data-go="listeler"><span class="nav-no">1</span><span class="nav-label">Sınıf listeleri</span><span class="badge" id="nav-classes"></span></button>
+        <button type="button" class="nav-item" data-go="bilgiler"><span class="nav-no">2</span><span class="nav-label">Sınav bilgileri</span></button>
+        <button type="button" class="nav-item" data-go="dagitim"><span class="nav-no">3</span><span class="nav-label">Dağıtım</span><span class="badge ok" id="nav-result"></span></button>
+          <nav class="side-tabs" id="tabs" hidden role="tablist" aria-label="Dağıtım çıktıları">
+            <button type="button" role="tab" data-view="plan" aria-selected="true">Oturma planları</button>
+            <button type="button" role="tab" data-view="yoklama" aria-selected="false">Salon yoklama listeleri</button>
+            <button type="button" role="tab" data-view="sinif" aria-selected="false">Sınıflara göre sınav yerleri</button>
+            <button type="button" role="tab" data-view="ara" aria-selected="false">Öğrenci ara</button>
+          </nav>
+        <button type="button" class="nav-item" data-go="arsiv"><span class="nav-no">4</span><span class="nav-label">Kayıtlı sınavlar</span><span class="badge" id="archive-count"></span></button>
+      </nav>
+      <div class="side-tools">
+        <div class="side-title">Yedek</div>
+        <button type="button" class="btn ghost small" id="btn-backup">Yedek al</button>
+        <button type="button" class="btn ghost small" id="btn-restore">Yedekten yükle</button>
+        <input type="file" id="restore-input" accept=".json,application/json" hidden>
+        <p class="side-note">Veriler bu tarayıcıya otomatik kaydedilir. Tarayıcı verilerini temizlerseniz ya da başka bilgisayara geçerseniz kaybolmaması için yedek alın.</p>
+      </div>
+    </aside>
 
-  <main class="wrap">
+    <div class="content">
+      <main class="wrap">
     <!-- 1. Listeler -->
-    <section class="step no-print" aria-labelledby="h-lists">
+    <section class="step no-print" data-page="listeler" aria-labelledby="h-lists">
       <div class="step-head">
         <span class="step-no">1</span>
         <div>
@@ -45,9 +62,6 @@
       <div class="row-actions">
         <button type="button" class="btn ghost" id="btn-manual">Elle sınıf ekle</button>
         <button type="button" class="btn ghost" id="btn-sample">Örnek listelerle dene</button>
-        <button type="button" class="btn ghost" id="btn-backup">Yedek al</button>
-        <button type="button" class="btn ghost" id="btn-restore">Yedekten yükle</button>
-        <input type="file" id="restore-input" accept=".json,application/json" hidden>
         <span class="spacer"></span>
         <button type="button" class="btn ghost danger" id="btn-clear" hidden>Tüm sınıfları sil</button>
       </div>
@@ -55,10 +69,11 @@
 
       <div id="class-summary" class="class-summary"></div>
       <div id="class-list" class="levels"></div>
+      <div class="next-row"><button type="button" class="btn primary" data-go="bilgiler">Devam: Sınav bilgileri →</button></div>
     </section>
 
     <!-- 2. Kurallar -->
-    <section class="step no-print" aria-labelledby="h-rules">
+    <section class="step no-print" data-page="bilgiler" aria-labelledby="h-rules">
       <div class="step-head">
         <span class="step-no">2</span>
         <div>
@@ -91,10 +106,11 @@
           <label class="check"><input type="checkbox" id="s-own" name="avoidOwnRoom"> Öğrenci kendi sınıfında sınava girmesin (işaretlenmezse kendi sınıfında oturabilir)</label>
         </fieldset>
       </form>
+      <div class="next-row"><button type="button" class="btn primary" data-go="dagitim">Devam: Dağıtım →</button></div>
     </section>
 
     <!-- 3. Dağıtım -->
-    <section class="step" aria-labelledby="h-result">
+    <section class="step" data-page="dagitim" aria-labelledby="h-result">
       <div class="step-head no-print">
         <span class="step-no">3</span>
         <div>
@@ -113,22 +129,14 @@
         <button type="button" class="btn" id="btn-csv" hidden>Excel'e aktar (CSV)</button>
       </div>
       <div id="result-status" class="no-print"></div>
-      <nav class="tabs no-print" id="tabs" hidden role="tablist">
-        <button type="button" role="tab" data-view="plan" aria-selected="true">Oturma planları</button>
-        <button type="button" role="tab" data-view="yoklama" aria-selected="false">Salon yoklama listeleri</button>
-        <button type="button" role="tab" data-view="sinif" aria-selected="false">Sınıflara göre sınav yerleri</button>
-        <button type="button" role="tab" data-view="ara" aria-selected="false">Öğrenci ara</button>
-      </nav>
       <div id="report"></div>
     </section>
-  </main>
 
-  <main class="wrap" style="padding-top:0">
-    <section class="step" id="arsiv" aria-labelledby="h-archive">
+    <section class="step" id="arsiv" data-page="arsiv" aria-labelledby="h-archive">
       <div class="step-head no-print">
         <span class="step-no">4</span>
         <div>
-          <h2 id="h-archive">Kayıtlı sınavlar <span class="count" id="archive-count"></span></h2>
+          <h2 id="h-archive">Kayıtlı sınavlar</h2>
           <p class="hint">Kaydettiğiniz dağıtımlar burada haftalara göre durur. Haftalık ya da iki haftalık sınav programının her sınavını istediğiniz an açıp yazdırabilirsiniz.</p>
         </div>
       </div>
@@ -141,11 +149,13 @@
       <div id="archive-list" class="no-print"></div>
       <div id="archive-view"></div>
     </section>
-  </main>
+      </main>
 
-  <footer class="wrap foot no-print">
-    <p>Tüm işlemler bu bilgisayarda, tarayıcınızın içinde yapılır; öğrenci listeleri hiçbir sunucuya gönderilmez. Yüklenen şubeler, ayarlar ve son dağıtım bu tarayıcıda otomatik kaydedilir; her açılışta yeniden yüklemeniz gerekmez. Tarayıcı verilerini temizlerseniz ya da başka bir bilgisayara geçerseniz kaybolmaması için “Yedek al” ile dosya olarak saklayın.</p>
-  </footer>
+      <footer class="wrap foot no-print">
+        <p>Tüm işlemler bu bilgisayarda, tarayıcınızın içinde yapılır; öğrenci listeleri hiçbir sunucuya gönderilmez.</p>
+      </footer>
+    </div>
+  </div>
 
   <!-- Sınıf düzenleme penceresi -->
   <dialog id="editor" class="editor">

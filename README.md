@@ -16,6 +16,9 @@ Sınıf listelerini PDF olarak yüklersiniz. Uygulama öğrencileri, **aynı sı
 
 ## Nasıl kullanılır?
 
+Menüler soldaki yan paneldedir: **1 Sınıf listeleri**, **2 Sınav bilgileri**, **3 Dağıtım** ve **4 Kayıtlı sınavlar**. Dağıtım yapıldıktan sonra oturma planları, yoklama listeleri, sınıflara göre sınav yerleri ve öğrenci arama, Dağıtım'ın altında listelenir. Yedek alma düğmeleri de yan panelin altındadır. Her bölümün sonundaki **Devam** düğmesi sizi sıradaki adıma götürür.
+
+
 1. **`index.html`** dosyasını açın (yukarıya bakın).
 2. **1. Sınıf listeleri:** e-Okul'dan aldığınız sınıf listesi PDF'lerini sürükleyip bırakın.
    - Bir PDF'te birden fazla sınıf olabilir. Sınıf adı sayfa başlığından (ör. `9. Sınıf / A Şubesi`) ya da dosya adından (ör. `9-A.pdf`) okunur.

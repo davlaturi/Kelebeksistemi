@@ -233,6 +233,8 @@
     const list = $('#class-list');
     const sum = $('#class-summary');
     $('#btn-clear').hidden = state.classes.length === 0;
+    $('#nav-classes').textContent = state.classes.length ? String(state.classes.length) : '';
+    $('#nav-classes').title = state.classes.length ? state.classes.length + ' şube' : '';
     if (!state.classes.length) {
       list.innerHTML = '<div class="empty" style="grid-column:1/-1">Henüz sınıf yok. PDF yükleyin ya da “Örnek listelerle dene” ile uygulamayı tanıyın.</div>';
       sum.innerHTML = '';
@@ -513,6 +515,8 @@
     $('#btn-csv').hidden = !has;
     $('#btn-save').hidden = !has;
     $('#tabs').hidden = !has;
+    $('#nav-result').textContent = has ? '✓' : '';
+    $('#nav-result').title = has ? 'Dağıtım hazır' : '';
     $('#btn-run').textContent = has ? 'Yeniden karıştır ve dağıt' : 'Kelebek dağıtımını yap';
     const status = $('#result-status');
     if (!has) {
@@ -837,7 +841,6 @@
   function renderArchive() {
     const box = $('#archive-list');
     $('#archive-count').textContent = state.archive.length ? String(state.archive.length) : '';
-    $('#btn-archive-top').hidden = state.archive.length === 0;
     document.querySelectorAll('#archive-filter button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === archiveFilter)));
     if (!state.archive.length) {
       box.innerHTML = '<div class="empty">Henüz kayıtlı sınav yok. Dağıtımı yaptıktan sonra “Bu dağıtımı kaydet” düğmesine basın. Haftalık ya da iki haftalık sınav programınızın tüm dağıtımları burada birikir.</div>';
@@ -1000,7 +1003,12 @@
 
     // kayıtlı sınavlar
     $('#btn-save').addEventListener('click', saveToArchive);
-    $('#btn-archive-top').addEventListener('click', () => $('#arsiv').scrollIntoView({ behavior: 'smooth' }));
+    // yan panel ve "Devam" düğmeleri
+    document.addEventListener('click', (e) => {
+      const g = e.target.closest('[data-go]');
+      if (g) showPage(g.dataset.go);
+    });
+    window.addEventListener('hashchange', () => showPage(pageFromHash(), true));
     $('#archive-filter').addEventListener('click', (e) => {
       const b = e.target.closest('button[data-f]');
       if (!b) return;
@@ -1107,6 +1115,7 @@
       if (!b) return;
       view = b.dataset.view;
       selectedSeat = null;
+      showPage('dagitim');
       renderResult();
     });
     $('#report').addEventListener('click', (e) => {
@@ -1120,7 +1129,30 @@
     });
   }
 
+  // ---------- sayfalar (yan panel) ----------
+  const PAGES = ['listeler', 'bilgiler', 'dagitim', 'arsiv'];
+  let page = 'listeler';
+  function pageFromHash() {
+    const h = (location.hash || '').replace('#', '');
+    return PAGES.includes(h) ? h : null;
+  }
+  function showPage(p, fromHash) {
+    if (!PAGES.includes(p)) p = 'listeler';
+    const changed = p !== page;
+    page = p;
+    document.querySelectorAll('[data-page]').forEach((sec) => { sec.hidden = sec.dataset.page !== p; });
+    document.querySelectorAll('#side-nav .nav-item').forEach((b) => {
+      if (b.dataset.go === p) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    $('#tabs').classList.toggle('active', p === 'dagitim');
+    if (!fromHash && location.hash !== '#' + p) {
+      try { history.replaceState(null, '', '#' + p); } catch (e) { /* file:// bazı tarayıcılarda */ }
+    }
+    if (changed) window.scrollTo(0, 0);
+  }
+
   load();
   bind();
   renderAll();
+  showPage(pageFromHash() || (state.result ? 'dagitim' : 'listeler'), true);
 })();

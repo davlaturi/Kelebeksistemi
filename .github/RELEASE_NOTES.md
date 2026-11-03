@@ -6,11 +6,15 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.5.0)
+## Bu sürümde (v1.6.0)
+
+- **Yan panel.** Menüler soldaki panelde. Panelde dört adım var: Sınıf listeleri, Sınav bilgileri, Dağıtım, Kayıtlı sınavlar. Dağıtım çıktıları (oturma planları, yoklama listeleri, sınıflara göre sınav yerleri, öğrenci arama) ve yedek düğmeleri de burada. Sağda her seferinde tek bir bölüm görünür; telefonda menü üstte durur.
+
+## Önceki sürümde (v1.5.0)
 
 - **Salon seçimi.** Öğrencilerin oturacağı sınıflar, sınava giren şubelerden ayrı seçiliyor. İstemediğiniz sınıfları salon olmaktan çıkarabilirsiniz. O şubenin öğrencileri yine başka salonlarda sınava girer. Öğrencisi sınava girmeyen bir sınıfı da salon yapabilirsiniz.
 
-## Önceki sürümde (v1.4.0)
+## Daha önce (v1.4.0)
 
 - **Kayıtlı sınavlar.** Her sınavın dağıtımını adı, tarihi ve saatiyle kaydedebilirsiniz. Haftalık ya da iki haftalık programın tüm sınavları haftalara göre listelenir. Her sınav istediğiniz an açılabilir, yazdırılabilir ve Excel'e aktarılabilir. Kayıtlar yedek dosyasına da girer.
 - **Kapasite artık bir seçenek.** "Salon mevcudunu ben belirleyeceğim" işaretlenmezse önceki kural geçerlidir: her salona sınıf mevcudu kadar öğrenci oturur.
