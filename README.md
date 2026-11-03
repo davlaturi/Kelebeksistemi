@@ -51,6 +51,12 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 - **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar.
 - **Salon yoklama listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
 - **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrencinin hangi salonda, hangi dizide (tahtaya bakarken soldan), hangi sırada (tahtadan arkaya) ve sırada solda mı sağda mı oturacağı yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
+- **Sınav kâğıdı dağıtımı:** Kâğıtları kolayca dağıtmak için hazırlanmış bir sayfa. İçinde şunlar var:
+  - Her salona hangi sınıf düzeyinden kaç kâğıt gideceğini gösteren tablo.
+  - Hangi şubeden kaç öğrenci olduğunu gösteren ayrıntılı tablo. Satır ve sütun toplamları da yazar.
+  - Her salonun kâğıt zarfına yapıştırılacak etiketler.
+
+  Ayrıca her oturma planının ve yoklama listesinin üstünde "Bu salonda: 9. sınıf 11 (9/A 6, 9/B 5)…" özeti yer alır.
 - **Öğrenci ara:** Ada göre arayıp öğrencinin salonunu bulabilirsiniz.
 - **Yazdır / PDF kaydet:** Her salon ayrı A4 sayfaya basılır. **Excel'e aktar (CSV)** ile tüm dağıtımı Excel'e alabilirsiniz.
 

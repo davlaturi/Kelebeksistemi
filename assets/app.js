@@ -558,6 +558,7 @@
     if (view === 'plan') el.innerHTML = renderPlans();
     else if (view === 'yoklama') el.innerHTML = renderRoll();
     else if (view === 'sinif') el.innerHTML = renderByClass();
+    else if (view === 'evrak') el.innerHTML = renderPapers();
     else el.innerHTML = renderSearch();
     if (view === 'ara') {
       const inp = $('#q');
@@ -615,12 +616,105 @@
       }
       return `<article class="sheet" data-room="${ri}">
         ${sheetHead('Sınav salonu · oturma planı', roomTitle(room, ci) + ' sınıfı', ri, 'room')}
+        ${roomCountsLine(room)}
         <div class="plan-scroll">
           <div class="board">Yazı tahtası · öğretmen masası</div>
           <div class="desks" style="grid-template-columns:repeat(${room.cols}, minmax(0,1fr))">${desks.join('')}</div>
         </div>
       </article>`;
     }).join('');
+  }
+
+  // ---------- sınav kâğıdı dağıtımı ----------
+  /** Salondaki öğrencileri düzey ve şubeye göre sayar. */
+  function roomCounts(room) {
+    const ci = classIndex();
+    const byClass = new Map();
+    for (const s of room.seats) {
+      if (s.empty || !s.classId) continue;
+      byClass.set(s.classId, (byClass.get(s.classId) || 0) + 1);
+    }
+    const levels = new Map();
+    for (const [id, n] of byClass) {
+      const c = ci.get(id).c;
+      const lv = A.levelOf(c.name);
+      if (!levels.has(lv)) levels.set(lv, { level: lv, total: 0, classes: [] });
+      const L = levels.get(lv);
+      L.total += n;
+      L.classes.push({ id, name: c.name, n });
+    }
+    const list = [...levels.values()].sort((a, b) => collator.compare(a.level, b.level));
+    for (const L of list) L.classes.sort((a, b) => collator.compare(a.name, b.name));
+    return { levels: list, total: list.reduce((a, L) => a + L.total, 0) };
+  }
+  const levelLabel = (lv) => (/^\d+$/.test(lv) ? lv + '. sınıf' : lv);
+
+  /** Plan ve yoklama sayfalarının üstündeki kısa özet. */
+  function roomCountsLine(room) {
+    const rc = roomCounts(room);
+    return `<div class="counts-line"><span class="counts-title">Bu salonda</span>${rc.levels.map((L) =>
+      `<span class="chip" style="--h:${levelHue(L.classes[0].name)}"><b>${esc(levelLabel(L.level))}: ${L.total}</b>${L.classes.length > 1 || L.classes[0].name !== L.level ? ' (' + L.classes.map((c) => esc(c.name) + ' ' + c.n).join(', ') + ')' : ''}</span>`).join('')}
+      <span class="counts-total">Toplam <b>${rc.total}</b> öğrenci</span></div>`;
+  }
+
+  /** Tüm salonlar için kâğıt dağıtım tablosu ve salon zarfı etiketleri. */
+  function renderPapers() {
+    const r = state.result;
+    const ci = classIndex();
+    const rooms = r.rooms.map((room, ri) => ({ room, ri, rc: roomCounts(room), title: roomTitle(room, ci) }));
+    // Sütunlar: düzeyler ve altındaki şubeler
+    const levelMap = new Map();
+    for (const x of rooms) for (const L of x.rc.levels) {
+      if (!levelMap.has(L.level)) levelMap.set(L.level, new Map());
+      for (const c of L.classes) levelMap.get(L.level).set(c.id, c.name);
+    }
+    const levels = [...levelMap.entries()].sort((a, b) => collator.compare(a[0], b[0]))
+      .map(([lv, m]) => ({ lv, classes: [...m.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => collator.compare(a.name, b.name)) }));
+    const cell = (x, id) => {
+      for (const L of x.rc.levels) for (const c of L.classes) if (c.id === id) return c.n;
+      return 0;
+    };
+    const lvTotal = (x, lv) => (x.rc.levels.find((L) => L.level === lv) || { total: 0 }).total;
+    const colTotal = (id) => rooms.reduce((a, x) => a + cell(x, id), 0);
+    const lvColTotal = (lv) => rooms.reduce((a, x) => a + lvTotal(x, lv), 0);
+    const grand = rooms.reduce((a, x) => a + x.rc.total, 0);
+
+    const levelTable = `<div class="table-scroll"><table class="list matrix">
+      <thead><tr><th>Sınav salonu</th>${levels.map((L) => `<th class="num">${esc(levelLabel(L.lv))}</th>`).join('')}<th class="num">Toplam</th></tr></thead>
+      <tbody>${rooms.map((x) => `<tr><td><b>${esc(x.title)}</b></td>${levels.map((L) => { const n = lvTotal(x, L.lv); return `<td class="num${n ? '' : ' zero'}">${n || '–'}</td>`; }).join('')}<td class="num"><b>${x.rc.total}</b></td></tr>`).join('')}</tbody>
+      <tfoot><tr><th>Toplam</th>${levels.map((L) => `<th class="num">${lvColTotal(L.lv)}</th>`).join('')}<th class="num">${grand}</th></tr></tfoot>
+    </table></div>`;
+
+    const classTable = `<div class="table-scroll"><table class="list matrix">
+      <thead>
+        <tr><th rowspan="2">Sınav salonu</th>${levels.map((L) => `<th class="grp" colspan="${L.classes.length}">${esc(levelLabel(L.lv))}</th>`).join('')}<th rowspan="2" class="num">Toplam</th></tr>
+        <tr>${levels.map((L) => L.classes.map((c) => `<th class="num">${esc(c.name)}</th>`).join('')).join('')}</tr>
+      </thead>
+      <tbody>${rooms.map((x) => `<tr><td><b>${esc(x.title)}</b></td>${levels.map((L) => L.classes.map((c) => { const n = cell(x, c.id); return `<td class="num${n ? '' : ' zero'}">${n || '–'}</td>`; }).join('')).join('')}<td class="num"><b>${x.rc.total}</b></td></tr>`).join('')}</tbody>
+      <tfoot><tr><th>Toplam</th>${levels.map((L) => L.classes.map((c) => `<th class="num">${colTotal(c.id)}</th>`).join('')).join('')}<th class="num">${grand}</th></tr></tfoot>
+    </table></div>`;
+
+    const labels = rooms.map((x) => `<div class="env">
+        <div class="env-head"><span class="sheet-sub">Sınav kâğıdı zarfı</span><b>${esc(x.title)} salonu</b></div>
+        <table class="env-table"><tbody>${x.rc.levels.map((L) => `
+          <tr class="env-lv"><td>${esc(levelLabel(L.level))}</td><td class="num">${L.total}</td></tr>
+          ${L.classes.map((c) => `<tr class="env-cl"><td>${esc(c.name)}</td><td class="num">${c.n}</td></tr>`).join('')}`).join('')}
+        </tbody><tfoot><tr><td>Toplam</td><td class="num">${x.rc.total}</td></tr></tfoot></table>
+      </div>`).join('');
+
+    return `<article class="sheet" data-papers="1">
+        ${sheetHead('Sınav kâğıdı dağıtımı', 'Salonlara göre kâğıt sayıları', 'all', 'papers')}
+        <h3 class="sub-h">Sınıf düzeyine göre</h3>
+        <p class="note">Her salona hangi düzeyden kaç sınav kâğıdı gideceğini gösterir.</p>
+        ${levelTable}
+        <h3 class="sub-h">Şubelere göre</h3>
+        ${classTable}
+      </article>
+      <article class="sheet" data-papers="2">
+        ${sheetHead('Sınav kâğıdı dağıtımı', 'Salon zarfı etiketleri', 'all2', 'papers')}
+        <p class="note">Her salonun kâğıt zarfına yapıştırabilirsiniz.</p>
+        <div class="env-grid">${labels}</div>
+      </article>`;
   }
 
   /** Salon yoklama listesi: ad, sınıf, imza. */
@@ -635,6 +729,7 @@
       }).join('');
       return `<article class="sheet" data-room="${ri}">
         ${sheetHead('Sınav salonu · yoklama listesi', roomTitle(room, ci) + ' sınıfı', ri, 'room')}
+        ${roomCountsLine(room)}
         <div class="table-scroll"><table class="list">
           <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>İmza</th></tr></thead>
           <tbody>${rows}</tbody>
@@ -894,7 +989,7 @@
     const entry = state.archive.find((a) => a.id === archiveView);
     if (!entry) { box.innerHTML = ''; archiveView = null; return; }
     const when = [fmtDay(parseDay(entry.date), { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }), entry.time].filter(Boolean).join(' · ');
-    const body = withEntry(entry, () => (archiveTab === 'plan' ? renderPlans() : archiveTab === 'yoklama' ? renderRoll() : renderByClass()));
+    const body = withEntry(entry, () => (archiveTab === 'plan' ? renderPlans() : archiveTab === 'yoklama' ? renderRoll() : archiveTab === 'evrak' ? renderPapers() : renderByClass()));
     box.innerHTML = `
       <div class="arch-head no-print">
         <div><div class="sheet-sub">Kayıtlı sınav</div><div class="sheet-title">${esc(entry.exam)}</div><div class="hint">${esc(when)}</div></div>
@@ -904,7 +999,7 @@
         <button type="button" class="btn ghost" data-arch-close="1">Kapat</button>
       </div>
       <nav class="tabs no-print" role="tablist">
-        ${[['plan', 'Oturma planları'], ['yoklama', 'Salon yoklama listeleri'], ['sinif', 'Sınıflara göre sınav yerleri']].map(([v, l]) =>
+        ${[['plan', 'Oturma planları'], ['yoklama', 'Salon yoklama listeleri'], ['sinif', 'Sınıflara göre sınav yerleri'], ['evrak', 'Sınav kâğıdı dağıtımı']].map(([v, l]) =>
           `<button type="button" role="tab" data-arch-tab="${v}" aria-selected="${v === archiveTab}">${l}</button>`).join('')}
       </nav>
       <div class="arch-report">${body}</div>`;
@@ -1039,7 +1134,7 @@
         document.querySelectorAll('.print-target').forEach((x) => x.classList.remove('print-target'));
         document.body.classList.add('print-archive');
         window.print();
-      } else if (t.dataset.printRoom != null || t.dataset.printClass != null) printOne(t.closest('.sheet'));
+      } else if (t.dataset.printRoom != null || t.dataset.printClass != null || t.dataset.printPapers != null) printOne(t.closest('.sheet'));
     });
 
     // salon kapasitesi
@@ -1121,7 +1216,7 @@
     $('#report').addEventListener('click', (e) => {
       const seat = e.target.closest('.seat[data-room]');
       if (seat) { onSeatClick(+seat.dataset.room, +seat.dataset.seat); return; }
-      const pr = e.target.closest('[data-print-room],[data-print-class]');
+      const pr = e.target.closest('[data-print-room],[data-print-class],[data-print-papers]');
       if (pr) printOne(pr.closest('.sheet'));
     });
     document.addEventListener('keydown', (e) => {

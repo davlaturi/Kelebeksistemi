@@ -370,6 +370,28 @@ table.list td.sign { width: 28%; }
 .signs div { border-top: 1px solid var(--ink-soft); padding-top: 6px; color: var(--ink-soft); }
 
 .note { font-size: 0.82rem; color: var(--ink-soft); }
+/* Sınav kâğıdı dağıtımı */
+.counts-line { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 0.85rem; }
+.counts-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.counts-line .chip b { font-family: var(--f-body); font-weight: 600; }
+.counts-total { margin-left: auto; }
+.counts-total b { font-family: var(--f-mono); font-weight: 500; }
+.sub-h { font-size: 1rem; margin-top: 4px; }
+table.matrix td.num, table.matrix th.num { text-align: center; }
+table.matrix td.zero { color: var(--line); }
+table.matrix th.grp { text-align: center; border-bottom: 1px solid var(--line); }
+table.matrix tfoot th { border-top: 2px solid var(--ink); border-bottom: 0; color: var(--ink); font-size: 0.85rem; }
+table.matrix tbody tr:nth-child(even) { background: var(--paper); }
+.env-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.env { border: 1.5px dashed var(--ink-soft); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; break-inside: avoid; }
+.env-head { display: grid; gap: 2px; }
+.env-head b { font: 700 1.15rem/1.1 var(--f-display); }
+.env-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.env-table td { padding: 2px 0; }
+.env-table td.num { text-align: right; font-family: var(--f-mono); }
+.env-lv td { font-weight: 600; border-top: 1px solid var(--line); padding-top: 5px; }
+.env-cl td { color: var(--ink-soft); padding-left: 12px; font-size: 0.85rem; }
+.env-table tfoot td { border-top: 2px solid var(--ink); font-weight: 700; padding-top: 5px; }
 .search { display: grid; gap: 12px; }
 .search input { max-width: 420px; }
 
@@ -449,4 +471,6 @@ table.list td.sign { width: 28%; }
   table.list th, table.list td { padding: 3.5px 6px; border-bottom-color: #bbb; }
   tr { break-inside: avoid; }
   .search { display: none; }
+  .env-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .counts-line { font-size: 8.5pt; }
 }
