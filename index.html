@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kelebek Sınav Dağıtımı</title>
+  <meta name="description" content="Sınıf listelerini PDF olarak yükleyin; aynı sınıftan öğrencilerin yan yana oturmadığı kelebek sınav oturma planlarını oluşturun.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="masthead no-print">
+    <div class="wrap masthead-inner">
+      <svg class="logo" viewBox="0 0 64 48" aria-hidden="true">
+        <path d="M32 24 C22 4, 4 2, 4 14 C4 24, 16 26, 30 25 C16 28, 8 36, 14 43 C20 48, 30 38, 32 27 Z" />
+        <path d="M32 24 C42 4, 60 2, 60 14 C60 24, 48 26, 34 25 C48 28, 56 36, 50 43 C44 48, 34 38, 32 27 Z" />
+        <rect x="31" y="14" width="2" height="24" rx="1" />
+      </svg>
+      <div>
+        <h1>Kelebek Sınav Dağıtımı</h1>
+        <p class="lede">Sınıf listelerini yükleyin; her sınıf aynı zamanda sınav salonu olur ve mevcudu kadar öğrenci alır. Aynı sınıftan öğrenciler yan yana oturmaz.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- 1. Listeler -->
+    <section class="step no-print" aria-labelledby="h-lists">
+      <div class="step-head">
+        <span class="step-no">1</span>
+        <div>
+          <h2 id="h-lists">Sınıf listeleri</h2>
+          <p class="hint">e-Okul'dan aldığınız sınıf listesi PDF'lerini bırakın. Bir PDF'te birden fazla sınıf olabilir; sınıf adı başlıktan ya da dosya adından okunur.</p>
+        </div>
+      </div>
+
+      <label class="drop" id="drop" for="file-input">
+        <input type="file" id="file-input" accept="application/pdf,.pdf" multiple>
+        <span class="drop-title">PDF dosyalarını buraya sürükleyin</span>
+        <span class="drop-sub">ya da <u>bilgisayardan seçin</u> · birden fazla dosya seçebilirsiniz</span>
+      </label>
+      <div class="row-actions">
+        <button type="button" class="btn ghost" id="btn-manual">Elle sınıf ekle</button>
+        <button type="button" class="btn ghost" id="btn-sample">Örnek listelerle dene</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost danger" id="btn-clear" hidden>Tüm sınıfları sil</button>
+      </div>
+      <div id="import-log" class="import-log" aria-live="polite"></div>
+
+      <div id="class-summary" class="class-summary"></div>
+      <div id="class-list" class="class-grid"></div>
+    </section>
+
+    <!-- 2. Kurallar -->
+    <section class="step no-print" aria-labelledby="h-rules">
+      <div class="step-head">
+        <span class="step-no">2</span>
+        <div>
+          <h2 id="h-rules">Sınav bilgileri ve salon düzeni</h2>
+          <p class="hint">Bu bilgiler çıktıların başlığında yer alır.</p>
+        </div>
+      </div>
+      <form id="settings" class="settings" autocomplete="off">
+        <div class="field wide"><label for="s-school">Okul adı</label><input id="s-school" name="school" type="text" placeholder="Örn. Atatürk Anadolu Lisesi"></div>
+        <div class="field wide"><label for="s-exam">Sınav adı</label><input id="s-exam" name="exam" type="text" placeholder="Örn. 1. Dönem 1. Ortak Sınav"></div>
+        <div class="field"><label for="s-date">Tarih</label><input id="s-date" name="date" type="date"></div>
+        <div class="field"><label for="s-time">Saat</label><input id="s-time" name="time" type="time"></div>
+        <div class="field"><label for="s-cols">Yan yana sıra sayısı</label>
+          <select id="s-cols" name="deskCols">
+            <option value="2">2 sıra (1 koridor)</option>
+            <option value="3" selected>3 sıra (2 koridor)</option>
+            <option value="4">4 sıra (3 koridor)</option>
+          </select>
+        </div>
+        <div class="field"><label for="s-spd">Sıra tipi</label>
+          <select id="s-spd" name="seatsPerDesk">
+            <option value="2" selected>İkili sıra</option>
+            <option value="1">Tekli sıra</option>
+          </select>
+        </div>
+        <fieldset class="checks wide">
+          <legend>Kurallar</legend>
+          <label class="check"><input type="checkbox" checked disabled> Aynı sınıftan öğrenciler aynı sıraya oturmaz</label>
+          <label class="check"><input type="checkbox" checked disabled> Önlü-arkalı ve çapraz da aynı sınıftan öğrenci olmamasına çalışılır</label>
+          <label class="check"><input type="checkbox" id="s-own" name="avoidOwnRoom" checked> Öğrenci kendi sınıfında sınava girmez</label>
+          <label class="check"><input type="checkbox" id="s-level" name="avoidSameLevel" checked> Aynı seviyeden (ör. 9/A ile 9/B) öğrenciler de mümkünse yan yana oturmaz</label>
+        </fieldset>
+      </form>
+    </section>
+
+    <!-- 3. Dağıtım -->
+    <section class="step" aria-labelledby="h-result">
+      <div class="step-head no-print">
+        <span class="step-no">3</span>
+        <div>
+          <h2 id="h-result">Dağıtım</h2>
+          <p class="hint">Dağıtımdan sonra planda iki öğrenciye sırayla tıklayarak yerlerini değiştirebilirsiniz.</p>
+        </div>
+      </div>
+      <div class="row-actions no-print">
+        <button type="button" class="btn primary" id="btn-run">Kelebek dağıtımını yap</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="btn-print" hidden>Yazdır / PDF kaydet</button>
+        <button type="button" class="btn" id="btn-csv" hidden>Excel'e aktar (CSV)</button>
+      </div>
+      <div id="result-status" class="no-print"></div>
+      <nav class="tabs no-print" id="tabs" hidden role="tablist">
+        <button type="button" role="tab" data-view="plan" aria-selected="true">Oturma planları</button>
+        <button type="button" role="tab" data-view="yoklama" aria-selected="false">Salon yoklama listeleri</button>
+        <button type="button" role="tab" data-view="sinif" aria-selected="false">Sınıflara göre liste</button>
+        <button type="button" role="tab" data-view="ara" aria-selected="false">Öğrenci ara</button>
+      </nav>
+      <div id="report"></div>
+    </section>
+  </main>
+
+  <footer class="wrap foot no-print">
+    <p>Tüm işlemler bu bilgisayarda, tarayıcınızın içinde yapılır; öğrenci listeleri hiçbir sunucuya gönderilmez. Veriler bu tarayıcıda saklanır.</p>
+  </footer>
+
+  <!-- Sınıf düzenleme penceresi -->
+  <dialog id="editor" class="editor">
+    <form method="dialog" id="editor-form">
+      <header class="editor-head">
+        <h3 id="editor-title">Sınıfı düzenle</h3>
+        <button type="button" class="icon-btn" id="editor-x" aria-label="Kapat">×</button>
+      </header>
+      <div class="editor-body">
+        <div class="editor-fields">
+          <div class="field"><label for="e-name">Sınıf / salon adı</label><input id="e-name" type="text" required></div>
+          <div class="field"><label for="e-cols">Bu salonda yan yana sıra</label>
+            <select id="e-cols">
+              <option value="">Genel ayar</option>
+              <option value="2">2 sıra</option>
+              <option value="3">3 sıra</option>
+              <option value="4">4 sıra</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="edit-table">
+            <thead><tr><th>#</th><th>Öğrenci no</th><th>Adı soyadı</th><th></th></tr></thead>
+            <tbody id="e-rows"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn ghost small" id="e-add">+ Öğrenci ekle</button>
+        <details class="paste">
+          <summary>Listeyi metin olarak yapıştır</summary>
+          <p class="hint">Excel'den ya da başka bir yerden kopyaladığınız satırları yapıştırın. Her satır: <code>Numara Ad Soyad</code>.</p>
+          <textarea id="e-paste" rows="5" placeholder="1234 Ayşe Yılmaz&#10;1235 Mehmet Kaya"></textarea>
+          <button type="button" class="btn small" id="e-paste-add">Satırları ekle</button>
+        </details>
+      </div>
+      <footer class="editor-foot">
+        <button type="button" class="btn ghost danger" id="e-delete">Sınıfı sil</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost" id="e-cancel">Vazgeç</button>
+        <button type="submit" class="btn primary" id="e-save">Kaydet</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast no-print" role="status" aria-live="polite" hidden></div>
+
+  <script src="vendor/pdfjs/pdf.min.js"></script>
+  <script src="assets/parser.js"></script>
+  <script src="assets/assign.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

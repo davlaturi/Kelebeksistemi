@@ -1,0 +1,11 @@
+{
+  "name": "kelebek-sinav-dagitimi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sınıf listesi PDF'lerinden kelebek sınav oturma planı oluşturan tarayıcı uygulaması",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node tests/assign.test.js && node tests/parser.test.js"
+  },
+  "license": "MIT"
+}
