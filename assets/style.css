@@ -172,6 +172,8 @@ main.wrap { display: grid; gap: 22px; padding-block: 24px 8px; }
 @media (max-width: 560px) { .pick-row { grid-template-columns: 1fr; } }
 
 /* Salon kapasitesi */
+.cap-toggle { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: pointer; }
+.cap-toggle:has(input:checked) { border-color: var(--accent); }
 .cap-modes { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 .cap-modes .check { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: pointer; }
 .cap-modes .check:has(input:checked) { border-color: var(--accent); }
@@ -196,6 +198,29 @@ main.wrap { display: grid; gap: 22px; padding-block: 24px 8px; }
 .seat.vacant { background: transparent; border: 1px dashed var(--line); color: var(--ink-soft); }
 .seat.vacant .who { font-weight: 400; font-style: italic; }
 @media (max-width: 560px) { .cap-row { grid-template-columns: 1fr; } }
+
+/* Kayıtlı sınavlar */
+.masthead-text { flex: 1 1 auto; min-width: 0; }
+#btn-archive-top { flex: none; align-self: center; }
+.count { font: 500 0.85rem/1 var(--f-mono); color: var(--accent-ink); background: var(--accent); border-radius: 999px; padding: 3px 8px; vertical-align: middle; }
+.count:empty { display: none; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); justify-self: start; }
+.seg button { appearance: none; border: 0; background: transparent; color: var(--ink-soft); font: 500 0.9rem/1 var(--f-body); padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+#archive-list { display: grid; gap: 16px; }
+.arch-week { display: grid; gap: 8px; }
+.arch-items { display: grid; gap: 6px; }
+.arch-item { display: grid; grid-template-columns: 9em 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.arch-item.open { border-color: var(--accent); }
+.arch-when, .arch-what { display: grid; gap: 2px; min-width: 0; }
+.arch-when span, .arch-what span { font-size: 0.85rem; color: var(--ink-soft); }
+.arch-what b { overflow-wrap: anywhere; }
+.arch-act { display: flex; gap: 6px; }
+#archive-view { display: grid; gap: 14px; min-width: 0; }
+#archive-view:empty { display: none; }
+.arch-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 10px; border-top: 2px solid var(--ink); }
+.arch-report { display: grid; gap: 22px; min-width: 0; }
+@media (max-width: 600px) { .arch-item { grid-template-columns: 1fr; } }
 
 /* Ayarlar */
 .settings { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 16px; }
@@ -352,6 +377,9 @@ table.list td.sign { width: 28%; }
   .sheet { border: 0; border-radius: 0; padding: 0; break-after: page; page-break-after: always; gap: 8px; }
   .sheet:last-child { break-after: auto; page-break-after: auto; }
   body.print-one .sheet:not(.print-target) { display: none; }
+  body.print-archive #report { display: none !important; }
+  body:not(.print-archive) #arsiv { display: none !important; }
+  .arch-report { display: block; }
   .plan-scroll { overflow: visible; }
   .desks { min-width: 0; gap: 9px 18px; }
   .seat { min-height: 19mm; padding: 4px 5px; cursor: default; }

@@ -59,13 +59,29 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 
 ## Salon kapasitesi
 
-3. Dağıtım adımında iki seçenekten birini seçersiniz:
+Varsayılan kural geçerlidir: her şube salonuna, o şubenin mevcudu kadar öğrenci oturur.
 
-- **Sınıf mevcuduna göre** (varsayılan): Her şube salonuna, o şubenin mevcudu kadar öğrenci oturur. 30 kişilik 9/A'ya 30 öğrenci oturur.
-- **Benim belirlediğim mevcuda göre:** Her salona kaç öğrenci oturacağını siz yazarsınız. "Tüm salonlara" kutusuyla hepsine aynı sayıyı da verebilirsiniz.
-  - 0 yazdığınız sınıf salon olarak kullanılmaz; o şubenin öğrencileri yine de başka salonlara dağıtılır.
-  - Koltuk sayısı öğrenci sayısından fazlaysa salonlar orantılı doldurulur. Boş kalan koltuklar aynı düzeydeki öğrencileri ayırmak için kullanılır ve planda "Boş" olarak görünür.
-  - Koltuk sayısı yetmezse uygulama dağıtımı başlatmaz ve kaç öğrenci için yer eksik olduğunu söyler.
+İsterseniz 3. Dağıtım adımında **Salon mevcudunu ben belirleyeceğim** seçeneğini işaretleyin. Bu seçenek işaretlenmezse varsayılan kural kullanılır. İşaretlerseniz:
+
+- Her salonun yanına kaç öğrenci oturacağını yazarsınız. "Tüm salonlara" kutusuyla hepsine aynı sayıyı verebilirsiniz.
+- 0 yazdığınız sınıf salon olarak kullanılmaz; o şubenin öğrencileri yine başka salonlara dağıtılır.
+- Koltuk sayısı öğrenci sayısından fazlaysa salonlar orantılı dolar. Boş koltuklar aynı düzeydeki öğrencileri ayırmak için kullanılır ve planda "Boş" görünür.
+- Koltuk yetmezse uygulama dağıtımı başlatmaz ve kaç öğrenci için yer eksik olduğunu söyler.
+
+## Kayıtlı sınavlar (haftalık / iki haftalık program)
+
+Her sınavın dağıtımını kaydedip daha sonra istediğiniz an açabilirsiniz.
+
+1. 2. adımda sınav adını, tarihini ve saatini yazın.
+2. Dağıtımı yapın ve **Bu dağıtımı kaydet** düğmesine basın.
+3. Sıradaki sınav için bilgileri değiştirip aynı adımları tekrarlayın.
+
+Kaydedilen sınavlar **4. Kayıtlı sınavlar** bölümünde haftalara göre sıralanır. Sayfanın üstündeki **Kayıtlı sınavlar** düğmesiyle de bu bölüme gidebilirsiniz.
+
+- **Süzme:** Yaklaşan, Önümüzdeki 2 hafta, Geçmiş ya da Tümü.
+- **Aç:** Sınavın oturma planlarını, yoklama listelerini ve sınıflara göre sınav yerlerini gösterir. Buradan yazdırabilir ya da Excel'e aktarabilirsiniz.
+- **Kayıtlar bağımsızdır:** Her kayıt, kaydedildiği andaki öğrenci listesini saklar. Sonradan listeleri değiştirmeniz eski kayıtları bozmaz.
+- **Güncelleme:** Aynı ad, tarih ve saatle tekrar kaydederseniz önceki kaydın yerine geçer.
 
 ## Kayıt ve yedek
 
@@ -75,7 +91,7 @@ Yüklediğiniz şubeler, ayarlar ve son dağıtım **otomatik olarak bu tarayıc
 - tarayıcı geçmişi ya da site verileri temizlenirse,
 - başka bir bilgisayar ya da başka bir tarayıcı kullanılırsa.
 
-Bu yüzden **Yedek al** düğmesiyle verileri bir `.json` dosyası olarak saklayın. Gerektiğinde **Yedekten yükle** ile geri getirebilirsiniz. Yedek dosyası öğrenci isimlerini içerir; güvenli bir yerde saklayın.
+Bu yüzden **Yedek al** düğmesiyle verileri (kayıtlı sınavlar dahil) bir `.json` dosyası olarak saklayın. Gerektiğinde **Yedekten yükle** ile geri getirebilirsiniz. Yedek dosyası öğrenci isimlerini içerir; güvenli bir yerde saklayın.
 
 ## PDF hakkında
 

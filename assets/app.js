@@ -16,7 +16,7 @@
     school: '', exam: '', date: '', time: '',
     deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class',
   };
-  let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false };
+  let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false, archive: [] };
   let view = 'plan';
   let selectedSeat = null; // {roomIdx, seatIdx}
 
@@ -30,6 +30,7 @@
         settings: { ...DEFAULT_SETTINGS, ...(s.settings || {}) },
         result: s.result || null,
         stale: !!s.stale,
+        archive: Array.isArray(s.archive) ? s.archive : [],
       };
       if ((s.rulesVersion || 1) < RULES_VERSION) {
         // Eski kurallarla yapılmış dağıtımı ve varsayılanı güncelle
@@ -40,7 +41,13 @@
     } catch (e) { /* bozuk kayıt: yoksay */ }
   }
   function save() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify({ ...state, rulesVersion: RULES_VERSION })); } catch (e) { /* depolama kapalı */ }
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ ...state, rulesVersion: RULES_VERSION }));
+      return true;
+    } catch (e) {
+      if (typeof toast === 'function') toast('Kayıt yapılamadı: tarayıcı depolama alanı dolu olabilir. Eski kayıtlı sınavları silin ya da yedek alın.');
+      return false;
+    }
   }
 
   // ---------- yardımcılar ----------
@@ -188,11 +195,12 @@
         settings: { ...DEFAULT_SETTINGS, ...(data.settings || {}) },
         result: (data.rulesVersion || 1) >= RULES_VERSION ? data.result || null : null,
         stale: !!data.stale,
+        archive: Array.isArray(data.archive) ? data.archive : [],
       };
       selectedSeat = null;
       save();
       renderAll();
-      toast(state.classes.length + ' şube yedekten yüklendi.');
+      toast(state.classes.length + ' şube ve ' + state.archive.length + ' kayıtlı sınav yedekten yüklendi.');
     } catch (e) {
       toast('Yedek yüklenemedi: ' + e.message);
     }
@@ -304,11 +312,10 @@
     if (!inc.length) { box.innerHTML = ''; return; }
     const custom = isCustomCap();
     let html = `
-      <div class="pick-head"><strong>Salon kapasitesi</strong></div>
-      <div class="cap-modes" role="radiogroup">
-        <label class="check"><input type="radio" name="capMode" value="class" ${custom ? '' : 'checked'}> <span><b>Sınıf mevcuduna göre</b><br><span class="hint">Her şube salonuna, o şubenin mevcudu kadar öğrenci oturur.</span></span></label>
-        <label class="check"><input type="radio" name="capMode" value="custom" ${custom ? 'checked' : ''}> <span><b>Benim belirlediğim mevcuda göre</b><br><span class="hint">Her salona kaç öğrenci oturacağını siz yazarsınız. 0 yazarsanız o sınıf salon olarak kullanılmaz.</span></span></label>
-      </div>`;
+      <div class="pick-head"><strong>Salon kapasitesi</strong>
+        <span class="hint">${custom ? 'Salonlara sizin yazdığınız sayıda öğrenci oturacak.' : 'Şu an: her salona sınıf mevcudu kadar öğrenci oturur (varsayılan kural).'}</span></div>
+      <label class="check cap-toggle"><input type="checkbox" id="cap-custom" ${custom ? 'checked' : ''}>
+        <span><b>Salon mevcudunu ben belirleyeceğim</b><br><span class="hint">İşaretlemezseniz önceki kural geçerlidir: her şube salonuna o şubenin mevcudu kadar öğrenci oturur. İşaretlerseniz her salona kaç öğrenci oturacağını siz yazarsınız; 0 yazdığınız sınıf salon olarak kullanılmaz.</span></span></label>`;
     if (custom) {
       html += `
       <div class="cap-all">
@@ -471,6 +478,7 @@
     const has = !!r && resultValid();
     $('#btn-print').hidden = !has;
     $('#btn-csv').hidden = !has;
+    $('#btn-save').hidden = !has;
     $('#tabs').hidden = !has;
     $('#btn-run').textContent = has ? 'Yeniden karıştır ve dağıt' : 'Kelebek dağıtımını yap';
     const status = $('#result-status');
@@ -728,23 +736,163 @@
   }
 
   function printAll() {
-    document.body.classList.remove('print-one');
+    document.body.classList.remove('print-one', 'print-archive');
     document.querySelectorAll('.print-target').forEach((e) => e.classList.remove('print-target'));
     window.print();
   }
   function printOne(sheet) {
     document.querySelectorAll('.print-target').forEach((e) => e.classList.remove('print-target'));
     sheet.classList.add('print-target');
+    document.body.classList.remove('print-archive');
+    if (sheet.closest('#archive-view')) document.body.classList.add('print-archive');
     document.body.classList.add('print-one');
     window.print();
   }
-  window.addEventListener('afterprint', () => document.body.classList.remove('print-one'));
+  window.addEventListener('afterprint', () => document.body.classList.remove('print-one', 'print-archive'));
+
+  // ---------- kayıtlı sınavlar ----------
+  let archiveView = null;      // açık kaydın id'si
+  let archiveTab = 'plan';
+  let archiveFilter = 'upcoming';
+
+  /** Kayıtlı bir sınavın verileriyle rapor fonksiyonlarını çalıştırır. */
+  function withEntry(entry, fn) {
+    const keep = { classes: state.classes, result: state.result, settings: state.settings, stale: state.stale };
+    state.classes = entry.classes;
+    state.result = entry.result;
+    state.settings = { ...DEFAULT_SETTINGS, ...entry.settings };
+    state.stale = false;
+    const keepSel = selectedSeat; selectedSeat = null;
+    try { return fn(); } finally { Object.assign(state, keep); selectedSeat = keepSel; }
+  }
+
+  function saveToArchive() {
+    if (!state.result || !resultValid()) { toast('Önce dağıtımı yapın.'); return; }
+    const st = state.settings;
+    if (!st.exam || !st.date) {
+      toast('Kaydetmeden önce 2. adımda sınav adını ve tarihini yazın.');
+      (st.exam ? $('#s-date') : $('#s-exam')).focus();
+      return;
+    }
+    const used = new Set();
+    for (const r of state.result.rooms) { used.add(r.roomId); for (const x of r.seats) if (x.classId) used.add(x.classId); }
+    const classes = state.classes.filter((c) => used.has(c.id)).map((c) => ({
+      id: c.id, name: c.name, selected: true, deskCols: c.deskCols || null,
+      students: c.students.map((x) => ({ id: x.id, name: x.name })),
+    }));
+    const entry = {
+      id: uid('a'),
+      exam: st.exam, date: st.date, time: st.time || '', school: st.school || '',
+      settings: { school: st.school, exam: st.exam, date: st.date, time: st.time, deskCols: st.deskCols, seatsPerDesk: st.seatsPerDesk, avoidOwnRoom: st.avoidOwnRoom },
+      classes,
+      result: JSON.parse(JSON.stringify(state.result)),
+      savedAt: new Date().toISOString(),
+    };
+    const same = state.archive.findIndex((a) => a.exam === entry.exam && a.date === entry.date && a.time === entry.time);
+    const before = state.archive.slice();
+    if (same >= 0) { entry.id = state.archive[same].id; state.archive[same] = entry; } else state.archive.push(entry);
+    if (!save()) { state.archive = before; return; }
+    renderArchive();
+    toast(same >= 0 ? '“' + entry.exam + '” kaydı güncellendi.' : '“' + entry.exam + '” kaydedildi. “Kayıtlı sınavlar” bölümünden istediğiniz an açabilirsiniz.');
+  }
+
+  const dayStart = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+  const parseDay = (s) => (s ? new Date(s + 'T00:00') : null);
+  function weekStart(d) { const x = dayStart(d); const wd = (x.getDay() + 6) % 7; x.setDate(x.getDate() - wd); return x; }
+  const fmtDay = (d, opt) => d.toLocaleDateString('tr-TR', opt || { day: 'numeric', month: 'long', weekday: 'long' });
+
+  function renderArchive() {
+    const box = $('#archive-list');
+    $('#archive-count').textContent = state.archive.length ? String(state.archive.length) : '';
+    $('#btn-archive-top').hidden = state.archive.length === 0;
+    document.querySelectorAll('#archive-filter button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === archiveFilter)));
+    if (!state.archive.length) {
+      box.innerHTML = '<div class="empty">Henüz kayıtlı sınav yok. Dağıtımı yaptıktan sonra “Bu dağıtımı kaydet” düğmesine basın. Haftalık ya da iki haftalık sınav programınızın tüm dağıtımları burada birikir.</div>';
+      $('#archive-view').innerHTML = '';
+      return;
+    }
+    const today = dayStart(new Date());
+    const in14 = new Date(today); in14.setDate(in14.getDate() + 14);
+    const list = state.archive.slice()
+      .filter((a) => {
+        const d = parseDay(a.date);
+        if (archiveFilter === 'upcoming') return d && d >= today;
+        if (archiveFilter === 'twoweeks') return d && d >= today && d < in14;
+        if (archiveFilter === 'past') return d && d < today;
+        return true;
+      })
+      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time) * (archiveFilter === 'past' ? -1 : 1));
+    if (!list.length) {
+      box.innerHTML = '<div class="empty">Bu görünümde sınav yok. “Tümü”nü seçerek bütün kayıtları görebilirsiniz.</div>';
+    } else {
+      const weeks = new Map();
+      for (const a of list) {
+        const d = parseDay(a.date);
+        const ws = weekStart(d).toISOString().slice(0, 10);
+        if (!weeks.has(ws)) weeks.set(ws, []);
+        weeks.get(ws).push(a);
+      }
+      box.innerHTML = [...weeks.entries()].map(([ws, items]) => {
+        const s0 = parseDay(ws), s1 = new Date(s0); s1.setDate(s1.getDate() + 6);
+        const label = fmtDay(s0, { day: 'numeric', month: 'long' }) + ' – ' + fmtDay(s1, { day: 'numeric', month: 'long', year: 'numeric' }) + ' haftası';
+        return `<div class="arch-week"><h3 class="level-title">${esc(label)} <span>${items.length} sınav</span></h3>
+          <div class="arch-items">${items.map((a) => {
+            const n = a.result.rooms.reduce((t, r) => t + r.seats.filter((x) => !x.empty).length, 0);
+            const isOpen = archiveView === a.id;
+            return `<div class="arch-item${isOpen ? ' open' : ''}">
+              <div class="arch-when"><b>${esc(fmtDay(parseDay(a.date), { day: 'numeric', month: 'short' }))}</b><span>${esc(fmtDay(parseDay(a.date), { weekday: 'long' }))}${a.time ? ' · ' + esc(a.time) : ''}</span></div>
+              <div class="arch-what"><b>${esc(a.exam)}</b><span>${n} öğrenci · ${a.result.rooms.length} salon</span></div>
+              <div class="arch-act">
+                <button type="button" class="btn small${isOpen ? ' primary' : ''}" data-arch-open="${esc(a.id)}">${isOpen ? 'Açık' : 'Aç'}</button>
+                <button type="button" class="btn ghost small danger" data-arch-del="${esc(a.id)}">Sil</button>
+              </div>
+            </div>`;
+          }).join('')}</div></div>`;
+      }).join('');
+    }
+    renderArchiveView();
+  }
+
+  function renderArchiveView() {
+    const box = $('#archive-view');
+    const entry = state.archive.find((a) => a.id === archiveView);
+    if (!entry) { box.innerHTML = ''; archiveView = null; return; }
+    const when = [fmtDay(parseDay(entry.date), { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }), entry.time].filter(Boolean).join(' · ');
+    const body = withEntry(entry, () => (archiveTab === 'plan' ? renderPlans() : archiveTab === 'yoklama' ? renderRoll() : renderByClass()));
+    box.innerHTML = `
+      <div class="arch-head no-print">
+        <div><div class="sheet-sub">Kayıtlı sınav</div><div class="sheet-title">${esc(entry.exam)}</div><div class="hint">${esc(when)}</div></div>
+        <span class="spacer"></span>
+        <button type="button" class="btn" data-arch-print="1">Yazdır / PDF kaydet</button>
+        <button type="button" class="btn" data-arch-csv="1">Excel'e aktar (CSV)</button>
+        <button type="button" class="btn ghost" data-arch-close="1">Kapat</button>
+      </div>
+      <nav class="tabs no-print" role="tablist">
+        ${[['plan', 'Oturma planları'], ['yoklama', 'Salon yoklama listeleri'], ['sinif', 'Sınıflara göre sınav yerleri']].map(([v, l]) =>
+          `<button type="button" role="tab" data-arch-tab="${v}" aria-selected="${v === archiveTab}">${l}</button>`).join('')}
+      </nav>
+      <div class="arch-report">${body}</div>`;
+  }
+
+  function deleteArchive(btn) {
+    if (btn.dataset.confirm !== '1') {
+      btn.dataset.confirm = '1'; btn.textContent = 'Emin misiniz?';
+      setTimeout(() => { if (btn.isConnected) { btn.dataset.confirm = ''; btn.textContent = 'Sil'; } }, 3000);
+      return;
+    }
+    state.archive = state.archive.filter((a) => a.id !== btn.dataset.archDel);
+    if (archiveView === btn.dataset.archDel) archiveView = null;
+    save();
+    renderArchive();
+    toast('Kayıt silindi.');
+  }
 
   // ---------- olaylar ----------
   function renderAll() {
     renderClasses();
     renderSettings();
     renderResult();
+    renderArchive();
   }
 
   function bind() {
@@ -817,11 +965,47 @@
     form.addEventListener('change', readSettings);
     form.addEventListener('submit', (e) => e.preventDefault());
 
+    // kayıtlı sınavlar
+    $('#btn-save').addEventListener('click', saveToArchive);
+    $('#btn-archive-top').addEventListener('click', () => $('#arsiv').scrollIntoView({ behavior: 'smooth' }));
+    $('#archive-filter').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-f]');
+      if (!b) return;
+      archiveFilter = b.dataset.f;
+      renderArchive();
+    });
+    $('#archive-list').addEventListener('click', (e) => {
+      const o = e.target.closest('[data-arch-open]');
+      if (o) {
+        archiveView = o.dataset.archOpen; archiveTab = 'plan';
+        renderArchive();
+        $('#archive-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      const d = e.target.closest('[data-arch-del]');
+      if (d) deleteArchive(d);
+    });
+    $('#archive-view').addEventListener('click', (e) => {
+      const entry = state.archive.find((a) => a.id === archiveView);
+      if (!entry) return;
+      const t = e.target.closest('button');
+      if (!t) return;
+      if (t.dataset.archTab) { archiveTab = t.dataset.archTab; renderArchiveView(); }
+      else if (t.dataset.archClose) { archiveView = null; renderArchive(); }
+      else if (t.dataset.archCsv) withEntry(entry, exportCsv);
+      else if (t.dataset.archPrint) {
+        document.body.classList.remove('print-one');
+        document.querySelectorAll('.print-target').forEach((x) => x.classList.remove('print-target'));
+        document.body.classList.add('print-archive');
+        window.print();
+      } else if (t.dataset.printRoom != null || t.dataset.printClass != null) printOne(t.closest('.sheet'));
+    });
+
     // salon kapasitesi
     const capBox = $('#capacity');
     capBox.addEventListener('change', (e) => {
-      if (e.target.name === 'capMode') {
-        state.settings.capacityMode = e.target.value;
+      if (e.target.id === 'cap-custom') {
+        state.settings.capacityMode = e.target.checked ? 'custom' : 'class';
         markStale(); save(); renderCapacity(); renderResult();
       }
     });

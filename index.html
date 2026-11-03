@@ -18,10 +18,11 @@
         <path d="M32 24 C42 4, 60 2, 60 14 C60 24, 48 26, 34 25 C48 28, 56 36, 50 43 C44 48, 34 38, 32 27 Z" />
         <rect x="31" y="14" width="2" height="24" rx="1" />
       </svg>
-      <div>
+      <div class="masthead-text">
         <h1>Kelebek Sınav Dağıtımı</h1>
         <p class="lede">Sınıf listelerini yükleyin; her sınıf aynı zamanda sınav salonu olur ve mevcudu kadar öğrenci alır. Aynı sınıf düzeyindeki (9'lar, 10'lar…) öğrenciler yan yana oturmaz.</p>
       </div>
+      <button type="button" class="btn" id="btn-archive-top" hidden>Kayıtlı sınavlar</button>
     </div>
   </header>
 
@@ -106,6 +107,7 @@
       <div class="row-actions no-print">
         <button type="button" class="btn primary" id="btn-run">Kelebek dağıtımını yap</button>
         <span class="spacer"></span>
+        <button type="button" class="btn" id="btn-save" hidden>Bu dağıtımı kaydet</button>
         <button type="button" class="btn" id="btn-print" hidden>Yazdır / PDF kaydet</button>
         <button type="button" class="btn" id="btn-csv" hidden>Excel'e aktar (CSV)</button>
       </div>
@@ -117,6 +119,26 @@
         <button type="button" role="tab" data-view="ara" aria-selected="false">Öğrenci ara</button>
       </nav>
       <div id="report"></div>
+    </section>
+  </main>
+
+  <main class="wrap" style="padding-top:0">
+    <section class="step" id="arsiv" aria-labelledby="h-archive">
+      <div class="step-head no-print">
+        <span class="step-no">4</span>
+        <div>
+          <h2 id="h-archive">Kayıtlı sınavlar <span class="count" id="archive-count"></span></h2>
+          <p class="hint">Kaydettiğiniz dağıtımlar burada haftalara göre durur. Haftalık ya da iki haftalık sınav programının her sınavını istediğiniz an açıp yazdırabilirsiniz.</p>
+        </div>
+      </div>
+      <div class="seg no-print" id="archive-filter" role="group" aria-label="Kayıtları süz">
+        <button type="button" data-f="upcoming" aria-pressed="true">Yaklaşan</button>
+        <button type="button" data-f="twoweeks" aria-pressed="false">Önümüzdeki 2 hafta</button>
+        <button type="button" data-f="past" aria-pressed="false">Geçmiş</button>
+        <button type="button" data-f="all" aria-pressed="false">Tümü</button>
+      </div>
+      <div id="archive-list" class="no-print"></div>
+      <div id="archive-view"></div>
     </section>
   </main>
 

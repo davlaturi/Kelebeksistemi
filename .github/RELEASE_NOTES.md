@@ -6,14 +6,19 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.3.0)
+## Bu sürümde (v1.4.0)
+
+- **Kayıtlı sınavlar.** Her sınavın dağıtımını adı, tarihi ve saatiyle kaydedebilirsiniz. Haftalık ya da iki haftalık programın tüm sınavları haftalara göre listelenir. Her sınav istediğiniz an açılabilir, yazdırılabilir ve Excel'e aktarılabilir. Kayıtlar yedek dosyasına da girer.
+- **Kapasite artık bir seçenek.** "Salon mevcudunu ben belirleyeceğim" işaretlenmezse önceki kural geçerlidir: her salona sınıf mevcudu kadar öğrenci oturur.
+
+## Önceki sürümde (v1.3.0)
 
 - **Salon kapasitesi seçimi.** Dağıtımı iki şekilde yapabilirsiniz:
   - sınıf mevcuduna göre,
   - sizin belirlediğiniz mevcuda göre: her salona istediğiniz sayıyı yazın, 0 yazdığınız sınıf salon olmaz.
 - **Boş koltuklar.** Koltuk sayısı fazla olursa boş koltuklar aynı düzeydeki öğrencileri ayırmak için kullanılıyor. Planda bir öğrenciyi boş koltuğa da taşıyabilirsiniz.
 
-## Önceki sürümde (v1.2.0)
+## Daha önce (v1.2.0)
 
 - **Sınıflara göre sınav yerleri listesi.** Her şube için ayrı bir sayfa hazırlanıyor. Her öğrencinin salonu, dizisi, sırası ve sırada sol mu sağ mı oturacağı yazıyor. Sayfalar yazdırılabiliyor ve Excel'e aktarılabiliyor.
 - **Yedek al / Yedekten yükle.** Veriler zaten tarayıcıya otomatik kaydediliyor. Artık bir dosyaya yedeklenip başka bir bilgisayara da taşınabiliyor.
