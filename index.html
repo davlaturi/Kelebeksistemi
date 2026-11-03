@@ -107,6 +107,9 @@
             <option value="doorR">Pencere tarafı – Orta – Kapı tarafı (kapı sağda)</option>
           </select>
         </div>
+        <div class="field wide"><label>Yazdırma</label>
+          <label class="check"><input type="checkbox" id="s-duplex" name="duplex" checked> Çift taraflı yazdırıyorum: her salonun ve şubenin evrakı ayrı kâğıttan başlasın (gereken yerlere boş sayfa eklenir)</label>
+        </div>
         <fieldset class="checks wide">
           <legend>Kurallar</legend>
           <label class="check"><input type="checkbox" checked disabled> Aynı sınıf düzeyinden (ör. 9/A ile 9/B) öğrenciler aynı sıraya oturmaz</label>
@@ -218,6 +221,8 @@
       <div class="editor-body">
         <p class="hint">Seçtiğiniz evraklar bu sırayla, her biri yeni sayfadan başlayarak tek seferde yazdırılır. Yazıcı penceresinde “PDF olarak kaydet”i seçerek tek bir PDF dosyası da alabilirsiniz.</p>
         <div id="pack-list" class="pack-list"></div>
+        <label class="check pack-item pack-duplex"><input type="checkbox" id="pack-duplex" checked>
+          <span><b>Çift taraflı yazdırıyorum</b><br><span class="hint">Her salonun ve şubenin evrakı yeni bir kâğıdın ön yüzünden başlar. Tek sayfalık evrakın arkasına boş sayfa eklenir. Yazıcı penceresinde “Çift taraflı” seçeneğini açmayı unutmayın.</span></span></label>
       </div>
       <footer class="editor-foot">
         <span class="hint" id="pack-total"></span>

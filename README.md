@@ -55,6 +55,7 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
   - **Salona göre (zarf):** Her kart bir salonun zarfıdır. Örneğin "9/A salonu: 9/A 6, 9/B 5, 10/A 5… Toplam 30". Bir şubenin kâğıtlarını zarfa koyunca satırı işaretleyin. Bütün satırlar işaretlenince kart yeşile döner ve "Zarf hazır" yazar. Gözetmen zarfını alıp gider.
   - **Şubeye göre (deste):** Elinizdeki bir şubenin kâğıt destesinin hangi salona kaçar kaçar ayrılacağını gösterir.
   - İşaretler dağıtımla birlikte saklanır, sayfayı kapatsanız da kaybolmaz.
+  - **Düzey özeti:** Kartların üstünde her düzeyden toplam kaç öğrenci (kâğıt) olduğu yazar, yanında şube şube sayılar ve genel toplam vardır. Örnek: "9. sınıf 192: 9/A 28, 9/B 35…". Şubeye göre görünümde kartlar düzeylere göre gruplanır, her grubun başlığında düzey toplamı yazar. Salona göre görünümde her salon kartının altında o salondaki düzey toplamları vardır.
   - **Öğretmenler odası için yazdır:** Ekrandaki kartların aynısını, öğretmenler odasına asılacak şekilde basar. Her kartta salon adı, şubeler ve kâğıt sayıları yazar; yanlarında kalemle işaretlenecek kutular vardır. Bir sayfaya 8 karta kadar sığar. "Şubeye göre" görünümündeyseniz o görünümün kartları basılır.
 
   Kartların altında ayrıca şunlar var:
@@ -99,6 +100,17 @@ Dağıtımdan sonra **Sınav evrakını yazdır** düğmesine basın. Açılan p
 İstemediklerinizin işaretini kaldırıp **Yazdır**'a basın. Seçtikleriniz bu sırayla, her biri yeni sayfadan başlayarak tek seferde basılır. Yazıcı penceresinde "PDF olarak kaydet"i seçerseniz tüm evrak tek bir PDF dosyası olur. Uygulama seçiminizi hatırlar. Aynı düğme **Kayıtlı sınavlar**'da açtığınız her sınavda da vardır.
 
 Tek bir bölümü yazdırmak için **Bu bölümü yazdır**, tek bir sayfa için de o sayfanın **Yazdır** düğmesini kullanın.
+
+## Çift taraflı yazdırma
+
+2. Sınav bilgileri adımındaki **Çift taraflı yazdırıyorum** seçeneği varsayılan olarak açıktır. Aynı seçenek sınav evrakı penceresinde de vardır. Açıkken şöyle çalışır:
+
+- **Ayrı kâğıt:** Her salonun ve her şubenin evrakı yeni bir kâğıdın ön yüzünden başlar. İki farklı salonun planı aynı kâğıdın iki yüzüne basılmaz.
+- **Boş sayfa:** Tek sayfalık evrakın arkasına "çift taraflı yazdırma için boş bırakılmıştır" yazan bir sayfa eklenir. Birden çok sayfalık evrakın sayfaları ise aynı kâğıdın ön ve arka yüzüne sırayla basılır.
+- **Ölçüm:** Basmadan önce her sayfa ölçülür. Sayfa sınırına çok yakın olanlar biraz küçültülür, böylece bir salonun planı iki kâğıda bölünmez.
+- **Yazıcı ayarı:** Yazıcı penceresinde "Çift taraflı" (iki tarafa yazdır) ayarını da açmayı unutmayın.
+
+Tek bir sayfayı **Yazdır** düğmesiyle bastığınızda boş sayfa eklenmez.
 
 ## Kayıtlı sınavlar (haftalık / iki haftalık program)
 

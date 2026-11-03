@@ -6,11 +6,16 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.13.0)
+## Bu sürümde (v1.14.0)
+
+- **Çift taraflı yazdırma.** Her salonun ve şubenin evrakı ayrı bir kâğıttan başlıyor. Gereken yerlere boş sayfa ekleniyor; iki farklı salonun planı artık aynı kâğıdın iki yüzüne düşmüyor. Sayfalar basmadan önce ölçülüyor ve sınıra yakın olanlar küçültülüyor. Bu ayar 2. adımda ve sınav evrakı penceresinde açılıp kapatılabiliyor.
+- **Düzey toplamları.** Kâğıt hazırlama kartlarında ve öğretmenler odası çıktısında her düzeyin toplam öğrenci/kâğıt sayısı, şube şube sayılar ve genel toplam yazıyor. Şube kartları düzeylere göre gruplanıyor.
+
+## Önceki sürümde (v1.13.0)
 
 - **Sıra numarası.** Oturma planında her koltuğun sağ alt köşesinde öğrencinin sıra numarası iri yazıyla yazıyor. Aynı numara "Sınıflara göre sınav yerleri" listesinde, öğrenci aramada ve Excel çıktısında da "Sıra no" olarak yer alıyor.
 
-## Önceki sürümde (v1.12.0)
+## Daha önce (v1.12.0)
 
 - **Kartlı öğretmenler odası listesi.** Liste artık ekrandaki kâğıt hazırlama kartlarının aynısı olarak basılıyor; yatay tablo kaldırıldı. Her kartta salon adı, şubeler ve iri sayılar var; yanlarında kalemle işaretlenecek kutular bulunuyor. Bir sayfaya 8 karta kadar sığıyor.
 

@@ -14,7 +14,7 @@
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '',
-    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'lr',
+    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'lr', duplex: true,
   };
   let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false, archive: [] };
   let view = 'plan';
@@ -449,6 +449,7 @@
     $('#s-cols').value = String(s.deskCols);
     $('#s-spd').value = String(s.seatsPerDesk);
     $('#s-sides').value = s.sideNames || 'lr';
+    $('#s-duplex').checked = s.duplex !== false;
     $('#s-own').checked = !!s.avoidOwnRoom;
   }
   function readSettings(ev) {
@@ -461,6 +462,7 @@
     s.deskCols = parseInt($('#s-cols').value, 10) || 3;
     s.seatsPerDesk = parseInt($('#s-spd').value, 10) === 1 ? 1 : 2;
     s.sideNames = $('#s-sides').value || 'lr';
+    s.duplex = $('#s-duplex').checked;
     s.avoidOwnRoom = $('#s-own').checked;
     if (JSON.stringify([s.deskCols, s.seatsPerDesk, s.avoidOwnRoom]) !== before) markStale();
     save();
@@ -799,6 +801,7 @@
         ? 'Her kart bir salonun zarfıdır. Şubenin kâğıtlarını koyduktan sonra satırı işaretleyin; tüm satırlar işaretlenince kart “Zarf hazır” olur.'
         : 'Her kart bir şubenin kâğıt destesidir. Desteyi salonlara ayırırken satırları işaretleyin.'}
         ${all ? ' <button type="button" class="btn ghost small" data-pclear="1">İşaretleri temizle</button>' : ''}</p>
+      ${levelSummaryHtml()}
       <div class="qgrid">${cards}</div>
     </article>`;
   }
@@ -884,6 +887,7 @@
     $('#pack-list').innerHTML = PACK_PARTS.map((p) => `
       <label class="check pack-item"><input type="checkbox" data-pack="${p.key}" ${ch[p.key] ? 'checked' : ''}>
         <span><b>${p.label}</b> <span class="pill">${counts[p.key]} sayfa</span><br><span class="hint">${p.hint}</span></span></label>`).join('');
+    $('#pack-duplex').checked = state.settings.duplex !== false;
     updatePackTotal(counts);
     const dlg = $('#pack-dlg');
     dlg._counts = counts;
@@ -897,7 +901,8 @@
   function updatePackTotal(counts) {
     const c = currentPackChoice();
     const n = PACK_PARTS.reduce((a, p) => a + (c[p.key] ? counts[p.key] : 0), 0);
-    $('#pack-total').textContent = n ? `Yaklaşık ${n} sayfa yazdırılacak.` : 'En az bir evrak seçin.';
+    const dup = $('#pack-duplex').checked;
+    $('#pack-total').textContent = n ? (dup ? `Yaklaşık ${n} sayfa; çift taraflı basılınca her salon/şube ayrı kâğıtta olur.` : `Yaklaşık ${n} sayfa yazdırılacak.`) : 'En az bir evrak seçin.';
     $('#pack-go').disabled = n === 0;
   }
   function closePack() {
@@ -905,9 +910,125 @@
     if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open');
   }
   /** Hazır HTML'i tek başına yazdırır (evrak kabını kullanır). */
-  function printHtml(html) {
-    $('#print-pack').innerHTML = html;
-    document.body.classList.remove('print-one', 'print-archive');
+  const PAGE_MM = 273; // A4 (297 mm) eksi üst/alt kenar boşluğu (2 × 12 mm)
+
+  /**
+   * Yazdırmaya hazırlar: her sayfa (salon, şube, liste) A4 genişliğinde ölçülür.
+   * Sayfa sınırına çok yakın olanlar hafifçe küçültülür. Çift taraflı
+   * yazdırmada sayfa sayısı tek olanların arkasına boş sayfa eklenir; böylece
+   * her salon/şube yeni bir kâğıdın ön yüzünden başlar.
+   */
+  function preparePrint(html, duplex) {
+    const box = $('#print-pack');
+    box.innerHTML = html;
+    box.classList.add('measuring');
+    const ruler = document.createElement('div');
+    ruler.style.cssText = 'height:100mm;position:absolute;visibility:hidden';
+    box.appendChild(ruler);
+    const pxPerMm = ruler.getBoundingClientRect().height / 100 || 3.78;
+    ruler.remove();
+    // Kartlı sayfaları (öğretmenler odası, zarf etiketleri) sayfalara kendimiz böleriz;
+    // tarayıcının kart taşırmasıyla sayfa sayısı şaşmasın.
+    for (const sh of [...box.children].filter((el) => el.classList.contains('sheet'))) paginateGrid(sh, pxPerMm);
+    const sheets = [...box.children].filter((el) => el.classList.contains('sheet'));
+    let pagesTotal = 0;
+    for (const sh of sheets) {
+      sh.style.zoom = '';
+      const mm = sh.getBoundingClientRect().height / pxPerMm;
+      let ratio = mm / PAGE_MM;
+      let pages = Math.max(1, Math.ceil(ratio - 0.001));
+      // Sayfa sınırına çok yakınsa (taşacak gibi ya da az taşmış) küçült: belirsizlik kalmasın.
+      const frac = ratio - Math.floor(ratio);
+      if (ratio > 0.94 && (frac > 0.94 || (frac > 0 && frac < 0.12))) {
+        const target = (frac > 0.94 ? Math.ceil(ratio) : Math.floor(ratio)) * 0.92;
+        const z = Math.max(0.6, target / ratio);
+        sh.style.zoom = z.toFixed(3);
+        ratio *= z;
+        pages = Math.max(1, Math.ceil(ratio - 0.001));
+      }
+      sh.dataset.pages = pages;
+      pagesTotal += pages;
+    }
+    if (duplex) {
+      // Aynı belgenin devam sayfaları (data-cont) tek parça sayılır.
+      const groups = [];
+      for (const sh of sheets) {
+        if (sh.dataset.cont && groups.length) groups[groups.length - 1].push(sh); else groups.push([sh]);
+      }
+      for (const g of groups) {
+        const pages = g.reduce((a, x) => a + (+x.dataset.pages || 1), 0);
+        const sh = g[g.length - 1];
+        if (pages % 2 === 1 && sh.nextElementSibling) {
+          const blank = document.createElement('div');
+          blank.className = 'blank-page';
+          blank.innerHTML = '<span>Bu sayfa çift taraflı yazdırma için boş bırakılmıştır.</span>';
+          sh.after(blank);
+          pagesTotal++;
+        }
+      }
+    }
+    box.classList.remove('measuring');
+    return pagesTotal;
+  }
+
+  function paginateGrid(sheet, pxPerMm) {
+    const grid = sheet.querySelector('.qgrid, .env-grid');
+    if (!grid) return;
+    const pageH = PAGE_MM * pxPerMm * 0.96;
+    if (sheet.getBoundingClientRect().height <= pageH) return;
+    const cols = Math.max(1, getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length);
+    const gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
+    const items = [...grid.children];
+    const rows = [];
+    let row = [];
+    const flush = () => { if (row.length) rows.push({ items: row, h: Math.max(...row.map((el) => el.getBoundingClientRect().height)) }); row = []; };
+    for (const el of items) {
+      if (el.classList.contains('grid-span')) { flush(); row = [el]; flush(); continue; }
+      row.push(el);
+      if (row.length === cols) flush();
+    }
+    flush();
+    // Düzey başlığı sayfanın son satırında kalmasın: başlığı sonraki satırla birlikte tut.
+    for (let i = 0; i < rows.length - 1; i++) {
+      if (rows[i].items.length === 1 && rows[i].items[0].classList.contains('grid-span')) {
+        rows[i + 1] = { items: rows[i].items.concat(rows[i + 1].items), h: rows[i].h + gap + rows[i + 1].h, glued: true };
+        rows.splice(i, 1);
+      }
+    }
+    const head = grid.getBoundingClientRect().top - sheet.getBoundingClientRect().top;
+    // Devam sayfalarında özet tablosu ve açıklama yok; üst kısım daha kısa.
+    const sheetGap = parseFloat(getComputedStyle(sheet).rowGap) || 0;
+    const dropped = [...sheet.querySelectorAll('.lvsum, .note')].reduce((a, el) => a + el.getBoundingClientRect().height + sheetGap, 0);
+    const contHead = Math.max(0, head - dropped);
+    const pages = [];
+    let cur = [], used = head;
+    for (const r of rows) {
+      if (cur.length && used + r.h > pageH) { pages.push(cur); cur = []; used = contHead; }
+      cur.push(r); used += r.h + gap;
+    }
+    if (cur.length) pages.push(cur);
+    if (pages.length < 2) return;
+    let anchor = sheet;
+    pages.forEach((pg, i) => {
+      const part = i === 0 ? sheet : sheet.cloneNode(true);
+      const g = part.querySelector('.qgrid, .env-grid');
+      g.innerHTML = '';
+      for (const r of pg) for (const el of r.items) g.appendChild(i === 0 ? el : el.cloneNode(true));
+      if (i > 0) part.querySelectorAll('.lvsum').forEach((n) => n.remove());
+      if (i > 0) {
+        part.dataset.cont = '1';
+        const t = part.querySelector('.sheet-title');
+        if (t) t.textContent = t.textContent.replace(/ \(devam.*\)$/, '') + ` (devam ${i + 1}/${pages.length})`;
+        part.querySelectorAll('.note').forEach((n) => n.remove());
+        anchor.after(part);
+        anchor = part;
+      }
+    });
+  }
+
+  function printHtml(html, opts) {
+    const duplex = opts && opts.single ? false : state.settings.duplex !== false;
+    preparePrint(html, duplex);
     document.body.classList.add('print-pack');
     window.print();
   }
@@ -926,16 +1047,16 @@
       return rooms.map((x) => {
         const lines = [];
         for (const L of x.rc.levels) for (const c of L.classes) lines.push({ label: c.name, n: c.n, hue: levelHue(c.name) });
-        return { title: x.title + ' salonu', total: x.rc.total, lines };
+        return { title: x.title + ' salonu', total: x.rc.total, lines, levels: x.rc.levels.map((L) => ({ label: levelLabel(L.level), n: L.total })) };
       });
     }
     const cls = new Map();
     for (const x of rooms) for (const L of x.rc.levels) for (const c of L.classes) {
-      if (!cls.has(c.id)) cls.set(c.id, { name: c.name, lines: [] });
+      if (!cls.has(c.id)) cls.set(c.id, { name: c.name, level: L.level, lines: [] });
       cls.get(c.id).lines.push({ label: x.title + ' salonuna', n: c.n });
     }
     return [...cls.values()].sort((a, b) => collator.compare(a.name, b.name))
-      .map((c) => ({ title: c.name + ' kâğıtları', hue: levelHue(c.name), total: c.lines.reduce((t, l) => t + l.n, 0), lines: c.lines }));
+      .map((c) => ({ title: c.name + ' kâğıtları', level: c.level, hue: levelHue(c.name), total: c.lines.reduce((t, l) => t + l.n, 0), lines: c.lines }));
   }
   /** Kart düzeninin yaklaşık sayfa sayısı (dikey A4, 4 sütun). */
   function teacherPages(mode) {
@@ -945,20 +1066,55 @@
     const perCol = Math.max(1, Math.floor(245 / (12 + maxLines * 5.2)));
     return Math.max(1, Math.ceil(cards.length / (4 * perCol)));
   }
+  /** Düzey toplamları: her düzeyden ve şubeden kaç öğrenci (kâğıt) var. */
+  function levelSummary() {
+    const r = state.result;
+    const ci = classIndex();
+    const lv = new Map();
+    for (const room of r.rooms) for (const L of roomCounts(room).levels) {
+      if (!lv.has(L.level)) lv.set(L.level, { level: L.level, total: 0, classes: new Map() });
+      const g = lv.get(L.level);
+      g.total += L.total;
+      for (const c of L.classes) g.classes.set(c.name, (g.classes.get(c.name) || 0) + c.n);
+    }
+    void ci;
+    const list = [...lv.values()].sort((a, b) => collator.compare(a.level, b.level));
+    return { list, total: list.reduce((a, g) => a + g.total, 0) };
+  }
+  function levelSummaryHtml() {
+    const sm = levelSummary();
+    return `<div class="lvsum">
+      <table class="lvsum-t"><tbody>${sm.list.map((g) => {
+        const first = [...g.classes.keys()][0] || g.level;
+        return `<tr style="--h:${levelHue(first)}"><th><span class="qdot"></span>${esc(levelLabel(g.level))}</th><td class="lvsum-n">${g.total}</td>
+          <td class="lvsum-c">${[...g.classes.entries()].sort((a, b) => collator.compare(a[0], b[0])).map(([n, k]) => `<span>${esc(n)} <b>${k}</b></span>`).join('')}</td></tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr><th>Toplam</th><td class="lvsum-n">${sm.total}</td><td class="lvsum-c">öğrenci / kâğıt</td></tr></tfoot></table>
+    </div>`;
+  }
+
   function renderTeacherList(mode) {
     const cards = teacherCards(mode);
     const grand = cards.reduce((a, c) => a + c.total, 0);
+    const sm = levelSummary();
+    const cardHtml = (c) => `
+        <div class="qcard tcard">
+          <div class="qhead"${c.hue != null ? ` style="--h:${c.hue}"` : ''}><span class="qtitle">${c.hue != null ? '<span class="qdot"></span>' : ''}${esc(c.title)}</span><span class="qtotal"><b>${c.total}</b> kâğıt</span></div>
+          ${c.lines.map((l) => `<div class="qline"${l.hue != null ? ` style="--h:${l.hue}"` : ''}><span class="tbox"></span><span class="qname">${esc(l.label)}</span><span class="qn">${l.n}</span></div>`).join('')}
+          ${c.levels ? `<div class="tlv">${c.levels.map((x) => `<span>${esc(x.label)}: <b>${x.n}</b></span>`).join('')}</div>` : ''}
+        </div>`;
+    let gridItems;
+    if (mode === 'class') {
+      gridItems = sm.list.map((g) => `<div class="grid-span tgroup-h">${esc(levelLabel(g.level))} şubeleri · toplam <b>${g.total}</b> kâğıt</div>` +
+        cards.filter((c) => c.level === g.level).map(cardHtml).join('')).join('');
+    } else gridItems = cards.map(cardHtml).join('');
     return `<article class="sheet teacher-sheet">
       ${sheetHead('Öğretmenler odası', mode === 'room' ? 'Hangi salona hangi şubeden kaç kâğıt' : 'Her şubenin kâğıtları hangi salona', 'oda-' + mode, 'papers')}
       <p class="note">${mode === 'room'
         ? 'Her kart bir salonun zarfıdır. Şubenizin satırındaki sayı kadar kâğıdı o salonun zarfına koyun ve kutuyu işaretleyin.'
         : 'Her kart bir şubenin kâğıt destesidir. Desteyi kartta yazan salonların zarflarına, yazan sayıda koyun ve kutuyu işaretleyin.'} Toplam ${grand} kâğıt.</p>
-      <div class="qgrid tgrid">${cards.map((c) => `
-        <div class="qcard tcard">
-          <div class="qhead"${c.hue != null ? ` style="--h:${c.hue}"` : ''}><span class="qtitle">${c.hue != null ? '<span class="qdot"></span>' : ''}${esc(c.title)}</span><span class="qtotal">${c.total} kâğıt</span></div>
-          ${c.lines.map((l) => `<div class="qline"${l.hue != null ? ` style="--h:${l.hue}"` : ''}><span class="tbox"></span><span class="qname">${esc(l.label)}</span><span class="qn">${l.n}</span></div>`).join('')}
-        </div>`).join('')}
-      </div>
+      ${levelSummaryHtml()}
+      <div class="qgrid tgrid">${gridItems}</div>
     </article>`;
   }
 
@@ -966,11 +1122,11 @@
     const c = currentPackChoice();
     try { localStorage.setItem(STORE_KEY + '.pack', JSON.stringify(c)); } catch (e) { /* yoksay */ }
     const html = packEntry ? withEntry(packEntry, () => buildPack(c)) : buildPack(c);
+    state.settings.duplex = $('#pack-duplex').checked;
+    save();
+    renderSettings();
     closePack();
-    $('#print-pack').innerHTML = html;
-    document.body.classList.remove('print-one', 'print-archive');
-    document.body.classList.add('print-pack');
-    window.print();
+    printHtml(html);
   }
 
   /** Salon yoklama listesi: ad, sınıf, imza. */
@@ -1173,18 +1329,15 @@
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
 
+  /** Açık bölümün bütün sayfaları (her salon/şube ayrı kâğıda). */
   function printAll() {
-    document.body.classList.remove('print-one', 'print-archive');
-    document.querySelectorAll('.print-target').forEach((e) => e.classList.remove('print-target'));
-    window.print();
+    let html;
+    if (view === 'ara') html = `<article class="sheet">${sheetHead('Öğrenci arama', 'Sınav yerleri', 'ara', 'papers')}${$('#q-out').innerHTML}</article>`;
+    else html = [...$('#report').children].filter((el) => el.classList.contains('sheet')).map((el) => el.outerHTML).join('');
+    printHtml(html);
   }
   function printOne(sheet) {
-    document.querySelectorAll('.print-target').forEach((e) => e.classList.remove('print-target'));
-    sheet.classList.add('print-target');
-    document.body.classList.remove('print-archive');
-    if (sheet.closest('#archive-view')) document.body.classList.add('print-archive');
-    document.body.classList.add('print-one');
-    window.print();
+    printHtml(sheet.outerHTML, { single: true });
   }
   window.addEventListener('afterprint', () => {
     document.body.classList.remove('print-one', 'print-archive');
@@ -1445,10 +1598,7 @@
       else if (t.dataset.archCsv) withEntry(entry, exportCsv);
       else if (t.dataset.archPack) openPack(entry);
       else if (t.dataset.archPrint) {
-        document.body.classList.remove('print-one');
-        document.querySelectorAll('.print-target').forEach((x) => x.classList.remove('print-target'));
-        document.body.classList.add('print-archive');
-        window.print();
+        printHtml([...$('#archive-view .arch-report').children].filter((el) => el.classList.contains('sheet')).map((el) => el.outerHTML).join(''));
       } else if (t.dataset.printRoom != null || t.dataset.printClass != null || t.dataset.printPapers != null) printOne(t.closest('.sheet'));
     });
 
@@ -1521,6 +1671,7 @@
     $('#btn-print').addEventListener('click', printAll);
     $('#btn-pack').addEventListener('click', () => openPack(null));
     $('#pack-list').addEventListener('change', () => updatePackTotal($('#pack-dlg')._counts));
+    $('#pack-duplex').addEventListener('change', () => updatePackTotal($('#pack-dlg')._counts));
     $('#pack-go').addEventListener('click', printPack);
     $('#pack-cancel').addEventListener('click', closePack);
     $('#pack-x').addEventListener('click', closePack);

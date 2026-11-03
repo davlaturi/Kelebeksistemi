@@ -404,6 +404,23 @@ table.list td.sign { width: 28%; }
 .tbox { display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 2px; }
 .tcard .qline { cursor: default; }
 
+/* Düzey özeti */
+.lvsum { overflow-x: auto; }
+.lvsum-t { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.lvsum-t th, .lvsum-t td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.lvsum-t tr { --h: 200; }
+.lvsum-t th { white-space: nowrap; font: 700 1.05rem/1.2 var(--f-display); }
+.lvsum-t th .qdot { display: inline-block; margin-right: 8px; vertical-align: 1px; }
+.lvsum-n { font: 700 1.5rem/1 var(--f-display); white-space: nowrap; width: 1%; }
+.lvsum-c { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--ink-soft); font-size: 0.92rem; }
+.lvsum-c b { color: var(--ink); }
+.lvsum-t tfoot th, .lvsum-t tfoot td { border-top: 2px solid var(--ink); border-bottom: 0; }
+.grid-span { grid-column: 1 / -1; }
+.tgroup-h { font: 600 1.05rem/1.2 var(--f-display); padding: 6px 0 2px; border-bottom: 2px solid var(--ink); }
+.tlv { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 0.8rem; color: var(--ink-soft); border-top: 1px solid var(--line); margin-top: 3px; padding-top: 3px; }
+.tlv b { color: var(--ink); }
+.qtotal b { color: var(--ink); font-size: 1.05em; }
+
 /* Hızlı kâğıt listesi */
 .quick-sheet .sheet-head { align-items: center; }
 .qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
@@ -498,70 +515,77 @@ table.matrix tbody tr:nth-child(even) { background: var(--paper); }
 
 /* ---------- Yazdırma ---------- */
 @page { size: A4 portrait; margin: 12mm; }
+/* ---------- Kâğıt (yazdırma) görünümü ----------
+   Bütün yazdırmalar #print-pack (.pack-out) üzerinden yapılır. Aşağıdaki
+   kurallar ekranda da geçerlidir: sayfa yükseklikleri basmadan önce bu
+   kabın içinde, A4 genişliğinde ölçülür (çift taraflı yazdırma için). */
+.pack-out {
+  --paper: #fff; --surface: #fff; --ink: #000; --ink-soft: #333; --line: #999;
+  --seat-l: 93%; --seat-s: 60%; --seat-ink-l: 15%; --board: #000;
+  --ok: #18794e; --ok-bg: #fff; --accent: #000; --accent-ink: #fff;
+  color-scheme: light; background: #fff; color: #000; font: 10pt/1.45 var(--f-body);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.pack-out.measuring { display: block; position: absolute; left: -10000px; top: 0; width: 186mm; visibility: hidden; }
+.pack-out .no-print, .pack-out .sheet-tools, .pack-out .tabs, .pack-out .search .field { display: none !important; }
+.pack-out > .sheet, .pack-out > .blank-page { break-after: page; page-break-after: always; }
+.pack-out > :last-child { break-after: auto; page-break-after: auto; }
+.pack-out .sheet { border: 0; border-radius: 0; padding: 0; gap: 8px; background: #fff; }
+.pack-out .blank-page { height: 1px; padding-top: 120mm; text-align: center; font-size: 8pt; color: #999; }
+.pack-out .blank-page span { display: inline-block; }
+.pack-out .plan-scroll { overflow: visible; }
+.pack-out .desks { min-width: 0; gap: 9px 18px; }
+.pack-out .mm-desk b { background: #c8c8c8; }
+.pack-out .mm-desk b.mm-me { background: #000; }
+.pack-out .mm-desk.mm-on { outline-color: #000; }
+.pack-out .seat { min-height: 19mm; padding: 4px 5px; cursor: default; }
+.pack-out .seat .who { font-size: 9.5pt; }
+.pack-out .seat .cls { font-size: 8pt; }
+.pack-out .seat .sno { font-size: 18pt; color: #333; opacity: 1; }
+.pack-out .seat.sel { outline: 0; }
+.pack-out table.list { font-size: 9pt; }
+.pack-out table.list th, .pack-out table.list td { padding: 2px 6px; border-bottom-color: #bbb; line-height: 1.25; }
+.pack-out .sheet-head { padding-bottom: 6px; }
+.pack-out .sheet-title { font-size: 15pt; }
+.pack-out .counts-line { gap: 3px 6px; font-size: 8.5pt; }
+.pack-out .counts-line .chip { padding: 0 6px; }
+.pack-out .signs { padding-top: 10px; gap: 12px; }
+.pack-out .note { font-size: 7.5pt; }
+.pack-out td.mm-cell { padding-top: 1px !important; padding-bottom: 1px !important; }
+.pack-out .mm { gap: 1px; }
+.pack-out .mm-grid { gap: 1px 3px; }
+.pack-out .mm-desk { padding: 0; }
+.pack-out .mm-desk b { width: 5px; height: 2.5px; }
+.pack-out .mm-board { height: 2px; }
+.pack-out tr { break-inside: avoid; }
+.pack-out .qgrid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pack-out .teacher-sheet { gap: 6px; }
+.pack-out .tgrid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.pack-out .tcard { padding: 6px 8px; gap: 0; break-inside: avoid; border-color: #888; }
+.pack-out .tcard .qhead { padding-bottom: 3px; }
+.pack-out .tcard .qtitle { font-size: 11pt; }
+.pack-out .tcard .qtotal { font-size: 8pt; }
+.pack-out .tcard .qline { padding: 1px 2px; grid-template-columns: auto 1fr auto; gap: 6px; border-bottom: 1px dotted #bbb; }
+.pack-out .tcard .qline:last-child { border-bottom: 0; }
+.pack-out .tcard .qname { font-size: 9pt; }
+.pack-out .tcard .qn { font-size: 12pt; }
+.pack-out .tcard .tbox { width: 10px; height: 10px; }
+.pack-out .qline input, .pack-out .qfoot { display: none; }
+.pack-out .qline { padding: 2px 4px; grid-template-columns: 1fr auto; }
+.pack-out .qline.on .qname, .pack-out .qline.on .qn { text-decoration: none; opacity: 1; }
+.pack-out .qcard.done { background: none; border-color: #999; }
+.pack-out .env-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pack-out .lvsum-t th, .pack-out .lvsum-t td { padding: 2px 6px; border-bottom-color: #bbb; }
+.pack-out .lvsum-t th { font-size: 10pt; }
+.pack-out .lvsum-n { font-size: 13pt; }
+.pack-out .lvsum-c { font-size: 8.5pt; gap: 2px 10px; color: #333; }
+.pack-out .tgroup-h { font-size: 10.5pt; padding-top: 4px; }
+.pack-out .tlv { font-size: 7.5pt; color: #333; }
+.pack-out .tcard .qtotal b { font-size: 10pt; }
+
 @media print {
-  :root {
-    --paper: #fff; --surface: #fff; --ink: #000; --ink-soft: #333; --line: #999;
-    --seat-l: 93%; --seat-s: 60%; --seat-ink-l: 15%; --board: #000;
-    color-scheme: light;
-  }
-  body { background: #fff; font-size: 10pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .no-print, .sheet-tools, .tabs { display: none !important; }
-  .shell { display: block; }
-  .wrap { max-width: none; padding: 0; }
-  main.wrap { display: block; padding: 0; }
-  .step { border: 0; padding: 0; display: block; }
-  #report { display: block; }
-  .sheet { border: 0; border-radius: 0; padding: 0; break-after: page; page-break-after: always; gap: 8px; }
-  .sheet:last-child { break-after: auto; page-break-after: auto; }
-  body.print-one .sheet:not(.print-target) { display: none; }
-  body.print-archive #report { display: none !important; }
-  body.print-pack .shell, body.print-pack dialog { display: none !important; }
-  body.print-pack .pack-out { display: block !important; }
-  body:not(.print-archive) #arsiv { display: none !important; }
-  .arch-report { display: block; }
-  .plan-scroll { overflow: visible; }
-  .desks { min-width: 0; gap: 9px 18px; }
-  .mm-desk b { background: #c8c8c8; }
-  .mm-desk b.mm-me { background: #000; }
-  .mm-desk.mm-on { outline-color: #000; }
-  .seat { min-height: 19mm; padding: 4px 5px; cursor: default; }
-  .seat .who { font-size: 9.5pt; }
-  .seat .cls { font-size: 8pt; }
-  .seat .sno { font-size: 18pt; color: #333; }
-  .seat.sel { outline: 0; }
-  .seat.conflict::after { display: none; }
-  table.list { font-size: 9pt; }
-  table.list th, table.list td { padding: 2px 6px; border-bottom-color: #bbb; line-height: 1.25; }
-  .sheet-head { padding-bottom: 6px; }
-  .sheet-title { font-size: 15pt; }
-  .counts-line { gap: 3px 6px; }
-  .counts-line .chip { padding: 0 6px; }
-  .signs { padding-top: 10px; gap: 12px; }
-  .note { font-size: 7.5pt; }
-  td.mm-cell { padding-top: 1px !important; padding-bottom: 1px !important; }
-  .mm { gap: 1px; }
-  .mm-grid { gap: 1px 3px; }
-  .mm-desk { padding: 0; }
-  .mm-desk b { width: 5px; height: 2.5px; }
-  .mm-board { height: 2px; }
-  tr { break-inside: avoid; }
-  .search { display: none; }
-  .qgrid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .teacher-sheet { gap: 6px; }
-  .tgrid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  .tcard { padding: 6px 8px; gap: 0; break-inside: avoid; border-color: #888; }
-  .tcard .qhead { padding-bottom: 3px; }
-  .tcard .qtitle { font-size: 11pt; }
-  .tcard .qtotal { font-size: 8pt; }
-  .tcard .qline { padding: 1px 2px; grid-template-columns: auto 1fr auto; gap: 6px; border-bottom: 1px dotted #bbb; }
-  .tcard .qline:last-child { border-bottom: 0; }
-  .tcard .qname { font-size: 9pt; }
-  .tcard .qn { font-size: 12pt; }
-  .tcard .tbox { width: 10px; height: 10px; }
-  .qline input, .qfoot { display: none; }
-  .qline { padding: 2px 4px; grid-template-columns: 1fr auto; }
-  .qline.on .qname, .qline.on .qn { text-decoration: none; opacity: 1; }
-  .qcard.done { background: none; border-color: #999; }
-  .env-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .counts-line { font-size: 8.5pt; }
+  :root { color-scheme: light; }
+  html, body { background: #fff !important; }
+  body > *:not(.pack-out) { display: none !important; }
+  .pack-out { display: block !important; position: static; visibility: visible; width: auto; }
 }
