@@ -5,12 +5,13 @@
  *  1) Paylaştırma: Her sınıftan her salona kaç öğrenci gideceği, maksimum akış
  *     (max-flow) ile bulunur. Kısıtlar:
  *       - her salon tam kapasite dolar (kapasite = o sınıfın öğrenci sayısı),
- *       - bir sınıftan bir salona en fazla "sıra sayısı" kadar öğrenci gider
- *         (böylece aynı sınıftan iki öğrenci aynı sıraya oturmak zorunda kalmaz),
- *       - isteğe bağlı: öğrenci kendi sınıfında sınava girmez,
+ *       - bir sınıf düzeyinden (ör. 9/A+9/B+9/C) bir salona en fazla "sıra
+ *         sayısı" kadar öğrenci gider (böylece aynı düzeyden iki öğrenci aynı
+ *         sıraya oturmak zorunda kalmaz),
+ *       - isteğe bağlı: öğrenci kendi sınıfında sınava girmez (varsayılan: girebilir),
  *       - sınıflar salonlara olabildiğince orantılı (dengeli) dağılır.
- *  2) Yerleştirme: Her salonda öğrenciler, aynı sınıftan olanlar yan yana
- *     (sıra arkadaşı), önlü-arkalı ve çapraz komşu olmayacak şekilde yerleştirilir.
+ *  2) Yerleştirme: Her salonda öğrenciler, aynı sınıf düzeyinden olanlar yan
+ *     yana (sıra arkadaşı), önlü-arkalı ve çapraz komşu olmayacak şekilde yerleştirilir.
  *     Sıra arkadaşı kuralı yapısal olarak garanti edilir; diğer komşuluklar
  *     tavlama (simulated annealing) ile en aza indirilir.
  *
@@ -95,34 +96,38 @@
     return { flow, cost };
   };
 
-  const COST_OWN = 1000;      // öğrenci kendi sınıfında
-  const COST_DESK = 100000;   // aynı sınıftan iki kişi aynı sırada zorunlu
+  const COST_OWN = 1000;      // öğrenci kendi sınıfında (yalnızca seçenek açıksa)
+  const COST_DESK = 100000;   // aynı düzeyden iki kişi aynı sırada zorunlu
 
   /**
-   * Sınıf -> salon öğrenci sayısı matrisini bulur.
-   * Önce sıra kuralını, sonra "kendi sınıfında olmasın" kuralını, en son
-   * dengeli dağılımı gözeten minimum maliyetli akış kullanılır.
+   * Sınıf -> salon öğrenci sayısı matrisini bulur (minimum maliyetli akış).
+   * Kısıt: bir salona aynı sınıf düzeyinden (ör. tüm 9'lar) en fazla
+   * "sıra sayısı" kadar öğrenci gider; böylece aynı düzeyden iki öğrenci aynı
+   * sıraya oturmak zorunda kalmaz. Sınıflar salonlara dengeli dağılır.
    * @param {number[]} sizes  sınıf mevcutları
    * @param {number[]} caps   salon kapasiteleri
    * @param {number[]} owner  salonun sahibi olan sınıfın indeksi (yoksa -1)
+   * @param {number[]} group  her sınıfın düzey indeksi
    * @param {{avoidOwnRoom:boolean, rnd:Function}} opts
    */
-  function allocate(sizes, caps, owner, opts) {
+  function allocate(sizes, caps, owner, group, opts) {
     const K = sizes.length, R = caps.length;
+    const G = Math.max(0, ...group) + 1;
     const N = sizes.reduce((a, b) => a + b, 0);
     const C = caps.reduce((a, b) => a + b, 0);
     if (N !== C) throw new Error('Toplam öğrenci sayısı (' + N + ') toplam salon kapasitesine (' + C + ') eşit değil.');
     const deskCap = caps.map((c) => Math.ceil(c / 2));
     const own = (i, j) => opts.avoidOwnRoom && owner[j] === i;
-    // Orantılı hedef: salon j, kendi sınıfı dışındakilerden mevcutlarıyla orantılı alır.
     const neff = caps.map((_, j) => {
       let s = 0;
       for (let i = 0; i < K; i++) if (!own(i, j)) s += sizes[i];
       return s || N;
     });
-
-    const S = K + R, T = K + R + 1;
-    const mcf = new MinCostFlow(K + R + 2);
+    // Düğümler: S, sınıflar [0,K), düzey×salon [K, K+G*R), salonlar, T
+    const GR = (g, j) => K + g * R + j;
+    const RM = (j) => K + G * R + j;
+    const S = K + G * R + R, T = S + 1;
+    const mcf = new MinCostFlow(T + 1);
     const cells = [];
     const classOrder = shuffle(sizes.map((_, i) => i), opts.rnd);
     const roomOrder = shuffle(caps.map((_, j) => j), opts.rnd);
@@ -131,30 +136,33 @@
       for (const j of roomOrder) {
         const base = own(i, j) ? COST_OWN : 0;
         const ub = Math.min(caps[j], sizes[i]);
-        const dc = Math.min(deskCap[j], ub);
-        const target = own(i, j) ? 0 : Math.min(dc, Math.ceil((sizes[i] * caps[j]) / neff[j]));
-        const tiers = [];
-        // [0, hedef] ücretsiz; hedefin 2 fazlasına kadar az; sonrası daha pahalı;
-        // sıra sınırını aşan kısım çok pahalı.
-        tiers.push([target, base]);
-        tiers.push([Math.min(dc, target + 2) - target, base + 3]);
-        tiers.push([dc - Math.min(dc, target + 2), base + 12]);
-        tiers.push([ub - dc, base + COST_DESK]);
+        const target = own(i, j) ? 0 : Math.min(ub, Math.ceil((sizes[i] * caps[j]) / neff[j]));
+        const t2 = Math.min(ub, target + 2);
         const es = [];
-        for (const [cap, cost] of tiers) if (cap > 0) es.push(mcf.addEdge(i, K + j, cap, cost));
+        for (const [cap, cost] of [[target, base], [t2 - target, base + 3], [ub - t2, base + 12]]) {
+          if (cap > 0) es.push(mcf.addEdge(i, GR(group[i], j), cap, cost));
+        }
         cells.push({ i, j, es });
       }
     }
-    for (const j of roomOrder) mcf.addEdge(K + j, T, caps[j], 0);
+    for (let g = 0; g < G; g++) for (const j of roomOrder) {
+      mcf.addEdge(GR(g, j), RM(j), deskCap[j], 0);
+      if (caps[j] > deskCap[j]) mcf.addEdge(GR(g, j), RM(j), caps[j] - deskCap[j], COST_DESK);
+    }
+    for (const j of roomOrder) mcf.addEdge(RM(j), T, caps[j], 0);
     const res = mcf.run(S, T, N);
     if (res.flow !== N) throw new Error('Dağıtım bulunamadı.');
 
     const matrix = sizes.map(() => caps.map(() => 0));
     for (const c of cells) for (const e of c.es) matrix[c.i][c.j] += e.orig - e.cap;
     let ownCount = 0, deskOver = 0;
-    for (let i = 0; i < K; i++) for (let j = 0; j < R; j++) {
-      if (owner[j] === i) ownCount += matrix[i][j];
-      deskOver += Math.max(0, matrix[i][j] - deskCap[j]);
+    for (let j = 0; j < R; j++) {
+      const perG = new Array(G).fill(0);
+      for (let i = 0; i < K; i++) {
+        perG[group[i]] += matrix[i][j];
+        if (owner[j] === i) ownCount += matrix[i][j];
+      }
+      for (const n of perG) deskOver += Math.max(0, n - deskCap[j]);
     }
     return { matrix, ownRoomCount: opts.avoidOwnRoom ? ownCount : 0, deskOverflow: deskOver };
   }
@@ -307,16 +315,18 @@
     const list = classes.filter((c) => c.students && c.students.length > 0);
     const warnings = [];
     if (list.length === 0) throw new Error('Dağıtım için en az bir sınıf listesi gerekli.');
-    if (list.length === 1) warnings.push('Yalnızca bir sınıf var; aynı sınıftan öğrencilerin yan yana oturması kaçınılmaz.');
 
     const sizes = list.map((c) => c.students.length);
     const caps = sizes.slice();
     const owner = list.map((_, i) => i);
     const levels = list.map((c) => levelOf(c.name));
+    const levelNames = [...new Set(levels)];
+    const group = levels.map((l) => levelNames.indexOf(l));
+    if (levelNames.length === 1) warnings.push('Tüm sınıflar aynı düzeyde (' + levelNames[0] + '); aynı düzeyden öğrencilerin yan yana oturması kaçınılmaz.');
 
-    const alloc = allocate(sizes, caps, owner, { avoidOwnRoom: !!settings.avoidOwnRoom, rnd });
+    const alloc = allocate(sizes, caps, owner, group, { avoidOwnRoom: !!settings.avoidOwnRoom, rnd });
     if (alloc.ownRoomCount > 0) warnings.push(alloc.ownRoomCount + ' öğrenci kendi sınıfında sınava giriyor; sınıf mevcutları bunu tamamen önlemeye izin vermiyor.');
-    if (alloc.deskOverflow > 0) warnings.push('Bir sınıfın mevcudu diğer sınıfların toplamından fazla; bazı sıralarda aynı sınıftan iki öğrenci oturmak zorunda.');
+    if (alloc.deskOverflow > 0) warnings.push('Bir sınıf düzeyinin öğrenci sayısı diğer düzeylerin toplamından fazla; bazı sıralarda aynı düzeyden iki öğrenci oturmak zorunda (' + alloc.deskOverflow + ' sıra).');
 
     // Her sınıfın öğrencilerini karıştırıp salonlara paylaştır.
     const pools = list.map((c) => shuffle(c.students, rnd));
@@ -326,16 +336,19 @@
       const counts = list.map((_, i) => alloc.matrix[i][j]);
       const roomCols = Math.max(1, room.deskCols || cols);
       const layout = seatLayout(caps[j], roomCols, spd);
-      const labels = arrangeRoom(layout, counts, levels, { rnd, avoidSameLevel: !!settings.avoidSameLevel });
-      // Etiketlere öğrenci ata
-      const byClass = list.map(() => []);
+      // Yerleşim düzey bazında yapılır: etiketler düzey indeksidir.
+      const gCounts = levelNames.map(() => 0);
+      for (let i = 0; i < list.length; i++) gCounts[group[i]] += counts[i];
+      const labels = arrangeRoom(layout, gCounts, levelNames, { rnd, avoidSameLevel: false });
+      // Her düzeyin koltuklarına o düzeydeki sınıfların öğrencilerini karışık ver
+      const byGroup = levelNames.map(() => []);
       for (let i = 0; i < list.length; i++) {
-        byClass[i] = pools[i].slice(takeIdx[i], takeIdx[i] + counts[i]);
+        for (const st of pools[i].slice(takeIdx[i], takeIdx[i] + counts[i])) byGroup[group[i]].push({ st, k: i });
         takeIdx[i] += counts[i];
       }
-      const ptr = list.map(() => 0);
-      const seats = labels.map((k, s) => {
-        const st = byClass[k][ptr[k]++];
+      const queues = byGroup.map((arr) => shuffle(arr, rnd));
+      const seats = labels.map((g, s) => {
+        const { st, k } = queues[g].pop();
         const geo = layout.seats[s];
         return { seatNo: s + 1, classId: list[k].id, studentId: st.id, desk: geo.desk + 1, side: geo.side, row: geo.row, col: geo.col };
       });
@@ -346,21 +359,20 @@
     return { seed, rooms, warnings, stats, createdAt: new Date().toISOString() };
   }
 
-  /** Kural ihlallerini sayar (sonuç ekranında gösterilir, testlerde doğrulanır). */
+  /** Kural ihlallerini sayar: komşu öğrenciler aynı sınıf düzeyinde mi? */
   function evaluate(rooms, classes, geo) {
     const lvl = {};
     for (const c of classes) lvl[c.id] = levelOf(c.name);
-    const out = { deskmate: 0, frontBack: 0, aisle: 0, diagonal: 0, sameLevelDeskmate: 0, ownRoom: 0 };
+    const out = { deskmate: 0, frontBack: 0, aisle: 0, diagonal: 0, sameClassDeskmate: 0, ownRoom: 0 };
     for (const room of rooms) {
       const layout = seatLayout(room.seats.length, room.cols || geo.cols, room.spd || geo.spd);
       for (const e of layout.edges) {
         const a = room.seats[e.a].classId, b = room.seats[e.b].classId;
-        if (a === b) {
-          if (e.kind === 'desk' || e.kind === 'side') out.deskmate++;
-          else if (e.kind === 'front') out.frontBack++;
-          else if (e.kind === 'aisle') out.aisle++;
-          else out.diagonal++;
-        } else if ((e.kind === 'desk' || e.kind === 'side') && lvl[a] === lvl[b]) out.sameLevelDeskmate++;
+        if (lvl[a] !== lvl[b]) continue;
+        if (e.kind === 'desk' || e.kind === 'side') { out.deskmate++; if (a === b) out.sameClassDeskmate++; }
+        else if (e.kind === 'front') out.frontBack++;
+        else if (e.kind === 'aisle') out.aisle++;
+        else out.diagonal++;
       }
       for (const s of room.seats) if (s.classId === room.roomId) out.ownRoom++;
     }

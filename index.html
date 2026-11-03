@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kelebek Sınav Dağıtımı</title>
-  <meta name="description" content="Sınıf listelerini PDF olarak yükleyin; aynı sınıftan öğrencilerin yan yana oturmadığı kelebek sınav oturma planlarını oluşturun.">
+  <meta name="description" content="Sınıf listelerini PDF olarak yükleyin; aynı sınıf düzeyindeki öğrencilerin yan yana oturmadığı kelebek sınav oturma planlarını oluşturun.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -20,7 +20,7 @@
       </svg>
       <div>
         <h1>Kelebek Sınav Dağıtımı</h1>
-        <p class="lede">Sınıf listelerini yükleyin; her sınıf aynı zamanda sınav salonu olur ve mevcudu kadar öğrenci alır. Aynı sınıftan öğrenciler yan yana oturmaz.</p>
+        <p class="lede">Sınıf listelerini yükleyin; her sınıf aynı zamanda sınav salonu olur ve mevcudu kadar öğrenci alır. Aynı sınıf düzeyindeki (9'lar, 10'lar…) öğrenciler yan yana oturmaz.</p>
       </div>
     </div>
   </header>
@@ -82,10 +82,9 @@
         </div>
         <fieldset class="checks wide">
           <legend>Kurallar</legend>
-          <label class="check"><input type="checkbox" checked disabled> Aynı sınıftan öğrenciler aynı sıraya oturmaz</label>
-          <label class="check"><input type="checkbox" checked disabled> Önlü-arkalı ve çapraz da aynı sınıftan öğrenci olmamasına çalışılır</label>
-          <label class="check"><input type="checkbox" id="s-own" name="avoidOwnRoom" checked> Öğrenci kendi sınıfında sınava girmez</label>
-          <label class="check"><input type="checkbox" id="s-level" name="avoidSameLevel" checked> Aynı seviyeden (ör. 9/A ile 9/B) öğrenciler de mümkünse yan yana oturmaz</label>
+          <label class="check"><input type="checkbox" checked disabled> Aynı sınıf düzeyinden (ör. 9/A ile 9/B) öğrenciler aynı sıraya oturmaz</label>
+          <label class="check"><input type="checkbox" checked disabled> Önlü-arkalı ve çapraz da aynı düzeyden öğrenci olmamasına çalışılır</label>
+          <label class="check"><input type="checkbox" id="s-own" name="avoidOwnRoom"> Öğrenci kendi sınıfında sınava girmesin (işaretlenmezse kendi sınıfında oturabilir)</label>
         </fieldset>
       </form>
     </section>

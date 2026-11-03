@@ -1,16 +1,22 @@
 # Kelebek Sınav Dağıtımı
 
 Okulda sınavları **kelebek sistemi** ile yapmak için hazırlanmış, tarayıcıda çalışan bir uygulama.
-Sınıf listelerini PDF olarak yüklersiniz. Uygulama öğrencileri, **aynı sınıftan iki öğrenci yan yana oturmayacak** şekilde salonlara dağıtır.
+Sınıf listelerini PDF olarak yüklersiniz. Uygulama öğrencileri, **aynı sınıf düzeyindeki (9'lar, 10'lar, 11'ler…) iki öğrenci yan yana oturmayacak** şekilde salonlara dağıtır. Öğrenci kendi sınıfında oturabilir, ama yanında kendi düzeyinden biri olmaz (9/A'daki bir öğrencinin yanına 9/A ya da 9/B'den biri oturmaz).
 
 - Yüklenen her sınıf aynı zamanda bir **sınav salonudur**.
 - Her salona, o sınıfın **mevcudu kadar** öğrenci yerleştirilir (30 kişilik 9/A sınıfına 30 öğrenci oturur).
 - Kurulum gerekmez, internet de gerekmez. Öğrenci listeleri hiçbir sunucuya gönderilmez.
 
+## Bilgisayarda (PC) kurulum
+
+1. GitHub'da **Code → Download ZIP** ile dosyayı indirin.
+2. ZIP'e sağ tıklayıp **Tümünü ayıkla** deyin. ZIP'in içinden doğrudan açarsanız PDF okuyucu yüklenmez.
+3. Çıkan klasördeki **`index.html`** dosyasını çift tıklayın. Chrome, Edge ya da Firefox'ta açılır.
+   İnternet bağlantısı gerekmez. Klasörü USB belleğe kopyalayıp başka bir bilgisayarda da kullanabilirsiniz.
+
 ## Nasıl kullanılır?
 
-1. Bu klasörü bilgisayarınıza indirin ve **`index.html`** dosyasını çift tıklayarak Chrome, Edge ya da Firefox ile açın.
-   (İsterseniz GitHub Pages ile bir web adresinden de yayınlayabilirsiniz. Ayrıntısı aşağıda.)
+1. **`index.html`** dosyasını açın (yukarıya bakın).
 2. **1. Sınıf listeleri:** e-Okul'dan aldığınız sınıf listesi PDF'lerini sürükleyip bırakın.
    - Bir PDF'te birden fazla sınıf olabilir. Sınıf adı sayfa başlığından (ör. `9. Sınıf / A Şubesi`) ya da dosya adından (ör. `9-A.pdf`) okunur.
    - Bir sınıfın kartına tıklayarak listeyi kontrol edebilir, sınıf adını düzeltebilir, öğrenci ekleyip silebilirsiniz.
@@ -25,11 +31,13 @@ Sınıf listelerini PDF olarak yüklersiniz. Uygulama öğrencileri, **aynı sı
 
 | Kural | Durum |
 |---|---|
-| Aynı sınıftan iki öğrenci aynı sıraya (sıra arkadaşı) oturmaz | Her zaman sağlanır. Tek istisna: bir sınıfın mevcudu diğer tüm sınıfların toplamından fazlaysa bu matematiksel olarak imkânsızdır; uygulama sizi uyarır. |
-| Önlü-arkalı, çapraz ve koridorun karşısında aynı sınıftan öğrenci olmaz | Mümkün olduğunca sağlanır. Normal bir okulda bu sayı genellikle 0 olur. |
-| Öğrenci kendi sınıfında sınava girmez | İsteğe bağlıdır. Mevcutlar izin vermezse kural en az sayıda öğrenci için esnetilir ve sayısı gösterilir. |
-| Aynı seviyeden (9/A ile 9/B gibi) öğrenciler yan yana oturmaz | İsteğe bağlıdır ve mümkün olduğunca uygulanır. |
+| Aynı sınıf düzeyinden iki öğrenci aynı sıraya (sıra arkadaşı) oturmaz | Her zaman sağlanır. Tek istisna: bir düzeyin öğrenci sayısı diğer tüm düzeylerin toplamından fazlaysa bu matematiksel olarak imkânsızdır; uygulama sizi uyarır. |
+| Önlü-arkalı aynı düzeyden öğrenci oturmaz | Mümkün olduğunca sağlanır. Normal bir okulda bu sayı genellikle 0 olur. |
+| Çapraz ve koridorun karşısındaki komşu | En düşük öncelikli kuraldır; mümkün olduğunca farklı düzeyden olur. |
+| Öğrenci kendi sınıfında oturabilir | Varsayılan budur. İsterseniz "kendi sınıfında sınava girmesin" seçeneğini açabilirsiniz. |
 | Her sınıfın öğrencileri salonlara dengeli dağılır | Her zaman uygulanır. |
+
+Sınıf düzeyi, sınıf adının başındaki sayıdan anlaşılır: `9/A`, `9-B`, `9C` hepsi 9. düzeydir. Planda **aynı renk aynı düzey** demektir.
 
 Dağıtımdan sonra her kuralın kaç kez ihlal edildiği ekranda gösterilir. Planda kural dışı oturan öğrenciler **!** işaretiyle belirtilir.
 

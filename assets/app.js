@@ -5,6 +5,7 @@
   const P = window.KelebekParser;
   const A = window.KelebekAssign;
   const STORE_KEY = 'kelebek-sinav.v1';
+  const RULES_VERSION = 2; // 2: kısıt sınıf yerine sınıf düzeyi; kendi sınıfında oturmak serbest
 
   if (window.pdfjsLib) {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
@@ -13,7 +14,7 @@
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '',
-    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: true, avoidSameLevel: true,
+    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false,
   };
   let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false };
   let view = 'plan';
@@ -30,10 +31,16 @@
         result: s.result || null,
         stale: !!s.stale,
       };
+      if ((s.rulesVersion || 1) < RULES_VERSION) {
+        // Eski kurallarla yapılmış dağıtımı ve varsayılanı güncelle
+        state.settings.avoidOwnRoom = false;
+        state.result = null;
+        state.stale = false;
+      }
     } catch (e) { /* bozuk kayıt: yoksay */ }
   }
   function save() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* depolama kapalı */ }
+    try { localStorage.setItem(STORE_KEY, JSON.stringify({ ...state, rulesVersion: RULES_VERSION })); } catch (e) { /* depolama kapalı */ }
   }
 
   // ---------- yardımcılar ----------
@@ -43,6 +50,11 @@
   const uid = (p) => p + Date.now().toString(36) + (uidN++).toString(36) + Math.random().toString(36).slice(2, 6);
   const collator = new Intl.Collator('tr', { numeric: true, sensitivity: 'base' });
   const hueOf = (idx) => Math.round((idx * 137.508 + 18) % 360);
+  /** Renkler sınıf düzeyine göre: aynı düzeydeki sınıflar aynı renk ailesinde. */
+  function levelHue(name) {
+    const levels = [...new Set(state.classes.map((c) => A.levelOf(c.name)))].sort(collator.compare);
+    return hueOf(Math.max(0, levels.indexOf(A.levelOf(name))));
+  }
 
   function toast(msg) {
     const t = $('#toast');
@@ -169,9 +181,9 @@
     const total = inc.reduce((a, c) => a + c.students.length, 0);
     sum.innerHTML = `<span><strong>${inc.length}</strong> sınıf = <strong>${inc.length}</strong> salon</span>` +
       `<span><strong>${total}</strong> öğrenci = <strong>${total}</strong> koltuk</span>` +
-      `<span>Karta tıklayarak listeyi kontrol edin ve düzeltin.</span>`;
+      `<span>Aynı renk = aynı sınıf düzeyi. Karta tıklayarak listeyi kontrol edin ve düzeltin.</span>`;
     list.innerHTML = state.classes.map((c, i) => `
-      <button type="button" class="class-card${c.students.length ? '' : ' off'}" data-id="${esc(c.id)}" style="--h:${hueOf(i)}">
+      <button type="button" class="class-card${c.students.length ? '' : ' off'}" data-id="${esc(c.id)}" style="--h:${levelHue(c.name)}">
         <span class="sw"></span>
         <span class="nm">${esc(c.name)}</span>
         <span class="ct"><b>${c.students.length}</b> öğrenci · salon kapasitesi <b>${c.students.length}</b></span>
@@ -259,11 +271,10 @@
     $('#s-cols').value = String(s.deskCols);
     $('#s-spd').value = String(s.seatsPerDesk);
     $('#s-own').checked = !!s.avoidOwnRoom;
-    $('#s-level').checked = !!s.avoidSameLevel;
   }
   function readSettings(ev) {
     const s = state.settings;
-    const before = JSON.stringify([s.deskCols, s.seatsPerDesk, s.avoidOwnRoom, s.avoidSameLevel]);
+    const before = JSON.stringify([s.deskCols, s.seatsPerDesk, s.avoidOwnRoom]);
     s.school = $('#s-school').value.trim();
     s.exam = $('#s-exam').value.trim();
     s.date = $('#s-date').value;
@@ -271,8 +282,7 @@
     s.deskCols = parseInt($('#s-cols').value, 10) || 3;
     s.seatsPerDesk = parseInt($('#s-spd').value, 10) === 1 ? 1 : 2;
     s.avoidOwnRoom = $('#s-own').checked;
-    s.avoidSameLevel = $('#s-level').checked;
-    if (JSON.stringify([s.deskCols, s.seatsPerDesk, s.avoidOwnRoom, s.avoidSameLevel]) !== before) markStale();
+    if (JSON.stringify([s.deskCols, s.seatsPerDesk, s.avoidOwnRoom]) !== before) markStale();
     save();
     if (ev && ev.type === 'change') renderResult();
     else renderReportOnly();
@@ -287,7 +297,6 @@
         deskCols: state.settings.deskCols,
         seatsPerDesk: state.settings.seatsPerDesk,
         avoidOwnRoom: state.settings.avoidOwnRoom,
-        avoidSameLevel: state.settings.avoidSameLevel,
       });
       state.result = r;
       state.stale = false;
@@ -317,9 +326,11 @@
 
   function conflictSet(room) {
     const layout = A.seatLayout(room.seats.length, room.cols, room.spd);
+    const ci = classIndex();
+    const lv = (id) => A.levelOf(ci.get(id).c.name);
     const bad = new Set();
     for (const e of layout.edges) {
-      if ((e.kind === 'desk' || e.kind === 'side' || e.kind === 'front') && room.seats[e.a].classId === room.seats[e.b].classId) {
+      if ((e.kind === 'desk' || e.kind === 'side' || e.kind === 'front') && lv(room.seats[e.a].classId) === lv(room.seats[e.b].classId)) {
         bad.add(e.a); bad.add(e.b);
       }
     }
@@ -344,11 +355,10 @@
     const st = r.stats;
     const pill = (n, label, zeroKind, kind) => `<span class="pill ${n === 0 ? zeroKind : kind}">${label}: <b>${n}</b></span>`;
     let html = '<div class="status-grid">' +
-      pill(st.deskmate, state.settings.seatsPerDesk === 1 ? 'Yan yana aynı sınıf' : 'Aynı sırada aynı sınıf', 'ok', 'bad') +
-      pill(st.frontBack, 'Önlü-arkalı aynı sınıf', 'ok', 'warn') +
-      pill(st.aisle + st.diagonal, 'Çapraz / koridor komşusu aynı sınıf', 'ok', '') +
-      (state.settings.avoidOwnRoom ? pill(st.ownRoom, 'Kendi sınıfında sınava giren', 'ok', 'warn') : '') +
-      (state.settings.avoidSameLevel ? pill(st.sameLevelDeskmate, 'Aynı seviyeden sıra arkadaşı', 'ok', '') : '') +
+      pill(st.deskmate, state.settings.seatsPerDesk === 1 ? 'Yan yana aynı düzey' : 'Aynı sırada aynı düzey', 'ok', 'bad') +
+      pill(st.frontBack, 'Önlü-arkalı aynı düzey', 'ok', 'warn') +
+      pill(st.aisle + st.diagonal, 'Çapraz / koridor komşusu aynı düzey', 'ok', '') +
+      (state.settings.avoidOwnRoom ? pill(st.ownRoom, 'Kendi sınıfında sınava giren', 'ok', 'warn') : `<span class="pill">Kendi sınıfında oturan: <b>${st.ownRoom}</b></span>`) +
       '</div>';
     if (state.stale) html += '<div class="log-item warn">Ayarlar ya da listeler dağıtımdan sonra değişti. Güncel hali için dağıtımı yeniden yapın.</div>';
     for (const w of r.warnings || []) html += `<div class="log-item warn">${esc(w)}</div>`;
@@ -388,7 +398,7 @@
     return [...counts.entries()]
       .map(([id, n]) => ({ c: ci.get(id), n }))
       .sort((a, b) => collator.compare(a.c.c.name, b.c.c.name))
-      .map(({ c, n }) => `<span class="chip" style="--h:${hueOf(c.i)}">${esc(c.c.name)} <b>${n}</b></span>`).join('');
+      .map(({ c, n }) => `<span class="chip" style="--h:${levelHue(c.c.name)}">${esc(c.c.name)} <b>${n}</b></span>`).join('');
   }
 
   function renderPlans() {
@@ -410,7 +420,7 @@
           const stu = si.get(seat.studentId);
           const c = ci.get(seat.classId);
           const isSel = selectedSeat && selectedSeat.roomIdx === ri && selectedSeat.seatIdx === idx;
-          cells.push(`<button type="button" class="seat${bad.has(idx) ? ' conflict' : ''}${isSel ? ' sel' : ''}" style="--h:${hueOf(c.i)}" data-room="${ri}" data-seat="${idx}" title="${esc(stu.s.name)} · ${esc(c.c.name)}">
+          cells.push(`<button type="button" class="seat${bad.has(idx) ? ' conflict' : ''}${isSel ? ' sel' : ''}" style="--h:${levelHue(c.c.name)}" data-room="${ri}" data-seat="${idx}" title="${esc(stu.s.name)} · ${esc(c.c.name)}">
             <span class="no">${seat.seatNo}</span>
             <span class="who">${esc(stu.s.name)}</span>
             <span class="cls">${esc(c.c.name)}${stu.s.no ? ' · ' + esc(stu.s.no) : ''}</span>
