@@ -261,6 +261,7 @@ table.list td.sign { width: 28%; }
 .signs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; font-size: 0.88rem; padding-top: 18px; }
 .signs div { border-top: 1px solid var(--ink-soft); padding-top: 6px; color: var(--ink-soft); }
 
+.note { font-size: 0.82rem; color: var(--ink-soft); }
 .search { display: grid; gap: 12px; }
 .search input { max-width: 420px; }
 

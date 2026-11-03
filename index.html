@@ -44,6 +44,9 @@
       <div class="row-actions">
         <button type="button" class="btn ghost" id="btn-manual">Elle sınıf ekle</button>
         <button type="button" class="btn ghost" id="btn-sample">Örnek listelerle dene</button>
+        <button type="button" class="btn ghost" id="btn-backup">Yedek al</button>
+        <button type="button" class="btn ghost" id="btn-restore">Yedekten yükle</button>
+        <input type="file" id="restore-input" accept=".json,application/json" hidden>
         <span class="spacer"></span>
         <button type="button" class="btn ghost danger" id="btn-clear" hidden>Tüm sınıfları sil</button>
       </div>
@@ -109,7 +112,7 @@
       <nav class="tabs no-print" id="tabs" hidden role="tablist">
         <button type="button" role="tab" data-view="plan" aria-selected="true">Oturma planları</button>
         <button type="button" role="tab" data-view="yoklama" aria-selected="false">Salon yoklama listeleri</button>
-        <button type="button" role="tab" data-view="sinif" aria-selected="false">Sınıflara göre liste</button>
+        <button type="button" role="tab" data-view="sinif" aria-selected="false">Sınıflara göre sınav yerleri</button>
         <button type="button" role="tab" data-view="ara" aria-selected="false">Öğrenci ara</button>
       </nav>
       <div id="report"></div>
@@ -117,7 +120,7 @@
   </main>
 
   <footer class="wrap foot no-print">
-    <p>Tüm işlemler bu bilgisayarda, tarayıcınızın içinde yapılır; öğrenci listeleri hiçbir sunucuya gönderilmez. Veriler bu tarayıcıda saklanır.</p>
+    <p>Tüm işlemler bu bilgisayarda, tarayıcınızın içinde yapılır; öğrenci listeleri hiçbir sunucuya gönderilmez. Yüklenen şubeler, ayarlar ve son dağıtım bu tarayıcıda otomatik kaydedilir; her açılışta yeniden yüklemeniz gerekmez. Tarayıcı verilerini temizlerseniz ya da başka bir bilgisayara geçerseniz kaybolmaması için “Yedek al” ile dosya olarak saklayın.</p>
   </footer>
 
   <!-- Sınıf düzenleme penceresi -->

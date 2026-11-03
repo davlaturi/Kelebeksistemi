@@ -47,7 +47,7 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 
 - **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar.
 - **Salon yoklama listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
-- **Sınıflara göre liste:** Her şubenin öğrencilerinin hangi salonda sınava girdiği yazar.
+- **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrencinin hangi salonda, hangi dizide (tahtaya bakarken soldan), hangi sırada (tahtadan arkaya) ve sırada solda mı sağda mı oturacağı yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
 - **Öğrenci ara:** Ada göre arayıp öğrencinin salonunu bulabilirsiniz.
 - **Yazdır / PDF kaydet:** Her salon ayrı A4 sayfaya basılır. **Excel'e aktar (CSV)** ile tüm dağıtımı Excel'e alabilirsiniz.
 
@@ -57,7 +57,15 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 - Sınıf adı şu yerlerden okunur: sayfa başlığı ("9. Sınıf / A Şubesi"), her satırdaki "Sınıfı" sütunu ("9/A") ya da dosya adı.
 - **3. Dağıtım** adımında hangi şubelerin dağıtıma gireceğini elle seçersiniz. Tek tek şube seçebilir ya da bir düzeyin hepsini birden açıp kapatabilirsiniz. Seçilen her şube aynı zamanda salon olur.
 
-Yüklediğiniz listeler, ayarlar ve son dağıtım bu tarayıcıda saklanır. Sayfayı kapatıp açtığınızda kaldığınız yerden devam edersiniz.
+## Kayıt ve yedek
+
+Yüklediğiniz şubeler, ayarlar ve son dağıtım **otomatik olarak bu tarayıcıya kaydedilir**. Uygulamayı kapatıp açtığınızda listeleri yeniden yüklemeniz gerekmez.
+
+İki durumda bu kayıt kaybolur:
+- tarayıcı geçmişi ya da site verileri temizlenirse,
+- başka bir bilgisayar ya da başka bir tarayıcı kullanılırsa.
+
+Bu yüzden **Yedek al** düğmesiyle verileri bir `.json` dosyası olarak saklayın. Gerektiğinde **Yedekten yükle** ile geri getirebilirsiniz. Yedek dosyası öğrenci isimlerini içerir; güvenli bir yerde saklayın.
 
 ## PDF hakkında
 

@@ -162,6 +162,42 @@
   }
   function setLine(el, text, kind) { el.textContent = text; el.className = 'log-item' + (kind ? ' ' + kind : ''); }
 
+  // ---------- yedek ----------
+  function downloadFile(name, text, type) {
+    const blob = new Blob([text], { type });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function exportBackup() {
+    const d = new Date();
+    const stamp = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const data = { app: 'kelebek-sinav', rulesVersion: RULES_VERSION, savedAt: d.toISOString(), ...state };
+    downloadFile('kelebek-yedek-' + stamp + '.json', JSON.stringify(data, null, 1), 'application/json');
+    toast('Yedek dosyası indirildi. Bu dosyayı saklayın.');
+  }
+  async function importBackup(file) {
+    try {
+      const data = JSON.parse(await file.text());
+      if (data.app !== 'kelebek-sinav' || !Array.isArray(data.classes)) throw new Error('Bu dosya bir Kelebek yedeği değil.');
+      state = {
+        classes: data.classes,
+        settings: { ...DEFAULT_SETTINGS, ...(data.settings || {}) },
+        result: (data.rulesVersion || 1) >= RULES_VERSION ? data.result || null : null,
+        stale: !!data.stale,
+      };
+      selectedSeat = null;
+      save();
+      renderAll();
+      toast(state.classes.length + ' şube yedekten yüklendi.');
+    } catch (e) {
+      toast('Yedek yüklenemedi: ' + e.message);
+    }
+  }
+
   // ---------- örnek veri ----------
   function loadSample() {
     const ad = ['Ahmet', 'Ayşe', 'Mehmet', 'Zeynep', 'Mustafa', 'Elif', 'Emre', 'Merve', 'Yusuf', 'Büşra', 'Ömer', 'İrem', 'Kerem', 'Ece', 'Burak', 'Defne', 'Eren', 'Öykü', 'Çağan', 'Sude', 'Berk', 'Ilgın', 'Doğukan', 'Nazlı'];
@@ -504,31 +540,66 @@
   }
 
   function placements() {
+    const m = new Map();
+    for (const [id, p] of seatPlaces()) m.set(id, p.room);
+    return m;
+  }
+
+  /**
+   * Öğrencinin salondaki yeri. Dizi: tahtaya bakarken soldan; sıra: tahtadan
+   * geriye doğru; yer: ikili sırada sol/sağ.
+   */
+  function seatPlaces() {
     const r = state.result;
     const ci = classIndex();
-    const out = new Map(); // studentId -> salon adı
+    const out = new Map();
     for (const room of r.rooms) {
       const name = roomTitle(room, ci);
-      for (const s of room.seats) out.set(s.studentId, name);
+      const spd = room.spd || 2;
+      const cols = room.cols || 3;
+      room.seats.forEach((s, idx) => {
+        const desk = Math.floor(idx / spd);
+        const row = s.row != null ? s.row : Math.floor(desk / cols);
+        const col = s.col != null ? s.col : desk % cols;
+        const side = s.side != null ? s.side : idx % spd;
+        out.set(s.studentId, {
+          room: name,
+          dizi: col + 1,
+          sira: row + 1,
+          yer: spd === 2 ? (side === 0 ? 'Sol' : 'Sağ') : '',
+        });
+      });
     }
     return out;
   }
 
   /** Sınıflara göre liste: her şubenin öğrencileri hangi salonda. */
+  /** Sınıflara göre liste: her şubenin öğrencileri hangi salonda, hangi sırada. */
   function renderByClass() {
-    const pl = placements();
+    const pl = seatPlaces();
+    const twin = state.result.rooms.some((r) => (r.spd || 2) === 2);
     return included().map((c) => {
       const rows = c.students.slice()
         .sort((a, b) => collator.compare(a.name, b.name))
-        .map((s) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(pl.get(s.id) || '-')}</b></td></tr>`).join('');
+        .map((s) => {
+          const p = pl.get(s.id);
+          if (!p) return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td colspan="${twin ? 4 : 3}">-</td></tr>`;
+          return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p.room)}</b></td>` +
+            `<td>${p.dizi}. dizi</td><td>${p.sira}. sıra</td>${twin ? `<td>${p.yer}</td>` : ''}</tr>`;
+        }).join('');
       return `<article class="sheet" data-class="${esc(c.id)}">
-        ${sheetHead('Öğrencilerin sınav salonları', c.name + ' sınıfı öğrencileri', c.id, 'class')}
+        ${sheetHead('Sınav yerleri', c.name + ' sınıfı öğrencileri', c.id, 'class')}
         <div class="table-scroll"><table class="list">
-          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th></tr></thead>
+          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Dizi</th><th>Sıra</th>${twin ? '<th>Yer</th>' : ''}</tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
+        <p class="note">Dizi, tahtaya bakarken soldan sayılır. Sıra, tahtadan arkaya doğru sayılır.${twin ? ' Yer, sıradaki sol ya da sağ koltuktur.' : ''}</p>
       </article>`;
     }).join('');
+  }
+
+  function placeText(p) {
+    return `${p.dizi}. dizi, ${p.sira}. sıra${p.yer ? ', ' + p.yer.toLocaleLowerCase('tr-TR') : ''}`;
   }
 
   function renderSearch() {
@@ -538,19 +609,19 @@
     </div>`;
   }
   function searchRows(q) {
-    const pl = placements();
+    const pl = seatPlaces();
     const norm = (s) => String(s).toLocaleLowerCase('tr-TR');
     const nq = norm(q.trim());
     const rows = [];
     for (const c of included()) for (const s of c.students) {
       if (nq && !norm(s.name).includes(nq)) continue;
-      rows.push({ s, c, room: pl.get(s.id) });
+      rows.push({ s, c, p: pl.get(s.id) });
     }
     rows.sort((a, b) => collator.compare(a.s.name, b.s.name));
     if (!rows.length) return '<p class="hint">Eşleşen öğrenci yok.</p>';
     return `<div class="table-scroll"><table class="list">
-      <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th></tr></thead>
-      <tbody>${rows.slice(0, 300).map(({ s, c, room }) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(room || '-')}</b></td></tr>`).join('')}</tbody>
+      <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Yeri</th></tr></thead>
+      <tbody>${rows.slice(0, 300).map(({ s, c, p }) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p ? p.room : '-')}</b></td><td>${p ? placeText(p) : '-'}</td></tr>`).join('')}</tbody>
     </table></div>${rows.length > 300 ? '<p class="hint">İlk 300 sonuç gösteriliyor; aramayı daraltın.</p>' : ''}`;
   }
 
@@ -573,9 +644,13 @@
   function exportCsv() {
     const ci = classIndex();
     const si = studentIndex();
-    const lines = [['Sınav salonu', 'Adı soyadı', 'Sınıfı']];
-    for (const room of state.result.rooms) {
-      for (const s of room.seats) lines.push([roomTitle(room, ci), si.get(s.studentId).s.name, ci.get(s.classId).c.name]);
+    const pl = seatPlaces();
+    const lines = [['Sınıfı', 'Adı soyadı', 'Sınav salonu', 'Dizi', 'Sıra', 'Yer']];
+    for (const c of included()) {
+      for (const s of c.students.slice().sort((a, b) => collator.compare(a.name, b.name))) {
+        const p = pl.get(s.id);
+        if (p) lines.push([c.name, s.name, p.room, p.dizi, p.sira, p.yer]);
+      }
     }
     const csv = '﻿' + lines.map((l) => l.map((v) => {
       const t = String(v == null ? '' : v);
@@ -622,6 +697,10 @@
     window.addEventListener('drop', (e) => e.preventDefault());
 
     $('#btn-sample').addEventListener('click', loadSample);
+    $('#btn-backup').addEventListener('click', exportBackup);
+    const rin = $('#restore-input');
+    rin.addEventListener('change', () => { if (rin.files[0]) importBackup(rin.files[0]); rin.value = ''; });
+    $('#btn-restore').addEventListener('click', () => rin.click());
     $('#btn-manual').addEventListener('click', () => openEditor(null));
     $('#btn-clear').addEventListener('click', (e) => {
       const b = e.currentTarget;
