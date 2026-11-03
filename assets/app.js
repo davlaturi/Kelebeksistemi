@@ -14,7 +14,7 @@
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '',
-    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class',
+    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'lr',
   };
   let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false, archive: [] };
   let view = 'plan';
@@ -448,6 +448,7 @@
     $('#s-time').value = s.time;
     $('#s-cols').value = String(s.deskCols);
     $('#s-spd').value = String(s.seatsPerDesk);
+    $('#s-sides').value = s.sideNames || 'lr';
     $('#s-own').checked = !!s.avoidOwnRoom;
   }
   function readSettings(ev) {
@@ -459,6 +460,7 @@
     s.time = $('#s-time').value;
     s.deskCols = parseInt($('#s-cols').value, 10) || 3;
     s.seatsPerDesk = parseInt($('#s-spd').value, 10) === 1 ? 1 : 2;
+    s.sideNames = $('#s-sides').value || 'lr';
     s.avoidOwnRoom = $('#s-own').checked;
     if (JSON.stringify([s.deskCols, s.seatsPerDesk, s.avoidOwnRoom]) !== before) markStale();
     save();
@@ -614,12 +616,20 @@
         }
         desks.push(`<div class="desk${spd === 2 ? ' spd2' : ''}">${cells.join('')}</div>`);
       }
+      // Sıra grubu başlıkları ve önden sıra numaraları
+      const names = groupNames(room.cols);
+      const gridCells = ['<span class="plan-corner"></span>'].concat(names.map((n) => `<span class="col-label">${esc(n)}</span>`));
+      const rowsN = Math.ceil(desks.length / room.cols);
+      for (let rr = 0; rr < rowsN; rr++) {
+        gridCells.push(`<span class="row-label">${rr + 1}. sıra</span>`);
+        for (let cc = 0; cc < room.cols; cc++) gridCells.push(desks[rr * room.cols + cc] || '<span></span>');
+      }
       return `<article class="sheet" data-room="${ri}">
         ${sheetHead('Sınav salonu · oturma planı', roomTitle(room, ci) + ' sınıfı', ri, 'room')}
         ${roomCountsLine(room)}
         <div class="plan-scroll">
           <div class="board">Yazı tahtası · öğretmen masası</div>
-          <div class="desks" style="grid-template-columns:repeat(${room.cols}, minmax(0,1fr))">${desks.join('')}</div>
+          <div class="desks" style="grid-template-columns:auto repeat(${room.cols}, minmax(0,1fr))">${gridCells.join('')}</div>
         </div>
       </article>`;
     }).join('');
@@ -745,9 +755,30 @@
     return m;
   }
 
+  // ---------- sıra grubu adları ----------
   /**
-   * Öğrencinin salondaki yeri. Dizi: tahtaya bakarken soldan; sıra: tahtadan
-   * geriye doğru; yer: ikili sırada sol/sağ.
+   * Yan yana duran sıra gruplarının adı (tahtaya bakarken soldan sağa).
+   * sideNames: 'lr' = Sol/Orta/Sağ, 'doorL' = kapı solda, 'doorR' = kapı sağda.
+   */
+  function groupNames(cols, mode) {
+    mode = mode || state.settings.sideNames || 'lr';
+    const T = {
+      lr: { 1: ['Orta'], 2: ['Sol', 'Sağ'], 3: ['Sol', 'Orta', 'Sağ'], 4: ['Sol', 'Orta sol', 'Orta sağ', 'Sağ'] },
+      doorL: { 1: ['Orta'], 2: ['Kapı tarafı', 'Pencere tarafı'], 3: ['Kapı tarafı', 'Orta', 'Pencere tarafı'], 4: ['Kapı tarafı', 'Orta (kapıya yakın)', 'Orta (pencereye yakın)', 'Pencere tarafı'] },
+      doorR: { 1: ['Orta'], 2: ['Pencere tarafı', 'Kapı tarafı'], 3: ['Pencere tarafı', 'Orta', 'Kapı tarafı'], 4: ['Pencere tarafı', 'Orta (pencereye yakın)', 'Orta (kapıya yakın)', 'Kapı tarafı'] },
+    };
+    return (T[mode] || T.lr)[cols] || Array.from({ length: cols }, (_, i) => (i + 1) + '. grup');
+  }
+  function seatSideName(side, mode) {
+    mode = mode || state.settings.sideNames || 'lr';
+    if (mode === 'lr') return side === 0 ? 'Sol koltuk' : 'Sağ koltuk';
+    const leftDoor = mode === 'doorL';
+    return (side === 0) === leftDoor ? 'Kapı tarafı koltuk' : 'Pencere tarafı koltuk';
+  }
+
+  /**
+   * Öğrencinin salondaki yeri: sıra grubu (tahtaya bakarken soldan sağa),
+   * önden kaçıncı sıra ve ikili sırada hangi koltuk.
    */
   function seatPlaces() {
     const r = state.result;
@@ -757,6 +788,8 @@
       const name = roomTitle(room, ci);
       const spd = room.spd || 2;
       const cols = room.cols || 3;
+      const names = groupNames(cols);
+      const rows = Math.ceil(Math.ceil(room.seats.length / spd) / cols);
       room.seats.forEach((s, idx) => {
         if (s.empty) return;
         const desk = Math.floor(idx / spd);
@@ -764,17 +797,37 @@
         const col = s.col != null ? s.col : desk % cols;
         const side = s.side != null ? s.side : idx % spd;
         out.set(s.studentId, {
-          room: name,
-          dizi: col + 1,
-          sira: row + 1,
-          yer: spd === 2 ? (side === 0 ? 'Sol' : 'Sağ') : '',
+          room: name, room0: room,
+          col, row, side, cols, rows, spd,
+          group: names[col],
+          rowNo: row + 1,
+          seat: spd === 2 ? seatSideName(side) : '',
         });
       });
     }
     return out;
   }
 
-  /** Sınıflara göre liste: her şubenin öğrencileri hangi salonda. */
+  /** Salonun küçük krokisi; öğrencinin koltuğu işaretli. */
+  function miniMap(p) {
+    const room = p.room0;
+    const nDesks = Math.ceil(room.seats.length / p.spd);
+    let cells = '';
+    for (let r = 0; r < p.rows; r++) {
+      for (let c = 0; c < p.cols; c++) {
+        const d = r * p.cols + c;
+        if (d >= nDesks) { cells += '<i class="mm-desk mm-none"></i>'; continue; }
+        let inner = '';
+        for (let k = 0; k < p.spd; k++) {
+          const exists = d * p.spd + k < room.seats.length;
+          inner += `<b class="${!exists ? 'mm-x' : (r === p.row && c === p.col && k === p.side) ? 'mm-me' : ''}"></b>`;
+        }
+        cells += `<i class="mm-desk${r === p.row && c === p.col ? ' mm-on' : ''}">${inner}</i>`;
+      }
+    }
+    return `<span class="mm" role="img" aria-label="${esc(placeText(p))}"><span class="mm-board"></span><span class="mm-grid" style="grid-template-columns:repeat(${p.cols},auto)">${cells}</span></span>`;
+  }
+
   /** Sınıflara göre liste: her şubenin öğrencileri hangi salonda, hangi sırada. */
   function renderByClass() {
     const pl = seatPlaces();
@@ -784,23 +837,29 @@
         .sort((a, b) => collator.compare(a.name, b.name))
         .map((s) => {
           const p = pl.get(s.id);
-          if (!p) return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td colspan="${twin ? 4 : 3}">-</td></tr>`;
+          if (!p) return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td colspan="${twin ? 5 : 4}">-</td></tr>`;
           return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p.room)}</b></td>` +
-            `<td>${p.dizi}. dizi</td><td>${p.sira}. sıra</td>${twin ? `<td>${p.yer}</td>` : ''}</tr>`;
+            `<td>${esc(p.group)}</td><td>Önden ${p.rowNo}. sıra</td>${twin ? `<td>${esc(p.seat)}</td>` : ''}<td class="mm-cell">${miniMap(p)}</td></tr>`;
         }).join('');
       return `<article class="sheet" data-class="${esc(c.id)}">
         ${sheetHead('Sınav yerleri', c.name + ' sınıfı öğrencileri', c.id, 'class')}
         <div class="table-scroll"><table class="list">
-          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Dizi</th><th>Sıra</th>${twin ? '<th>Yer</th>' : ''}</tr></thead>
+          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Sıra grubu</th><th>Sıra</th>${twin ? '<th>Koltuk</th>' : ''}<th>Yeri</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
-        <p class="note">Dizi, tahtaya bakarken soldan sayılır. Sıra, tahtadan arkaya doğru sayılır.${twin ? ' Yer, sıradaki sol ya da sağ koltuktur.' : ''}</p>
+        <p class="note">${placeLegend()} Krokide üstteki çizgi tahtadır; öğrencinin koltuğu koyu renkle işaretlidir.</p>
       </article>`;
     }).join('');
   }
 
   function placeText(p) {
-    return `${p.dizi}. dizi, ${p.sira}. sıra${p.yer ? ', ' + p.yer.toLocaleLowerCase('tr-TR') : ''}`;
+    return `Sıra grubu: ${p.group} · önden ${p.rowNo}. sıra${p.seat ? ' · ' + p.seat.toLocaleLowerCase('tr-TR') : ''}`;
+  }
+  function placeLegend() {
+    const m = state.settings.sideNames || 'lr';
+    return m === 'lr'
+      ? 'Sıra grubu ve koltuk, öğrenci tahtaya bakarken sol ya da sağ olarak yazılmıştır.'
+      : 'Sıra grubu ve koltuk, kapı ve pencereye göre yazılmıştır.';
   }
 
   function renderSearch() {
@@ -821,8 +880,8 @@
     rows.sort((a, b) => collator.compare(a.s.name, b.s.name));
     if (!rows.length) return '<p class="hint">Eşleşen öğrenci yok.</p>';
     return `<div class="table-scroll"><table class="list">
-      <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Yeri</th></tr></thead>
-      <tbody>${rows.slice(0, 300).map(({ s, c, p }) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p ? p.room : '-')}</b></td><td>${p ? placeText(p) : '-'}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Yeri</th><th></th></tr></thead>
+      <tbody>${rows.slice(0, 300).map(({ s, c, p }) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p ? p.room : '-')}</b></td><td>${p ? esc(placeText(p)) : '-'}</td><td class="mm-cell">${p ? miniMap(p) : ''}</td></tr>`).join('')}</tbody>
     </table></div>${rows.length > 300 ? '<p class="hint">İlk 300 sonuç gösteriliyor; aramayı daraltın.</p>' : ''}`;
   }
 
@@ -847,11 +906,11 @@
     const ci = classIndex();
     const si = studentIndex();
     const pl = seatPlaces();
-    const lines = [['Sınıfı', 'Adı soyadı', 'Sınav salonu', 'Dizi', 'Sıra', 'Yer']];
+    const lines = [['Sınıfı', 'Adı soyadı', 'Sınav salonu', 'Sıra grubu', 'Sıra (önden)', 'Koltuk']];
     for (const c of included()) {
       for (const s of c.students.slice().sort((a, b) => collator.compare(a.name, b.name))) {
         const p = pl.get(s.id);
-        if (p) lines.push([c.name, s.name, p.room, p.dizi, p.sira, p.yer]);
+        if (p) lines.push([c.name, s.name, p.room, p.group, p.rowNo, p.seat]);
       }
     }
     const csv = '﻿' + lines.map((l) => l.map((v) => {
@@ -915,7 +974,7 @@
     const entry = {
       id: uid('a'),
       exam: st.exam, date: st.date, time: st.time || '', school: st.school || '',
-      settings: { school: st.school, exam: st.exam, date: st.date, time: st.time, deskCols: st.deskCols, seatsPerDesk: st.seatsPerDesk, avoidOwnRoom: st.avoidOwnRoom },
+      settings: { school: st.school, exam: st.exam, date: st.date, time: st.time, deskCols: st.deskCols, seatsPerDesk: st.seatsPerDesk, avoidOwnRoom: st.avoidOwnRoom, sideNames: st.sideNames },
       classes,
       result: JSON.parse(JSON.stringify(state.result)),
       savedAt: new Date().toISOString(),

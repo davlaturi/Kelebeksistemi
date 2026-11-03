@@ -6,13 +6,23 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.7.0)
+## Bu sürümde (v1.8.0)
+
+- **"Dizi" yerine "sıra grubu".** Yan yana duran sıra grupları adıyla yazılıyor. 2. adımda şu üç seçenekten birini seçebilirsiniz:
+  - Sol – Orta – Sağ
+  - Kapı tarafı – Orta – Pencere tarafı
+  - Pencere tarafı – Orta – Kapı tarafı
+- **Sıra ve koltuk da açık yazılıyor.** Örnek: "Pencere tarafı · önden 3. sıra · kapı tarafı koltuk".
+- **Mini kroki.** Sınıflara göre listede ve aramada her öğrencinin yanında salonun küçük bir krokisi var; öğrencinin koltuğu işaretli.
+- **Planda etiketler.** Oturma planında grup adları sütunların üstünde, sıra numaraları da solda yazıyor.
+
+## Önceki sürümde (v1.7.0)
 
 - **Sınav kâğıdı dağıtımı.** Yeni bir sayfada her salona hangi düzeyden ve hangi şubeden kaç kâğıt gideceği yazıyor. Satır ve sütun toplamları da var. Sayfada salon zarflarına yapıştırılacak etiketler de bulunuyor.
 - **Salon özeti.** Her oturma planının ve yoklama listesinin üstünde o salondaki öğrencilerin düzey ve şubelere göre dağılımı görünüyor.
 - **Kayıtlı sınavlarda da var.** Bu bilgiler kayıtlı sınavlarda da açılıp yazdırılabiliyor.
 
-## Önceki sürümde (v1.6.0)
+## Daha önce (v1.6.0)
 
 - **Yan panel.** Menüler soldaki panelde. Panelde dört adım var: Sınıf listeleri, Sınav bilgileri, Dağıtım, Kayıtlı sınavlar. Dağıtım çıktıları (oturma planları, yoklama listeleri, sınıflara göre sınav yerleri, öğrenci arama) ve yedek düğmeleri de burada. Sağda her seferinde tek bir bölüm görünür; telefonda menü üstte durur.
 
@@ -34,7 +44,7 @@ Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkm
 
 ## Daha önce (v1.2.0)
 
-- **Sınıflara göre sınav yerleri listesi.** Her şube için ayrı bir sayfa hazırlanıyor. Her öğrencinin salonu, dizisi, sırası ve sırada sol mu sağ mı oturacağı yazıyor. Sayfalar yazdırılabiliyor ve Excel'e aktarılabiliyor.
+- **Sınıflara göre sınav yerleri listesi.** Her şube için ayrı bir sayfa hazırlanıyor. Her öğrencinin salonu, sıra grubu, sırası ve koltuğu yazıyor. Sayfalar yazdırılabiliyor ve Excel'e aktarılabiliyor.
 - **Yedek al / Yedekten yükle.** Veriler zaten tarayıcıya otomatik kaydediliyor. Artık bir dosyaya yedeklenip başka bir bilgisayara da taşınabiliyor.
 
 ## Daha önce (v1.1.0)

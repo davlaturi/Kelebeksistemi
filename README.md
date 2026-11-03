@@ -50,7 +50,7 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 
 - **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar.
 - **Salon yoklama listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
-- **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrencinin hangi salonda, hangi dizide (tahtaya bakarken soldan), hangi sırada (tahtadan arkaya) ve sırada solda mı sağda mı oturacağı yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
+- **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrenci için şunlar yazar: hangi salonda, hangi **sıra grubunda** (Sol / Orta / Sağ ya da Kapı tarafı / Orta / Pencere tarafı), **önden kaçıncı sırada** ve sıranın hangi koltuğunda oturacağı. Yanında salonun küçük bir krokisi vardır; öğrencinin koltuğu bu krokide işaretlidir. Sıra gruplarının adını 2. Sınav bilgileri adımında seçersiniz. Oturma planında da grup adları sütunların üstünde, sıra numaraları da solda yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
 - **Sınav kâğıdı dağıtımı:** Kâğıtları kolayca dağıtmak için hazırlanmış bir sayfa. İçinde şunlar var:
   - Her salona hangi sınıf düzeyinden kaç kâğıt gideceğini gösteren tablo.
   - Hangi şubeden kaç öğrenci olduğunu gösteren ayrıntılı tablo. Satır ve sütun toplamları da yazar.
