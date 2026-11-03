@@ -1,11 +1,21 @@
-# "v" ile başlayan bir etiket (ör. v1.0.0) gönderildiğinde testleri çalıştırır,
-# PC'de çift tıklayarak açılacak ZIP paketini hazırlar ve GitHub Release oluşturur.
+# Testleri çalıştırır, PC'de çift tıklayarak açılacak ZIP paketini hazırlar ve
+# GitHub Release oluşturur. Actions sekmesinden "Run workflow" ile ya da bir
+# "v*" etiketi gönderilerek çalıştırılır.
 name: Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Sürüm etiketi (ör. v1.0.0)"
+        required: true
+        default: "v1.0.0"
   push:
     tags:
       - "v*"
+
+env:
+  VERSION: ${{ inputs.version || github.ref_name }}
 
 permissions:
   contents: write
@@ -25,7 +35,7 @@ jobs:
 
       - name: ZIP paketi
         run: |
-          NAME="Kelebek-Sinav-Dagitimi-${GITHUB_REF_NAME}"
+          NAME="Kelebek-Sinav-Dagitimi-${VERSION}"
           mkdir -p "dist/$NAME"
           cp -r index.html assets vendor ornekler README.md "dist/$NAME/"
           cat > "dist/$NAME/BENI OKU.txt" <<'EOF'
@@ -47,6 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "$ZIP" \
-            --title "Kelebek Sınav Dağıtımı $GITHUB_REF_NAME" \
+          gh release create "$VERSION" "$ZIP" \
+            --target "$GITHUB_SHA" \
+            --title "Kelebek Sınav Dağıtımı $VERSION" \
             --notes-file .github/RELEASE_NOTES.md
