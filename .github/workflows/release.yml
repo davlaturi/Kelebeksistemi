@@ -1,0 +1,52 @@
+# "v" ile başlayan bir etiket (ör. v1.0.0) gönderildiğinde testleri çalıştırır,
+# PC'de çift tıklayarak açılacak ZIP paketini hazırlar ve GitHub Release oluşturur.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Testler
+        run: npm test
+
+      - name: ZIP paketi
+        run: |
+          NAME="Kelebek-Sinav-Dagitimi-${GITHUB_REF_NAME}"
+          mkdir -p "dist/$NAME"
+          cp -r index.html assets vendor ornekler README.md "dist/$NAME/"
+          cat > "dist/$NAME/BENI OKU.txt" <<'EOF'
+          KELEBEK SINAV DAĞITIMI
+
+          1. Bu ZIP dosyasına sağ tıklayıp "Tümünü ayıkla" deyin.
+          2. Çıkan klasördeki index.html dosyasını çift tıklayın.
+             Chrome, Edge ya da Firefox'ta açılır. İnternet gerekmez.
+          3. Sınıf listesi PDF'lerini sürükleyip bırakın, "Kelebek dağıtımını yap"a basın.
+
+          Denemek için "ornekler" klasöründeki PDF'leri kullanabilirsiniz (isimler hayalidir).
+          Ayrıntılı bilgi: README.md
+          EOF
+          sed -i 's/^          //' "dist/$NAME/BENI OKU.txt"
+          (cd dist && zip -qr "$NAME.zip" "$NAME")
+          echo "ZIP=dist/$NAME.zip" >> "$GITHUB_ENV"
+
+      - name: Release oluştur
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$ZIP" \
+            --title "Kelebek Sınav Dağıtımı $GITHUB_REF_NAME" \
+            --notes-file .github/RELEASE_NOTES.md
