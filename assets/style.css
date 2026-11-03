@@ -256,6 +256,15 @@ main.wrap { display: grid; gap: 22px; padding-block: 24px 8px; }
 .seat.vacant .who { font-weight: 400; font-style: italic; }
 @media (max-width: 560px) { .cap-row { grid-template-columns: 1fr; } }
 
+/* Sınav evrakı */
+.pack-out { display: none; }
+.pack-form { display: grid; grid-template-rows: auto 1fr auto; max-height: calc(100vh - 32px); }
+.pack-list { display: grid; gap: 8px; }
+.pack-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.pack-item:has(input:checked) { border-color: var(--accent); }
+.pack-item .pill { padding: 1px 8px; font-size: 0.78rem; margin-left: 4px; }
+.editor-head h3 .hint { display: block; font: 400 0.88rem/1.3 var(--f-body); margin-top: 2px; }
+
 /* Kayıtlı sınavlar */
 .masthead-text { flex: 1 1 auto; min-width: 0; }
 #btn-archive-top { flex: none; align-self: center; }
@@ -471,6 +480,8 @@ table.matrix tbody tr:nth-child(even) { background: var(--paper); }
   .sheet:last-child { break-after: auto; page-break-after: auto; }
   body.print-one .sheet:not(.print-target) { display: none; }
   body.print-archive #report { display: none !important; }
+  body.print-pack .shell, body.print-pack dialog { display: none !important; }
+  body.print-pack .pack-out { display: block !important; }
   body:not(.print-archive) #arsiv { display: none !important; }
   .arch-report { display: block; }
   .plan-scroll { overflow: visible; }
@@ -483,8 +494,20 @@ table.matrix tbody tr:nth-child(even) { background: var(--paper); }
   .seat .cls { font-size: 8pt; }
   .seat.sel { outline: 0; }
   .seat.conflict::after { display: none; }
-  table.list { font-size: 9.5pt; }
-  table.list th, table.list td { padding: 3.5px 6px; border-bottom-color: #bbb; }
+  table.list { font-size: 9pt; }
+  table.list th, table.list td { padding: 2px 6px; border-bottom-color: #bbb; line-height: 1.25; }
+  .sheet-head { padding-bottom: 6px; }
+  .sheet-title { font-size: 15pt; }
+  .counts-line { gap: 3px 6px; }
+  .counts-line .chip { padding: 0 6px; }
+  .signs { padding-top: 10px; gap: 12px; }
+  .note { font-size: 7.5pt; }
+  td.mm-cell { padding-top: 1px !important; padding-bottom: 1px !important; }
+  .mm { gap: 1px; }
+  .mm-grid { gap: 1px 3px; }
+  .mm-desk { padding: 0; }
+  .mm-desk b { width: 5px; height: 2.5px; }
+  .mm-board { height: 2px; }
   tr { break-inside: avoid; }
   .search { display: none; }
   .env-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }

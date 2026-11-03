@@ -6,7 +6,13 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.8.0)
+## Bu sürümde (v1.9.0)
+
+- **Sınav evrakını yazdır.** Tek düğmeyle o oturumun tüm evrakı sırayla basılıyor: oturma planları, öğrenci imza listeleri, sınıflara göre sınav yerleri, kâğıt dağıtım tablosu ve zarf etiketleri. İstemediğiniz evrakı çıkarabilirsiniz. "PDF olarak kaydet" ile hepsi tek dosya oluyor. Kayıtlı sınavlarda da kullanılabiliyor.
+- **Ad değişikliği.** "Salon yoklama listeleri" artık "Öğrenci imza listeleri" adıyla görünüyor.
+- **Sığdırma.** İmza ve yer listeleri yazdırıldığında tek sayfaya sığacak şekilde sıkıştırıldı.
+
+## Önceki sürümde (v1.8.0)
 
 - **"Dizi" yerine "sıra grubu".** Yan yana duran sıra grupları adıyla yazılıyor. 2. adımda şu üç seçenekten birini seçebilirsiniz:
   - Sol – Orta – Sağ
@@ -16,7 +22,7 @@ Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkm
 - **Mini kroki.** Sınıflara göre listede ve aramada her öğrencinin yanında salonun küçük bir krokisi var; öğrencinin koltuğu işaretli.
 - **Planda etiketler.** Oturma planında grup adları sütunların üstünde, sıra numaraları da solda yazıyor.
 
-## Önceki sürümde (v1.7.0)
+## Daha önce (v1.7.0)
 
 - **Sınav kâğıdı dağıtımı.** Yeni bir sayfada her salona hangi düzeyden ve hangi şubeden kaç kâğıt gideceği yazıyor. Satır ve sütun toplamları da var. Sayfada salon zarflarına yapıştırılacak etiketler de bulunuyor.
 - **Salon özeti.** Her oturma planının ve yoklama listesinin üstünde o salondaki öğrencilerin düzey ve şubelere göre dağılımı görünüyor.

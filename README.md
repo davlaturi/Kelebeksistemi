@@ -49,7 +49,7 @@ Dağıtımdan sonra her kuralın kaç kez ihlal edildiği ekranda gösterilir. P
 Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sınıfı** yazar. Numara, cinsiyet ya da sıra no yazmaz.
 
 - **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar.
-- **Salon yoklama listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
+- **Öğrenci imza listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
 - **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrenci için şunlar yazar: hangi salonda, hangi **sıra grubunda** (Sol / Orta / Sağ ya da Kapı tarafı / Orta / Pencere tarafı), **önden kaçıncı sırada** ve sıranın hangi koltuğunda oturacağı. Yanında salonun küçük bir krokisi vardır; öğrencinin koltuğu bu krokide işaretlidir. Sıra gruplarının adını 2. Sınav bilgileri adımında seçersiniz. Oturma planında da grup adları sütunların üstünde, sıra numaraları da solda yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
 - **Sınav kâğıdı dağıtımı:** Kâğıtları kolayca dağıtmak için hazırlanmış bir sayfa. İçinde şunlar var:
   - Her salona hangi sınıf düzeyinden kaç kâğıt gideceğini gösteren tablo.
@@ -79,6 +79,20 @@ Varsayılan kural geçerlidir: her şube salonuna, o şubenin mevcudu kadar öğ
 - 0 yazdığınız sınıf salon olarak kullanılmaz; o şubenin öğrencileri yine başka salonlara dağıtılır.
 - Koltuk sayısı öğrenci sayısından fazlaysa salonlar orantılı dolar. Boş koltuklar aynı düzeydeki öğrencileri ayırmak için kullanılır ve planda "Boş" görünür.
 - Koltuk yetmezse uygulama dağıtımı başlatmaz ve kaç öğrenci için yer eksik olduğunu söyler.
+
+## Sınav evrakını tek seferde yazdırma
+
+Dağıtımdan sonra **Sınav evrakını yazdır** düğmesine basın. Açılan pencerede o oturumun tüm evrakı seçili gelir. Her birinin yanında kaç sayfa tutacağı yazar:
+
+1. Oturma planları: her salon için 1 sayfa
+2. Öğrenci imza listeleri: her salon için 1 sayfa
+3. Sınıflara göre sınav yerleri: her şube için 1 sayfa
+4. Kâğıt dağıtım tablosu
+5. Zarf etiketleri
+
+İstemediklerinizin işaretini kaldırıp **Yazdır**'a basın. Seçtikleriniz bu sırayla, her biri yeni sayfadan başlayarak tek seferde basılır. Yazıcı penceresinde "PDF olarak kaydet"i seçerseniz tüm evrak tek bir PDF dosyası olur. Uygulama seçiminizi hatırlar. Aynı düğme **Kayıtlı sınavlar**'da açtığınız her sınavda da vardır.
+
+Tek bir bölümü yazdırmak için **Bu bölümü yazdır**, tek bir sayfa için de o sayfanın **Yazdır** düğmesini kullanın.
 
 ## Kayıtlı sınavlar (haftalık / iki haftalık program)
 

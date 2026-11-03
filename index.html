@@ -27,7 +27,7 @@
         <button type="button" class="nav-item" data-go="dagitim"><span class="nav-no">3</span><span class="nav-label">Dağıtım</span><span class="badge ok" id="nav-result"></span></button>
           <nav class="side-tabs" id="tabs" hidden role="tablist" aria-label="Dağıtım çıktıları">
             <button type="button" role="tab" data-view="plan" aria-selected="true">Oturma planları</button>
-            <button type="button" role="tab" data-view="yoklama" aria-selected="false">Salon yoklama listeleri</button>
+            <button type="button" role="tab" data-view="yoklama" aria-selected="false">Öğrenci imza listeleri</button>
             <button type="button" role="tab" data-view="sinif" aria-selected="false">Sınıflara göre sınav yerleri</button>
             <button type="button" role="tab" data-view="evrak" aria-selected="false">Sınav kâğıdı dağıtımı</button>
             <button type="button" role="tab" data-view="ara" aria-selected="false">Öğrenci ara</button>
@@ -133,7 +133,8 @@
         <button type="button" class="btn primary" id="btn-run">Kelebek dağıtımını yap</button>
         <span class="spacer"></span>
         <button type="button" class="btn" id="btn-save" hidden>Bu dağıtımı kaydet</button>
-        <button type="button" class="btn" id="btn-print" hidden>Yazdır / PDF kaydet</button>
+        <button type="button" class="btn primary" id="btn-pack" hidden>Sınav evrakını yazdır</button>
+        <button type="button" class="btn" id="btn-print" hidden>Bu bölümü yazdır</button>
         <button type="button" class="btn" id="btn-csv" hidden>Excel'e aktar (CSV)</button>
       </div>
       <div id="result-status" class="no-print"></div>
@@ -206,6 +207,28 @@
       </footer>
     </form>
   </dialog>
+
+  <!-- Sınav evrakı penceresi -->
+  <dialog id="pack-dlg" class="editor pack-dlg">
+    <div class="pack-form">
+      <header class="editor-head">
+        <h3>Sınav evrakını yazdır <span class="hint" id="pack-title"></span></h3>
+        <button type="button" class="icon-btn" id="pack-x" aria-label="Kapat">×</button>
+      </header>
+      <div class="editor-body">
+        <p class="hint">Seçtiğiniz evraklar bu sırayla, her biri yeni sayfadan başlayarak tek seferde yazdırılır. Yazıcı penceresinde “PDF olarak kaydet”i seçerek tek bir PDF dosyası da alabilirsiniz.</p>
+        <div id="pack-list" class="pack-list"></div>
+      </div>
+      <footer class="editor-foot">
+        <span class="hint" id="pack-total"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost" id="pack-cancel">Vazgeç</button>
+        <button type="button" class="btn primary" id="pack-go">Yazdır</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <div id="print-pack" class="pack-out"></div>
 
   <div id="toast" class="toast no-print" role="status" aria-live="polite" hidden></div>
 

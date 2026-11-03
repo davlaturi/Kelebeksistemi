@@ -514,6 +514,7 @@
     const r = state.result;
     const has = !!r && resultValid();
     $('#btn-print').hidden = !has;
+    $('#btn-pack').hidden = !has;
     $('#btn-csv').hidden = !has;
     $('#btn-save').hidden = !has;
     $('#tabs').hidden = !has;
@@ -668,7 +669,7 @@
   }
 
   /** Tüm salonlar için kâğıt dağıtım tablosu ve salon zarfı etiketleri. */
-  function renderPapers() {
+  function renderPapers(part) {
     const r = state.result;
     const ci = classIndex();
     const rooms = r.rooms.map((room, ri) => ({ room, ri, rc: roomCounts(room), title: roomTitle(room, ci) }));
@@ -712,19 +713,95 @@
         </tbody><tfoot><tr><td>Toplam</td><td class="num">${x.rc.total}</td></tr></tfoot></table>
       </div>`).join('');
 
-    return `<article class="sheet" data-papers="1">
+    const tableSheet = `<article class="sheet" data-papers="1">
         ${sheetHead('Sınav kâğıdı dağıtımı', 'Salonlara göre kâğıt sayıları', 'all', 'papers')}
         <h3 class="sub-h">Sınıf düzeyine göre</h3>
         <p class="note">Her salona hangi düzeyden kaç sınav kâğıdı gideceğini gösterir.</p>
         ${levelTable}
         <h3 class="sub-h">Şubelere göre</h3>
         ${classTable}
-      </article>
-      <article class="sheet" data-papers="2">
+      </article>`;
+    const labelSheet = `<article class="sheet" data-papers="2">
         ${sheetHead('Sınav kâğıdı dağıtımı', 'Salon zarfı etiketleri', 'all2', 'papers')}
         <p class="note">Her salonun kâğıt zarfına yapıştırabilirsiniz.</p>
         <div class="env-grid">${labels}</div>
       </article>`;
+    if (part === 'table') return tableSheet;
+    if (part === 'labels') return labelSheet;
+    return tableSheet + labelSheet;
+  }
+
+  // ---------- sınav evrakı (tek seferde yazdırma) ----------
+  const PACK_PARTS = [
+    { key: 'plan', label: 'Oturma planları', hint: 'Her salon için 1 sayfa; salon kapısına asılır.' },
+    { key: 'imza', label: 'Öğrenci imza listeleri', hint: 'Her salon için 1 sayfa; gözetmen öğrencilere imzalatır.' },
+    { key: 'yer', label: 'Sınıflara göre sınav yerleri', hint: 'Her şube için 1 sayfa; öğrenciler yerini buradan öğrenir.' },
+    { key: 'tablo', label: 'Kâğıt dağıtım tablosu', hint: 'Hangi salona hangi düzeyden ve şubeden kaç kâğıt gideceği.' },
+    { key: 'zarf', label: 'Zarf etiketleri', hint: 'Her salonun kâğıt zarfına yapıştırılır.' },
+  ];
+  let packEntry = null; // null = çalışma alanındaki dağıtım; yoksa kayıtlı sınav
+  function packChoice() {
+    let c = null;
+    try { c = JSON.parse(localStorage.getItem(STORE_KEY + '.pack') || 'null'); } catch (e) { c = null; }
+    const out = {};
+    for (const p of PACK_PARTS) out[p.key] = !c || c[p.key] !== false;
+    return out;
+  }
+  function buildPack(choice) {
+    const parts = [];
+    if (choice.plan) parts.push(renderPlans());
+    if (choice.imza) parts.push(renderRoll());
+    if (choice.yer) parts.push(renderByClass());
+    if (choice.tablo) parts.push(renderPapers('table'));
+    if (choice.zarf) parts.push(renderPapers('labels'));
+    return parts.join('');
+  }
+  function packCounts() {
+    const r = state.result;
+    const rooms = r.rooms.length;
+    const used = new Set();
+    for (const rm of r.rooms) for (const x of rm.seats) if (x.classId) used.add(x.classId);
+    return { plan: rooms, imza: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)) };
+  }
+  function openPack(entry) {
+    packEntry = entry || null;
+    const run = (fn) => (packEntry ? withEntry(packEntry, fn) : fn());
+    const counts = run(packCounts);
+    const title = packEntry ? packEntry.exam : (state.settings.exam || 'Bu dağıtım');
+    const ch = packChoice();
+    $('#pack-title').textContent = title;
+    $('#pack-list').innerHTML = PACK_PARTS.map((p) => `
+      <label class="check pack-item"><input type="checkbox" data-pack="${p.key}" ${ch[p.key] ? 'checked' : ''}>
+        <span><b>${p.label}</b> <span class="pill">${counts[p.key]} sayfa</span><br><span class="hint">${p.hint}</span></span></label>`).join('');
+    updatePackTotal(counts);
+    const dlg = $('#pack-dlg');
+    dlg._counts = counts;
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+  }
+  function currentPackChoice() {
+    const c = {};
+    document.querySelectorAll('#pack-list [data-pack]').forEach((i) => { c[i.dataset.pack] = i.checked; });
+    return c;
+  }
+  function updatePackTotal(counts) {
+    const c = currentPackChoice();
+    const n = PACK_PARTS.reduce((a, p) => a + (c[p.key] ? counts[p.key] : 0), 0);
+    $('#pack-total').textContent = n ? `Yaklaşık ${n} sayfa yazdırılacak.` : 'En az bir evrak seçin.';
+    $('#pack-go').disabled = n === 0;
+  }
+  function closePack() {
+    const dlg = $('#pack-dlg');
+    if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open');
+  }
+  function printPack() {
+    const c = currentPackChoice();
+    try { localStorage.setItem(STORE_KEY + '.pack', JSON.stringify(c)); } catch (e) { /* yoksay */ }
+    const html = packEntry ? withEntry(packEntry, () => buildPack(c)) : buildPack(c);
+    closePack();
+    $('#print-pack').innerHTML = html;
+    document.body.classList.remove('print-one', 'print-archive');
+    document.body.classList.add('print-pack');
+    window.print();
   }
 
   /** Salon yoklama listesi: ad, sınıf, imza. */
@@ -738,7 +815,7 @@
         return `<tr><td>${esc(stu.s.name)}</td><td>${esc(ci.get(seat.classId).c.name)}</td><td class="sign"></td></tr>`;
       }).join('');
       return `<article class="sheet" data-room="${ri}">
-        ${sheetHead('Sınav salonu · yoklama listesi', roomTitle(room, ci) + ' sınıfı', ri, 'room')}
+        ${sheetHead('Sınav salonu · öğrenci imza listesi', roomTitle(room, ci) + ' sınıfı', ri, 'room')}
         ${roomCountsLine(room)}
         <div class="table-scroll"><table class="list">
           <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>İmza</th></tr></thead>
@@ -939,7 +1016,13 @@
     document.body.classList.add('print-one');
     window.print();
   }
-  window.addEventListener('afterprint', () => document.body.classList.remove('print-one', 'print-archive'));
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('print-one', 'print-archive');
+    if (document.body.classList.contains('print-pack')) {
+      document.body.classList.remove('print-pack');
+      $('#print-pack').innerHTML = '';
+    }
+  });
 
   // ---------- kayıtlı sınavlar ----------
   let archiveView = null;      // açık kaydın id'si
@@ -1053,12 +1136,13 @@
       <div class="arch-head no-print">
         <div><div class="sheet-sub">Kayıtlı sınav</div><div class="sheet-title">${esc(entry.exam)}</div><div class="hint">${esc(when)}</div></div>
         <span class="spacer"></span>
-        <button type="button" class="btn" data-arch-print="1">Yazdır / PDF kaydet</button>
+        <button type="button" class="btn primary" data-arch-pack="1">Sınav evrakını yazdır</button>
+        <button type="button" class="btn" data-arch-print="1">Bu bölümü yazdır</button>
         <button type="button" class="btn" data-arch-csv="1">Excel'e aktar (CSV)</button>
         <button type="button" class="btn ghost" data-arch-close="1">Kapat</button>
       </div>
       <nav class="tabs no-print" role="tablist">
-        ${[['plan', 'Oturma planları'], ['yoklama', 'Salon yoklama listeleri'], ['sinif', 'Sınıflara göre sınav yerleri'], ['evrak', 'Sınav kâğıdı dağıtımı']].map(([v, l]) =>
+        ${[['plan', 'Oturma planları'], ['yoklama', 'Öğrenci imza listeleri'], ['sinif', 'Sınıflara göre sınav yerleri'], ['evrak', 'Sınav kâğıdı dağıtımı']].map(([v, l]) =>
           `<button type="button" role="tab" data-arch-tab="${v}" aria-selected="${v === archiveTab}">${l}</button>`).join('')}
       </nav>
       <div class="arch-report">${body}</div>`;
@@ -1188,6 +1272,7 @@
       if (t.dataset.archTab) { archiveTab = t.dataset.archTab; renderArchiveView(); }
       else if (t.dataset.archClose) { archiveView = null; renderArchive(); }
       else if (t.dataset.archCsv) withEntry(entry, exportCsv);
+      else if (t.dataset.archPack) openPack(entry);
       else if (t.dataset.archPrint) {
         document.body.classList.remove('print-one');
         document.querySelectorAll('.print-target').forEach((x) => x.classList.remove('print-target'));
@@ -1263,6 +1348,11 @@
     // dağıtım
     $('#btn-run').addEventListener('click', runDistribution);
     $('#btn-print').addEventListener('click', printAll);
+    $('#btn-pack').addEventListener('click', () => openPack(null));
+    $('#pack-list').addEventListener('change', () => updatePackTotal($('#pack-dlg')._counts));
+    $('#pack-go').addEventListener('click', printPack);
+    $('#pack-cancel').addEventListener('click', closePack);
+    $('#pack-x').addEventListener('click', closePack);
     $('#btn-csv').addEventListener('click', exportCsv);
     $('#tabs').addEventListener('click', (e) => {
       const b = e.target.closest('button[data-view]');
