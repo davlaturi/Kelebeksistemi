@@ -728,7 +728,103 @@
       </article>`;
     if (part === 'table') return tableSheet;
     if (part === 'labels') return labelSheet;
-    return tableSheet + labelSheet;
+    return renderQuickPapers(rooms, levels) + tableSheet + labelSheet;
+  }
+
+  /**
+   * Hızlı kâğıt listesi. 'room': her salonun zarfına hangi şubeden kaç kâğıt;
+   * 'class': her şubenin kâğıt destesinden hangi salona kaç kâğıt.
+   * Kutular, kâğıdı koydukça işaretlemek içindir (dağıtım kaydıyla saklanır).
+   */
+  let paperMode = 'room';
+  function renderQuickPapers(rooms, levels) {
+    const r = state.result;
+    const checks = r.paperChecks || {};
+    const key = (ri, id) => ri + '|' + id;
+    const ci = classIndex();
+    let cards;
+    if (paperMode === 'room') {
+      cards = rooms.map((x) => {
+        const lines = [];
+        for (const L of x.rc.levels) for (const c of L.classes) lines.push({ id: c.id, name: c.name, n: c.n });
+        const done = lines.filter((l) => checks[key(x.ri, l.id)]).length;
+        const full = done === lines.length && lines.length > 0;
+        return `<div class="qcard${full ? ' done' : ''}">
+          <div class="qhead"><span class="qtitle">${esc(x.title)} salonu</span><span class="qtotal">${x.rc.total} kâğıt</span></div>
+          ${lines.map((l) => `<label class="qline${checks[key(x.ri, l.id)] ? ' on' : ''}" style="--h:${levelHue(l.name)}">
+            <input type="checkbox" data-pc="${esc(key(x.ri, l.id))}" ${checks[key(x.ri, l.id)] ? 'checked' : ''}>
+            <span class="qname">${esc(l.name)}</span><span class="qn">${l.n}</span></label>`).join('')}
+          <div class="qfoot">${full ? 'Zarf hazır ✓' : done + ' / ' + lines.length + ' şube konuldu'}</div>
+        </div>`;
+      }).join('');
+    } else {
+      const allClasses = [];
+      for (const L of levels) for (const c of L.classes) allClasses.push(c);
+      cards = allClasses.map((c) => {
+        const lines = rooms.map((x) => {
+          let n = 0;
+          for (const L of x.rc.levels) for (const cc of L.classes) if (cc.id === c.id) n = cc.n;
+          return { ri: x.ri, title: x.title, n };
+        }).filter((l) => l.n > 0);
+        const total = lines.reduce((a, l) => a + l.n, 0);
+        const done = lines.filter((l) => checks[key(l.ri, c.id)]).length;
+        const full = done === lines.length && lines.length > 0;
+        return `<div class="qcard${full ? ' done' : ''}">
+          <div class="qhead" style="--h:${levelHue(c.name)}"><span class="qtitle"><span class="qdot"></span>${esc(c.name)} kâğıtları</span><span class="qtotal">${total} kâğıt</span></div>
+          ${lines.map((l) => `<label class="qline${checks[key(l.ri, c.id)] ? ' on' : ''}">
+            <input type="checkbox" data-pc="${esc(key(l.ri, c.id))}" ${checks[key(l.ri, c.id)] ? 'checked' : ''}>
+            <span class="qname">${esc(l.title)} salonuna</span><span class="qn">${l.n}</span></label>`).join('')}
+          <div class="qfoot">${full ? 'Deste dağıtıldı ✓' : done + ' / ' + lines.length + ' salon'}</div>
+        </div>`;
+      }).join('');
+    }
+    void ci;
+    const all = Object.keys(checks).filter((k) => checks[k]).length;
+    return `<article class="sheet quick-sheet" data-papers="0">
+      <div class="sheet-head">
+        <div>
+          <div class="sheet-sub">Kâğıt hazırlama</div>
+          <div class="sheet-title">${paperMode === 'room' ? 'Hangi salona hangi şubeden kaç kâğıt' : 'Her şubenin kâğıtları hangi salona'}</div>
+        </div>
+        <div class="seg no-print" role="group" aria-label="Görünüm">
+          <button type="button" data-pmode="room" aria-pressed="${paperMode === 'room'}">Salona göre (zarf)</button>
+          <button type="button" data-pmode="class" aria-pressed="${paperMode === 'class'}">Şubeye göre (deste)</button>
+        </div>
+      </div>
+      <p class="note no-print">${paperMode === 'room'
+        ? 'Her kart bir salonun zarfıdır. Şubenin kâğıtlarını koyduktan sonra satırı işaretleyin; tüm satırlar işaretlenince kart “Zarf hazır” olur.'
+        : 'Her kart bir şubenin kâğıt destesidir. Desteyi salonlara ayırırken satırları işaretleyin.'}
+        ${all ? ' <button type="button" class="btn ghost small" data-pclear="1">İşaretleri temizle</button>' : ''}</p>
+      <div class="qgrid">${cards}</div>
+    </article>`;
+  }
+
+  function paperResult(el) {
+    if (el.closest('#archive-view')) {
+      const entry = state.archive.find((a) => a.id === archiveView);
+      return entry ? entry.result : null;
+    }
+    return state.result;
+  }
+  function onPaperCheck(e) {
+    const t = e.target;
+    if (!t.dataset || !t.dataset.pc) return false;
+    const r = paperResult(t);
+    if (!r) return true;
+    r.paperChecks = r.paperChecks || {};
+    if (t.checked) r.paperChecks[t.dataset.pc] = true; else delete r.paperChecks[t.dataset.pc];
+    save();
+    if (t.closest('#archive-view')) renderArchiveView(); else renderReportOnly();
+    return true;
+  }
+  function onPaperClick(e) {
+    const m = e.target.closest('[data-pmode]');
+    const c = e.target.closest('[data-pclear]');
+    if (!m && !c) return false;
+    if (m) paperMode = m.dataset.pmode;
+    if (c) { const r = paperResult(c); if (r) { r.paperChecks = {}; save(); } }
+    if (e.target.closest('#archive-view')) renderArchiveView(); else renderReportOnly();
+    return true;
   }
 
   // ---------- sınav evrakı (tek seferde yazdırma) ----------
@@ -1269,6 +1365,7 @@
       if (!entry) return;
       const t = e.target.closest('button');
       if (!t) return;
+      if (onPaperClick(e)) return;
       if (t.dataset.archTab) { archiveTab = t.dataset.archTab; renderArchiveView(); }
       else if (t.dataset.archClose) { archiveView = null; renderArchive(); }
       else if (t.dataset.archCsv) withEntry(entry, exportCsv);
@@ -1362,7 +1459,10 @@
       showPage('dagitim');
       renderResult();
     });
+    $('#report').addEventListener('change', onPaperCheck);
+    $('#archive-view').addEventListener('change', onPaperCheck);
     $('#report').addEventListener('click', (e) => {
+      if (onPaperClick(e)) return;
       const seat = e.target.closest('.seat[data-room]');
       if (seat) { onSeatClick(+seat.dataset.room, +seat.dataset.seat); return; }
       const pr = e.target.closest('[data-print-room],[data-print-class],[data-print-papers]');

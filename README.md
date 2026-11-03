@@ -51,7 +51,12 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 - **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar.
 - **Öğrenci imza listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
 - **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrenci için şunlar yazar: hangi salonda, hangi **sıra grubunda** (Sol / Orta / Sağ ya da Kapı tarafı / Orta / Pencere tarafı), **önden kaçıncı sırada** ve sıranın hangi koltuğunda oturacağı. Yanında salonun küçük bir krokisi vardır; öğrencinin koltuğu bu krokide işaretlidir. Sıra gruplarının adını 2. Sınav bilgileri adımında seçersiniz. Oturma planında da grup adları sütunların üstünde, sıra numaraları da solda yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
-- **Sınav kâğıdı dağıtımı:** Kâğıtları kolayca dağıtmak için hazırlanmış bir sayfa. İçinde şunlar var:
+- **Sınav kâğıdı dağıtımı:** Kâğıtları kolayca dağıtmak için hazırlanmış bir sayfa. En üstte **kâğıt hazırlama kartları** vardır:
+  - **Salona göre (zarf):** Her kart bir salonun zarfıdır. Örneğin "9/A salonu: 9/A 6, 9/B 5, 10/A 5… Toplam 30". Bir şubenin kâğıtlarını zarfa koyunca satırı işaretleyin. Bütün satırlar işaretlenince kart yeşile döner ve "Zarf hazır" yazar. Gözetmen zarfını alıp gider.
+  - **Şubeye göre (deste):** Elinizdeki bir şubenin kâğıt destesinin hangi salona kaçar kaçar ayrılacağını gösterir.
+  - İşaretler dağıtımla birlikte saklanır, sayfayı kapatsanız da kaybolmaz.
+
+  Kartların altında ayrıca şunlar var:
   - Her salona hangi sınıf düzeyinden kaç kâğıt gideceğini gösteren tablo.
   - Hangi şubeden kaç öğrenci olduğunu gösteren ayrıntılı tablo. Satır ve sütun toplamları da yazar.
   - Her salonun kâğıt zarfına yapıştırılacak etiketler.

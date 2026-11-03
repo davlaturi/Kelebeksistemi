@@ -392,6 +392,29 @@ table.list td.sign { width: 28%; }
 .signs div { border-top: 1px solid var(--ink-soft); padding-top: 6px; color: var(--ink-soft); }
 
 .note { font-size: 0.82rem; color: var(--ink-soft); }
+/* Hızlı kâğıt listesi */
+.quick-sheet .sheet-head { align-items: center; }
+.qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.qcard { display: grid; gap: 4px; align-content: start; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.qcard.done { border-color: var(--ok); background: var(--ok-bg); }
+.qhead { --h: 200; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding-bottom: 6px; margin-bottom: 2px; border-bottom: 2px solid var(--ink); }
+.qtitle { font: 700 1.25rem/1.1 var(--f-display); display: inline-flex; align-items: center; gap: 8px; }
+.qdot { width: 12px; height: 12px; border-radius: 3px; background: hsl(var(--h) 60% 50%); }
+.qtotal { font-size: 0.9rem; color: var(--ink-soft); white-space: nowrap; }
+.qline {
+  --h: 200;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+  padding: 6px 8px; border-radius: 7px; cursor: pointer;
+}
+.qline:hover { background: var(--paper); }
+.qline input { width: 18px; height: 18px; accent-color: var(--ok); margin: 0; }
+.qline .qname { font-weight: 600; font-size: 1rem; }
+.qline[style] .qname::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; background: hsl(var(--h) 60% 50%); vertical-align: 0; }
+.qline .qn { font: 700 1.5rem/1 var(--f-display); font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }
+.qline.on .qname, .qline.on .qn { text-decoration: line-through; opacity: 0.55; }
+.qfoot { font-size: 0.82rem; color: var(--ink-soft); padding-top: 4px; }
+.qcard.done .qfoot { color: var(--ok); font-weight: 600; }
+
 /* Sınav kâğıdı dağıtımı */
 .counts-line { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 0.85rem; }
 .counts-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
@@ -510,6 +533,11 @@ table.matrix tbody tr:nth-child(even) { background: var(--paper); }
   .mm-board { height: 2px; }
   tr { break-inside: avoid; }
   .search { display: none; }
+  .qgrid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .qline input, .qfoot { display: none; }
+  .qline { padding: 2px 4px; grid-template-columns: 1fr auto; }
+  .qline.on .qname, .qline.on .qn { text-decoration: none; opacity: 1; }
+  .qcard.done { background: none; border-color: #999; }
   .env-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .counts-line { font-size: 8.5pt; }
 }
