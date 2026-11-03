@@ -7,6 +7,12 @@ Sınıf listelerini PDF olarak yüklersiniz. Uygulama öğrencileri, **aynı sı
 - Her salona, o sınıfın **mevcudu kadar** öğrenci yerleştirilir (30 kişilik 9/A sınıfına 30 öğrenci oturur).
 - Kurulum gerekmez, internet de gerekmez. Öğrenci listeleri hiçbir sunucuya gönderilmez.
 
+## Tablet ve telefonda
+
+Release sayfasındaki **`Kelebek-Sinav-Dagitimi-…-tablet.html`** dosyasını indirip açın. Bu dosya stilleri, betikleri ve PDF okuyucuyu içinde taşır, tek başına çalışır. ZIP'teki `index.html` tablette tek başına açılırsa görünüm ve PDF okuma çalışmaz, çünkü tablet yanındaki klasörleri okuyamaz.
+
+Tek dosyayı kendiniz üretmek için `python3 tools/tek-dosya.py` komutunu çalıştırın.
+
 ## Bilgisayarda (PC) kurulum
 
 1. GitHub'da **Code → Download ZIP** ile dosyayı indirin.

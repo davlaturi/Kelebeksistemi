@@ -52,12 +52,14 @@ jobs:
           sed -i 's/^          //' "dist/$NAME/BENI OKU.txt"
           (cd dist && zip -qr "$NAME.zip" "$NAME")
           echo "ZIP=dist/$NAME.zip" >> "$GITHUB_ENV"
+          python3 tools/tek-dosya.py "dist/Kelebek-Sinav-Dagitimi-${VERSION}-tablet.html"
+          echo "ONE=dist/Kelebek-Sinav-Dagitimi-${VERSION}-tablet.html" >> "$GITHUB_ENV"
 
       - name: Release oluştur
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$VERSION" "$ZIP" \
+          gh release create "$VERSION" "$ZIP" "$ONE" \
             --target "$GITHUB_SHA" \
             --title "Kelebek Sınav Dağıtımı $VERSION" \
             --notes-file .github/RELEASE_NOTES.md
