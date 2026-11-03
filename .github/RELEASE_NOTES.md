@@ -6,11 +6,15 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.11.0)
+## Bu sürümde (v1.12.0)
 
-- **Öğretmenler odası listesi.** Öğretmenler odasına asılacak tek sayfalık, yatay bir tablo eklendi. Satırlar şubeler, sütunlar sınav salonları. Başkan öğretmen kendi şubesinin satırından her salona kaç kâğıt koyacağını okuyor ve bitince satır sonundaki kutuyu işaretliyor. Liste "Sınav kâğıdı dağıtımı" sayfasındaki "Öğretmenler odası için yazdır" düğmesiyle ya da "Sınav evrakını yazdır" penceresinden basılıyor. Salonlara göre düzen de seçilebiliyor.
+- **Kartlı öğretmenler odası listesi.** Liste artık ekrandaki kâğıt hazırlama kartlarının aynısı olarak basılıyor; yatay tablo kaldırıldı. Her kartta salon adı, şubeler ve iri sayılar var; yanlarında kalemle işaretlenecek kutular bulunuyor. Bir sayfaya 8 karta kadar sığıyor.
 
-## Önceki sürümde (v1.10.0)
+## Önceki sürümde (v1.11.0)
+
+- **Öğretmenler odası listesi.** "Öğretmenler odası için yazdır" düğmesi ve sınav evrakı penceresinde yeni bir seçenek eklendi.
+
+## Daha önce (v1.10.0)
 
 - **Kâğıt hazırlama kartları.** "Sınav kâğıdı dağıtımı" sayfasının en üstünde her salon için bir kart var. Kartta hangi şubeden kaç kâğıt konacağı iri yazıyla yazıyor. Kâğıtları koydukça satırları işaretliyorsunuz; zarf tamamlanınca kart yeşile dönüp "Zarf hazır" oluyor. "Şubeye göre" görünümünde her şubenin destesinin salonlara nasıl bölüneceği görünüyor. İşaretler kaydediliyor.
 

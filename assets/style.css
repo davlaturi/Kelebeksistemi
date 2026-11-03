@@ -392,21 +392,10 @@ table.list td.sign { width: 28%; }
 .signs div { border-top: 1px solid var(--ink-soft); padding-top: 6px; color: var(--ink-soft); }
 
 .note { font-size: 0.82rem; color: var(--ink-soft); }
-/* Öğretmenler odası listesi */
+/* Öğretmenler odası listesi (kartların basılı hali) */
 .quick-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.tbox { display: inline-block; width: 13px; height: 13px; border: 1.5px solid var(--ink); border-radius: 2px; vertical-align: middle; }
-.tmatrix { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
-.tmatrix th, .tmatrix td { border: 1px solid var(--line); padding: 3px 4px; text-align: center; }
-.tmatrix thead th { background: var(--paper); font-weight: 600; }
-.tmatrix .tm-corner { text-align: left; white-space: nowrap; font-weight: 500; color: var(--ink-soft); }
-.tmatrix .tm-col { white-space: nowrap; }
-.tmatrix .tm-row { --h: 200; text-align: left; white-space: nowrap; font-weight: 700; box-shadow: inset 4px 0 0 hsl(var(--h) 60% 50%); padding-left: 8px; }
-.tmatrix td.tm-v { font-weight: 700; font-size: 1.15em; }
-.tmatrix td.tm-0 { background: repeating-linear-gradient(45deg, transparent 0 3px, var(--paper) 3px 6px); }
-.tmatrix td.tm-tot { font-weight: 700; background: var(--paper); }
-.tmatrix tr.tm-group th { text-align: left; background: var(--surface); border-left: 0; border-right: 0; padding-top: 8px; font-size: 1.05em; }
-.tmatrix tbody tr:not(.tm-group):hover td, .tmatrix tbody tr:not(.tm-group):hover th { background: var(--ok-bg); }
-.tmatrix tfoot th, .tmatrix tfoot td { font-weight: 700; border-top: 2px solid var(--ink); }
+.tbox { display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--ink); border-radius: 2px; }
+.tcard .qline { cursor: default; }
 
 /* Hızlı kâğıt listesi */
 .quick-sheet .sheet-head { align-items: center; }
@@ -502,7 +491,6 @@ table.matrix tbody tr:nth-child(even) { background: var(--paper); }
 
 /* ---------- Yazdırma ---------- */
 @page { size: A4 portrait; margin: 12mm; }
-@page yatay { size: A4 landscape; margin: 10mm; }
 @media print {
   :root {
     --paper: #fff; --surface: #fff; --ink: #000; --ink-soft: #333; --line: #999;
@@ -551,15 +539,17 @@ table.matrix tbody tr:nth-child(even) { background: var(--paper); }
   tr { break-inside: avoid; }
   .search { display: none; }
   .qgrid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .teacher-sheet { page: yatay; gap: 6px; }
-  .tmatrix th, .tmatrix td { border-color: #777; padding: 1px 3px; line-height: 1.2; }
-  .tmatrix td.tm-v { font-size: 1.05em; }
-  .tmatrix tr.tm-group th { padding-top: 3px; font-size: 1em; }
-  .teacher-sheet .sheet-title { font-size: 13pt; }
-  .teacher-sheet .note { margin: 0; }
-  .tmatrix thead th, .tmatrix td.tm-tot { background: #eee; }
-  .tmatrix td.tm-0 { background: #f3f3f3; }
-  .tmatrix tr { break-inside: avoid; }
+  .teacher-sheet { gap: 6px; }
+  .tgrid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .tcard { padding: 6px 8px; gap: 0; break-inside: avoid; border-color: #888; }
+  .tcard .qhead { padding-bottom: 3px; }
+  .tcard .qtitle { font-size: 11pt; }
+  .tcard .qtotal { font-size: 8pt; }
+  .tcard .qline { padding: 1px 2px; grid-template-columns: auto 1fr auto; gap: 6px; border-bottom: 1px dotted #bbb; }
+  .tcard .qline:last-child { border-bottom: 0; }
+  .tcard .qname { font-size: 9pt; }
+  .tcard .qn { font-size: 12pt; }
+  .tcard .tbox { width: 10px; height: 10px; }
   .qline input, .qfoot { display: none; }
   .qline { padding: 2px 4px; grid-template-columns: 1fr auto; }
   .qline.on .qname, .qline.on .qn { text-decoration: none; opacity: 1; }

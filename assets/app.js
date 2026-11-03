@@ -871,7 +871,7 @@
     const rooms = r.rooms.length;
     const used = new Set();
     for (const rm of r.rooms) for (const x of rm.seats) if (x.classId) used.add(x.classId);
-    return { plan: rooms, imza: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)), oda: 1, odaSalon: 1 };
+    return { plan: rooms, imza: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)), oda: teacherPages('class'), odaSalon: teacherPages('room') };
   }
   function openPack(entry) {
     packEntry = entry || null;
@@ -912,61 +912,52 @@
   }
 
   /**
-   * Öğretmenler odasına asılacak kâğıt listesi: yatay A4'te tek tablo.
-   * 'class': satırlar şubeler, sütunlar salonlar (başkan öğretmen kendi
-   * şubesinin satırını okur). 'room': satırlar salonlar, sütunlar şubeler.
+   * Öğretmenler odasına asılacak kâğıt listesi: ekrandaki kâğıt hazırlama
+   * kartlarının basılı hali. 'room': her salonun zarfına hangi şubeden kaç
+   * kâğıt; 'class': her şubenin kâğıtları hangi salona kaçar. Elle işaretlemek
+   * için boş kutular basılır.
    */
-  function renderTeacherList(mode) {
+  function teacherCards(mode) {
     const r = state.result;
     const ci = classIndex();
-    const rooms = r.rooms.map((room) => ({ id: room.roomId, title: roomTitle(room, ci), rc: roomCounts(room) }));
+    const rooms = r.rooms.map((room) => ({ title: roomTitle(room, ci), rc: roomCounts(room) }));
+    if (mode === 'room') {
+      return rooms.map((x) => {
+        const lines = [];
+        for (const L of x.rc.levels) for (const c of L.classes) lines.push({ label: c.name, n: c.n, hue: levelHue(c.name) });
+        return { title: x.title + ' salonu', total: x.rc.total, lines };
+      });
+    }
     const cls = new Map();
     for (const x of rooms) for (const L of x.rc.levels) for (const c of L.classes) {
-      if (!cls.has(c.id)) cls.set(c.id, { id: c.id, name: c.name, level: L.level });
+      if (!cls.has(c.id)) cls.set(c.id, { name: c.name, lines: [] });
+      cls.get(c.id).lines.push({ label: x.title + ' salonuna', n: c.n });
     }
-    const classes = [...cls.values()].sort((a, b) => collator.compare(a.name, b.name));
-    const count = (roomX, classId) => {
-      for (const L of roomX.rc.levels) for (const c of L.classes) if (c.id === classId) return c.n;
-      return 0;
-    };
-    const rowsDef = mode === 'class'
-      ? classes.map((c) => ({ key: c.id, label: c.name, level: c.level, hue: levelHue(c.name), get: (col) => count(col.x, c.id) }))
-      : rooms.map((x) => ({ key: x.id, label: x.title, level: A.levelOf(x.title), hue: levelHue(x.title), get: (col) => count(x, col.id) }));
-    const colsDef = mode === 'class'
-      ? rooms.map((x) => ({ label: x.title, x }))
-      : classes.map((c) => ({ label: c.name, id: c.id, hue: levelHue(c.name) }));
-    const nCols = colsDef.length;
-    const groups = new Map();
-    for (const row of rowsDef) {
-      if (!groups.has(row.level)) groups.set(row.level, []);
-      groups.get(row.level).push(row);
-    }
-    // Tek yatay sayfaya sığsın: yazı boyutu sütun ve satır sayısına göre küçülür.
-    const nRows = rowsDef.length + groups.size;
-    const byCols = nCols <= 10 ? 11 : nCols <= 16 ? 10 : nCols <= 22 ? 9 : nCols <= 30 ? 8 : 7;
-    const byRows = nRows <= 18 ? 11 : nRows <= 24 ? 10 : nRows <= 30 ? 9 : nRows <= 38 ? 8 : 7;
-    const fs = Math.min(byCols, byRows);
-    let body = '';
-    for (const [lv, list] of [...groups.entries()].sort((a, b) => collator.compare(a[0], b[0]))) {
-      body += `<tr class="tm-group"><th colspan="${nCols + 3}">${esc(levelLabel(lv))} ${mode === 'class' ? 'şubeleri' : 'salonları'}</th></tr>`;
-      for (const row of list) {
-        const vals = colsDef.map((col) => row.get(col));
-        const tot = vals.reduce((a, v) => a + v, 0);
-        body += `<tr><th class="tm-row" style="--h:${row.hue}">${esc(row.label)}</th>${vals.map((v) => `<td class="${v ? 'tm-v' : 'tm-0'}">${v || ''}</td>`).join('')}<td class="tm-tot">${tot}</td><td class="tm-chk"><span class="tbox"></span></td></tr>`;
-      }
-    }
-    const colTot = colsDef.map((col) => rowsDef.reduce((a, row) => a + row.get(col), 0));
-    const grand = colTot.reduce((a, v) => a + v, 0);
+    return [...cls.values()].sort((a, b) => collator.compare(a.name, b.name))
+      .map((c) => ({ title: c.name + ' kâğıtları', hue: levelHue(c.name), total: c.lines.reduce((t, l) => t + l.n, 0), lines: c.lines }));
+  }
+  /** Kart düzeninin yaklaşık sayfa sayısı (dikey A4, 4 sütun). */
+  function teacherPages(mode) {
+    const cards = teacherCards(mode);
+    if (!cards.length) return 1;
+    const maxLines = Math.max(...cards.map((c) => c.lines.length));
+    const perCol = Math.max(1, Math.floor(245 / (12 + maxLines * 5.2)));
+    return Math.max(1, Math.ceil(cards.length / (4 * perCol)));
+  }
+  function renderTeacherList(mode) {
+    const cards = teacherCards(mode);
+    const grand = cards.reduce((a, c) => a + c.total, 0);
     return `<article class="sheet teacher-sheet">
-      ${sheetHead('Öğretmenler odası', mode === 'class' ? 'Şubelere göre sınav kâğıdı dağılımı' : 'Salonlara göre sınav kâğıdı dağılımı', 'oda-' + mode, 'papers')}
-      <p class="note">${mode === 'class'
-        ? 'Kendi şubenizin satırını bulun. Sütunlar sınav salonlarıdır: her salonun zarfına, satırınızda yazan sayıda kâğıt koyun. Bitince satır sonundaki kutuyu işaretleyin.'
-        : 'Her satır bir salon zarfıdır. Sütunlardaki şubelerden yazan sayıda kâğıt koyun. Bitince satır sonundaki kutuyu işaretleyin.'} Toplam ${grand} kâğıt.</p>
-      <div class="table-scroll"><table class="tmatrix" style="font-size:${fs}pt">
-        <thead><tr><th class="tm-corner">${mode === 'class' ? 'Şube ↓ &nbsp; Salon →' : 'Salon ↓ &nbsp; Şube →'}</th>${colsDef.map((c) => `<th class="tm-col">${esc(c.label)}</th>`).join('')}<th class="tm-col">Toplam</th><th class="tm-col">Tamam</th></tr></thead>
-        <tbody>${body}</tbody>
-        <tfoot><tr><th>Toplam</th>${colTot.map((v) => `<td>${v}</td>`).join('')}<td>${grand}</td><td></td></tr></tfoot>
-      </table></div>
+      ${sheetHead('Öğretmenler odası', mode === 'room' ? 'Hangi salona hangi şubeden kaç kâğıt' : 'Her şubenin kâğıtları hangi salona', 'oda-' + mode, 'papers')}
+      <p class="note">${mode === 'room'
+        ? 'Her kart bir salonun zarfıdır. Şubenizin satırındaki sayı kadar kâğıdı o salonun zarfına koyun ve kutuyu işaretleyin.'
+        : 'Her kart bir şubenin kâğıt destesidir. Desteyi kartta yazan salonların zarflarına, yazan sayıda koyun ve kutuyu işaretleyin.'} Toplam ${grand} kâğıt.</p>
+      <div class="qgrid tgrid">${cards.map((c) => `
+        <div class="qcard tcard">
+          <div class="qhead"${c.hue != null ? ` style="--h:${c.hue}"` : ''}><span class="qtitle">${c.hue != null ? '<span class="qdot"></span>' : ''}${esc(c.title)}</span><span class="qtotal">${c.total} kâğıt</span></div>
+          ${c.lines.map((l) => `<div class="qline"${l.hue != null ? ` style="--h:${l.hue}"` : ''}><span class="tbox"></span><span class="qname">${esc(l.label)}</span><span class="qn">${l.n}</span></div>`).join('')}
+        </div>`).join('')}
+      </div>
     </article>`;
   }
 

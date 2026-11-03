@@ -55,7 +55,7 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
   - **Salona göre (zarf):** Her kart bir salonun zarfıdır. Örneğin "9/A salonu: 9/A 6, 9/B 5, 10/A 5… Toplam 30". Bir şubenin kâğıtlarını zarfa koyunca satırı işaretleyin. Bütün satırlar işaretlenince kart yeşile döner ve "Zarf hazır" yazar. Gözetmen zarfını alıp gider.
   - **Şubeye göre (deste):** Elinizdeki bir şubenin kâğıt destesinin hangi salona kaçar kaçar ayrılacağını gösterir.
   - İşaretler dağıtımla birlikte saklanır, sayfayı kapatsanız da kaybolmaz.
-  - **Öğretmenler odası için yazdır:** Öğretmenler odasına asılacak tek sayfalık, yatay bir tablo basar. Şubeye göre görünümde her satır bir şubedir, sütunlar salonlardır. Başkan öğretmen kendi şubesinin satırını bulur; her salonun zarfına kaç kâğıt koyacağını sağa doğru okur. Bitince satır sonundaki kutuyu işaretler. Salona göre görünümde satırlar salonlar, sütunlar şubelerdir. Yazı boyutu şube ve salon sayısına göre ayarlanır, böylece tablo tek sayfaya sığar. Örneğin 24 şube × 24 salon tek sayfaya sığar.
+  - **Öğretmenler odası için yazdır:** Ekrandaki kartların aynısını, öğretmenler odasına asılacak şekilde basar. Her kartta salon adı, şubeler ve kâğıt sayıları yazar; yanlarında kalemle işaretlenecek kutular vardır. Bir sayfaya 8 karta kadar sığar. "Şubeye göre" görünümündeyseniz o görünümün kartları basılır.
 
   Kartların altında ayrıca şunlar var:
   - Her salona hangi sınıf düzeyinden kaç kâğıt gideceğini gösteren tablo.
