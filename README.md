@@ -48,7 +48,7 @@ Dağıtımdan sonra her kuralın kaç kez ihlal edildiği ekranda gösterilir. P
 
 Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sınıfı** yazar. Numara, cinsiyet ya da sıra no yazmaz.
 
-- **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar.
+- **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar. Sağ alt köşede iri harflerle **sıra numarası** yer alır. Numaralar önden arkaya ve soldan sağa sayılır; aynı numara sınav yerleri listesinde ve aramada da yazar.
 - **Öğrenci imza listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
 - **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrenci için şunlar yazar: hangi salonda, hangi **sıra grubunda** (Sol / Orta / Sağ ya da Kapı tarafı / Orta / Pencere tarafı), **önden kaçıncı sırada** ve sıranın hangi koltuğunda oturacağı. Yanında salonun küçük bir krokisi vardır; öğrencinin koltuğu bu krokide işaretlidir. Sıra gruplarının adını 2. Sınav bilgileri adımında seçersiniz. Oturma planında da grup adları sütunların üstünde, sıra numaraları da solda yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
 - **Sınav kâğıdı dağıtımı:** Kâğıtları kolayca dağıtmak için hazırlanmış bir sayfa. En üstte **kâğıt hazırlama kartları** vardır:

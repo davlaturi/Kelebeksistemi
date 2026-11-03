@@ -604,7 +604,7 @@
           if (!seat) { cells.push('<span class="seat empty-seat"></span>'); continue; }
           if (seat.empty) {
             const isSelE = selectedSeat && selectedSeat.roomIdx === ri && selectedSeat.seatIdx === idx;
-            cells.push(`<button type="button" class="seat vacant${isSelE ? ' sel' : ''}" data-room="${ri}" data-seat="${idx}"><span class="who">Boş</span></button>`);
+            cells.push(`<button type="button" class="seat vacant${isSelE ? ' sel' : ''}" data-room="${ri}" data-seat="${idx}"><span class="who">Boş</span><span class="sno">${seat.seatNo}</span></button>`);
             continue;
           }
           const stu = si.get(seat.studentId);
@@ -613,6 +613,7 @@
           cells.push(`<button type="button" class="seat${isSel ? ' sel' : ''}" style="--h:${levelHue(c.c.name)}" data-room="${ri}" data-seat="${idx}">
             <span class="who">${esc(stu.s.name)}</span>
             <span class="cls">${esc(c.c.name)}</span>
+            <span class="sno" aria-label="Sıra no">${seat.seatNo}</span>
           </button>`);
         }
         desks.push(`<div class="desk${spd === 2 ? ' spd2' : ''}">${cells.join('')}</div>`);
@@ -1046,6 +1047,7 @@
           col, row, side, cols, rows, spd,
           group: names[col],
           rowNo: row + 1,
+          no: s.seatNo || idx + 1,
           seat: spd === 2 ? seatSideName(side) : '',
         });
       });
@@ -1082,14 +1084,14 @@
         .sort((a, b) => collator.compare(a.name, b.name))
         .map((s) => {
           const p = pl.get(s.id);
-          if (!p) return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td colspan="${twin ? 5 : 4}">-</td></tr>`;
+          if (!p) return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td colspan="${twin ? 6 : 5}">-</td></tr>`;
           return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p.room)}</b></td>` +
-            `<td>${esc(p.group)}</td><td>Önden ${p.rowNo}. sıra</td>${twin ? `<td>${esc(p.seat)}</td>` : ''}<td class="mm-cell">${miniMap(p)}</td></tr>`;
+            `<td class="no-cell">${p.no}</td><td>${esc(p.group)}</td><td>Önden ${p.rowNo}. sıra</td>${twin ? `<td>${esc(p.seat)}</td>` : ''}<td class="mm-cell">${miniMap(p)}</td></tr>`;
         }).join('');
       return `<article class="sheet" data-class="${esc(c.id)}">
         ${sheetHead('Sınav yerleri', c.name + ' sınıfı öğrencileri', c.id, 'class')}
         <div class="table-scroll"><table class="list">
-          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Sıra grubu</th><th>Sıra</th>${twin ? '<th>Koltuk</th>' : ''}<th>Yeri</th></tr></thead>
+          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Sıra no</th><th>Sıra grubu</th><th>Sıra</th>${twin ? '<th>Koltuk</th>' : ''}<th>Yeri</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
         <p class="note">${placeLegend()} Krokide üstteki çizgi tahtadır; öğrencinin koltuğu koyu renkle işaretlidir.</p>
@@ -1098,7 +1100,7 @@
   }
 
   function placeText(p) {
-    return `Sıra grubu: ${p.group} · önden ${p.rowNo}. sıra${p.seat ? ' · ' + p.seat.toLocaleLowerCase('tr-TR') : ''}`;
+    return `Sıra no ${p.no} · ${p.group} grubu · önden ${p.rowNo}. sıra${p.seat ? ' · ' + p.seat.toLocaleLowerCase('tr-TR') : ''}`;
   }
   function placeLegend() {
     const m = state.settings.sideNames || 'lr';
@@ -1151,11 +1153,11 @@
     const ci = classIndex();
     const si = studentIndex();
     const pl = seatPlaces();
-    const lines = [['Sınıfı', 'Adı soyadı', 'Sınav salonu', 'Sıra grubu', 'Sıra (önden)', 'Koltuk']];
+    const lines = [['Sınıfı', 'Adı soyadı', 'Sınav salonu', 'Sıra no', 'Sıra grubu', 'Sıra (önden)', 'Koltuk']];
     for (const c of included()) {
       for (const s of c.students.slice().sort((a, b) => collator.compare(a.name, b.name))) {
         const p = pl.get(s.id);
-        if (p) lines.push([c.name, s.name, p.room, p.group, p.rowNo, p.seat]);
+        if (p) lines.push([c.name, s.name, p.room, p.no, p.group, p.rowNo, p.seat]);
       }
     }
     const csv = '﻿' + lines.map((l) => l.map((v) => {

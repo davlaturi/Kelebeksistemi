@@ -6,11 +6,15 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.12.0)
+## Bu sürümde (v1.13.0)
+
+- **Sıra numarası.** Oturma planında her koltuğun sağ alt köşesinde öğrencinin sıra numarası iri yazıyla yazıyor. Aynı numara "Sınıflara göre sınav yerleri" listesinde, öğrenci aramada ve Excel çıktısında da "Sıra no" olarak yer alıyor.
+
+## Önceki sürümde (v1.12.0)
 
 - **Kartlı öğretmenler odası listesi.** Liste artık ekrandaki kâğıt hazırlama kartlarının aynısı olarak basılıyor; yatay tablo kaldırıldı. Her kartta salon adı, şubeler ve iri sayılar var; yanlarında kalemle işaretlenecek kutular bulunuyor. Bir sayfaya 8 karta kadar sığıyor.
 
-## Önceki sürümde (v1.11.0)
+## Daha önce (v1.11.0)
 
 - **Öğretmenler odası listesi.** "Öğretmenler odası için yazdır" düğmesi ve sınav evrakı penceresinde yeni bir seçenek eklendi.
 
