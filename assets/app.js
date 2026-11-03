@@ -268,7 +268,7 @@
     const total = inc.reduce((a, c) => a + c.students.length, 0);
     box.innerHTML = `
       <div class="pick-head">
-        <strong>Dağıtıma girecek şubeler</strong>
+        <strong>Öğrencileri sınava girecek şubeler</strong>
         <span class="hint">${inc.length} şube seçili · ${total} öğrenci</span>
         <span class="spacer"></span>
         <button type="button" class="btn ghost small" data-pick="all">Tümünü seç</button>
@@ -284,6 +284,7 @@
         </div>`;
       }).join('')}`;
     box.querySelectorAll('[data-mixed]').forEach((el) => { el.indeterminate = true; });
+    renderRoomPicker();
     renderCapacity();
   }
 
@@ -293,15 +294,44 @@
     if (!isCustomCap() || c.roomCap == null || c.roomCap === '') return c.students.length;
     return Math.max(0, Math.floor(Number(c.roomCap)) || 0);
   }
+  /** Sınav salonu olarak kullanılacak sınıflar (öğrencilerinin sınava girmesinden bağımsız). */
+  function roomClasses() { return state.classes.filter((c) => c.students.length > 0 && c.useAsRoom !== false); }
   function capTotals() {
     const inc = included();
-    return { seats: inc.reduce((a, c) => a + capOf(c), 0), students: inc.reduce((a, c) => a + c.students.length, 0), rooms: inc.filter((c) => capOf(c) > 0).length };
+    const rooms = roomClasses();
+    return { seats: rooms.reduce((a, c) => a + capOf(c), 0), students: inc.reduce((a, c) => a + c.students.length, 0), rooms: rooms.filter((c) => capOf(c) > 0).length };
+  }
+
+  function renderRoomPicker() {
+    const box = $('#rooms-picker');
+    const all = state.classes.filter((c) => c.students.length > 0);
+    if (!all.length) { box.innerHTML = ''; return; }
+    const groups = byLevel(all);
+    const on = roomClasses();
+    box.innerHTML = `
+      <div class="pick-head">
+        <strong>Sınav salonu olarak kullanılacak sınıflar</strong>
+        <span class="hint">${on.length} salon seçili. İşaretini kaldırdığınız sınıfa öğrenci oturtulmaz; o şubenin öğrencileri yine sınava girer ve başka salonlara dağıtılır.</span>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost small" data-room-pick="all">Tümünü seç</button>
+        <button type="button" class="btn ghost small" data-room-pick="same">Sınava girenlerle aynı</button>
+      </div>
+      ${groups.map((g) => {
+        const n = g.classes.filter((c) => c.useAsRoom !== false).length;
+        return `<div class="pick-row">
+          <label class="pick-level"><input type="checkbox" data-room-level="${esc(g.level)}" ${n === g.classes.length ? 'checked' : ''} ${n > 0 && n < g.classes.length ? 'data-mixed="1"' : ''}> ${esc(g.label)}</label>
+          <div class="pick-classes">${g.classes.map((c) => `
+            <label class="pick-chip room-chip" style="--h:${levelHue(c.name)}"><input type="checkbox" data-room-class="${esc(c.id)}" ${c.useAsRoom !== false ? 'checked' : ''}> ${esc(c.name)}</label>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}`;
+    box.querySelectorAll('[data-mixed]').forEach((el) => { el.indeterminate = true; });
   }
   function capSummaryHtml() {
     const t = capTotals();
     const diff = t.seats - t.students;
     const kind = diff < 0 ? 'bad' : diff > 0 ? 'warn' : 'ok';
-    const msg = diff < 0 ? `${-diff} öğrenci için yer yok. Kapasiteleri artırın.`
+    const msg = diff < 0 ? `${-diff} öğrenci için yer yok. Daha fazla salon seçin ya da “Salon mevcudunu ben belirleyeceğim” ile kapasiteyi artırın.`
       : diff > 0 ? `${diff} koltuk boş kalacak. Boş koltuklar aynı düzeydeki öğrencileri ayırmak için kullanılır.`
       : 'Koltuk sayısı öğrenci sayısına eşit.';
     return `<span class="pill ${kind}">Toplam koltuk: <b>${t.seats}</b></span><span class="pill">Öğrenci: <b>${t.students}</b></span><span class="pill">Salon: <b>${t.rooms}</b></span><span class="cap-msg ${kind}">${msg}</span>`;
@@ -324,7 +354,7 @@
         <button type="button" class="btn small" id="cap-all-btn">Uygula</button>
         <button type="button" class="btn ghost small" id="cap-reset">Mevcutlara döndür</button>
       </div>
-      ${byLevel(inc).map((g) => `<div class="cap-row">
+      ${byLevel(roomClasses()).map((g) => `<div class="cap-row">
         <span class="pick-level">${esc(g.label)}</span>
         <div class="cap-items">${g.classes.map((c) => `
           <label class="cap-item" style="--h:${levelHue(c.name)}"><span>${esc(c.name)}</span>
@@ -440,8 +470,11 @@
     if (!inc.length) { toast(state.classes.length ? 'Dağıtıma girecek en az bir şube seçin.' : 'Önce sınıf listelerini yükleyin.'); return; }
     try {
       const t = capTotals();
-      if (t.seats < t.students) { toast(`Salon kapasitesi yetmiyor: ${t.students} öğrenci için ${t.seats} koltuk var.`); return; }
+      if (t.seats < t.students) { toast(`Salonlar yetmiyor: ${t.students} öğrenci için ${t.seats} koltuk var. Daha fazla salon seçin ya da salon mevcudunu artırın.`); return; }
+      const rooms = roomClasses().map((c) => ({ id: c.id, name: c.name, deskCols: c.deskCols, capacity: capOf(c) }));
+      if (!rooms.some((x) => x.capacity > 0)) { toast('Sınav salonu olarak en az bir sınıf seçin.'); return; }
       const r = A.distribute(inc, {
+        rooms,
         capacityMode: state.settings.capacityMode,
         deskCols: state.settings.deskCols,
         seatsPerDesk: state.settings.seatsPerDesk,
@@ -1022,11 +1055,29 @@
       if (e.target.id === 'cap-all-btn') {
         const n = parseInt($('#cap-all-n').value, 10);
         if (!(n >= 0)) { toast('Önce bir sayı yazın.'); return; }
-        for (const c of included()) c.roomCap = n;
+        for (const c of roomClasses()) c.roomCap = n;
       } else if (e.target.id === 'cap-reset') {
         for (const c of state.classes) c.roomCap = null;
       } else return;
       markStale(); save(); renderCapacity();
+    });
+
+    // salon seçimi
+    $('#rooms-picker').addEventListener('change', (e) => {
+      const t = e.target;
+      if (t.dataset.roomClass) {
+        const c = state.classes.find((x) => x.id === t.dataset.roomClass);
+        if (c) c.useAsRoom = t.checked;
+      } else if (t.dataset.roomLevel) {
+        for (const c of state.classes) if (A.levelOf(c.name) === t.dataset.roomLevel) c.useAsRoom = t.checked;
+      } else return;
+      markStale(); save(); renderRoomPicker(); renderCapacity(); renderResult();
+    });
+    $('#rooms-picker').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-room-pick]');
+      if (!b) return;
+      for (const c of state.classes) c.useAsRoom = b.dataset.roomPick === 'all' ? true : c.selected !== false;
+      markStale(); save(); renderRoomPicker(); renderCapacity(); renderResult();
     });
 
     // şube seçimi

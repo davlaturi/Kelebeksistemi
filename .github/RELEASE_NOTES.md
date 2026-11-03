@@ -6,12 +6,16 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.4.0)
+## Bu sürümde (v1.5.0)
+
+- **Salon seçimi.** Öğrencilerin oturacağı sınıflar, sınava giren şubelerden ayrı seçiliyor. İstemediğiniz sınıfları salon olmaktan çıkarabilirsiniz. O şubenin öğrencileri yine başka salonlarda sınava girer. Öğrencisi sınava girmeyen bir sınıfı da salon yapabilirsiniz.
+
+## Önceki sürümde (v1.4.0)
 
 - **Kayıtlı sınavlar.** Her sınavın dağıtımını adı, tarihi ve saatiyle kaydedebilirsiniz. Haftalık ya da iki haftalık programın tüm sınavları haftalara göre listelenir. Her sınav istediğiniz an açılabilir, yazdırılabilir ve Excel'e aktarılabilir. Kayıtlar yedek dosyasına da girer.
 - **Kapasite artık bir seçenek.** "Salon mevcudunu ben belirleyeceğim" işaretlenmezse önceki kural geçerlidir: her salona sınıf mevcudu kadar öğrenci oturur.
 
-## Önceki sürümde (v1.3.0)
+## Daha önce (v1.3.0)
 
 - **Salon kapasitesi seçimi.** Dağıtımı iki şekilde yapabilirsiniz:
   - sınıf mevcuduna göre,

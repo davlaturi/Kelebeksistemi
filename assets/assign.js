@@ -331,10 +331,14 @@
       if (!custom || c.roomCap == null || c.roomCap === '') return c.students.length;
       return Math.max(0, Math.floor(Number(c.roomCap)) || 0);
     };
-    const roomIdx = list.map((_, i) => i).filter((i) => capOf(list[i]) > 0);
-    if (!roomIdx.length) throw new Error('Kapasitesi 0\'dan büyük en az bir salon gerekli.');
-    const caps = roomIdx.map((i) => capOf(list[i]));
-    const owner = roomIdx.slice();
+    // Salonlar: ayrıca verilmişse (settings.rooms) onlar, yoksa sınava giren şubelerin kendi sınıfları.
+    const roomList = Array.isArray(settings.rooms)
+      ? settings.rooms.map((r) => ({ id: r.id, name: r.name, deskCols: r.deskCols, cap: Math.max(0, Math.floor(Number(r.capacity)) || 0) }))
+      : list.map((c) => ({ id: c.id, name: c.name, deskCols: c.deskCols, cap: capOf(c) }));
+    const usable = roomList.filter((r) => r.cap > 0);
+    if (!usable.length) throw new Error('Sınav salonu olarak en az bir sınıf seçin.');
+    const caps = usable.map((r) => r.cap);
+    const owner = usable.map((r) => list.findIndex((c) => c.id === r.id));
     const levels = list.map((c) => levelOf(c.name));
     const levelNames = [...new Set(levels)];
     const group = levels.map((l) => levelNames.indexOf(l));
@@ -349,8 +353,7 @@
     const takeIdx = list.map(() => 0);
     const EMPTY = levelNames.length;
 
-    const rooms = roomIdx.map((ci, j) => {
-      const room = list[ci];
+    const rooms = usable.map((room, j) => {
       const counts = list.map((_, i) => alloc.matrix[i][j]);
       const roomCols = Math.max(1, room.deskCols || cols);
       const layout = seatLayout(caps[j], roomCols, spd);

@@ -55,7 +55,10 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 
 - Yüklenen listelerdeki sınıflar şube şube ayrılır ve düzeylere göre gruplanır (9. sınıflar, 10. sınıflar…).
 - Sınıf adı şu yerlerden okunur: sayfa başlığı ("9. Sınıf / A Şubesi"), her satırdaki "Sınıfı" sütunu ("9/A") ya da dosya adı.
-- **3. Dağıtım** adımında hangi şubelerin dağıtıma gireceğini elle seçersiniz. Tek tek şube seçebilir ya da bir düzeyin hepsini birden açıp kapatabilirsiniz. Seçilen her şube aynı zamanda salon olur.
+- **3. Dağıtım** adımında iki ayrı seçim yaparsınız. İkisinde de tek tek şube seçebilir ya da bir düzeyin hepsini birden açıp kapatabilirsiniz.
+  - **Öğrencileri sınava girecek şubeler:** Hangi şubelerin öğrencileri dağıtılacak?
+  - **Sınav salonu olarak kullanılacak sınıflar:** Öğrenciler hangi sınıflara oturtulacak? İşaretini kaldırdığınız sınıfa hiç öğrenci oturtulmaz. O şubenin öğrencileri yine sınava girer ve başka salonlara dağıtılır. Öğrencileri sınava girmeyen bir sınıfı da salon olarak kullanabilirsiniz.
+  - Salonları azaltınca koltuk yetmezse uygulama uyarır. Bu durumda daha fazla salon seçin ya da "Salon mevcudunu ben belirleyeceğim" ile kapasiteyi artırın.
 
 ## Salon kapasitesi
 

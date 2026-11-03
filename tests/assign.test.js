@@ -115,4 +115,19 @@ assert.deepStrictEqual(partial.rooms.map((r) => r.seats.length), [30, 30, 34, 30
 const sep = custom([['9/A', 30], ['9/B', 30], ['10/A', 10]], [40, 40, 40]);
 assert.strictEqual(sep.stats.deskmate, 0);
 
+// Salonlar şubelerden bağımsız seçilebilir
+{
+  const studs = [mk('9/A', 30), mk('10/A', 30), mk('11/A', 30)];
+  const rooms = [
+    { id: '9/A', name: '9/A', capacity: 45 },
+    { id: '12/B', name: '12/B', capacity: 45 },   // öğrencisi sınava girmeyen sınıf
+  ];
+  const r = A.distribute(studs, { seed: 2, rooms });
+  assert.deepStrictEqual(r.rooms.map((x) => x.roomId), ['9/A', '12/B']);
+  assert.strictEqual(r.rooms.flatMap((x) => x.seats).filter((x) => !x.empty).length, 90);
+  assert.strictEqual(r.stats.deskmate, 0);
+  assert.throws(() => A.distribute(studs, { seed: 2, rooms: [{ id: '9/A', name: '9/A', capacity: 30 }] }), /öğrenci sayısından/);
+  assert.throws(() => A.distribute(studs, { seed: 2, rooms: [] }), /en az bir sınıf/);
+}
+
 console.log('Dağıtım testleri geçti.');
