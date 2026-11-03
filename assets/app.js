@@ -786,9 +786,12 @@
           <div class="sheet-sub">Kâğıt hazırlama</div>
           <div class="sheet-title">${paperMode === 'room' ? 'Hangi salona hangi şubeden kaç kâğıt' : 'Her şubenin kâğıtları hangi salona'}</div>
         </div>
-        <div class="seg no-print" role="group" aria-label="Görünüm">
-          <button type="button" data-pmode="room" aria-pressed="${paperMode === 'room'}">Salona göre (zarf)</button>
-          <button type="button" data-pmode="class" aria-pressed="${paperMode === 'class'}">Şubeye göre (deste)</button>
+        <div class="quick-tools no-print">
+          <div class="seg" role="group" aria-label="Görünüm">
+            <button type="button" data-pmode="room" aria-pressed="${paperMode === 'room'}">Salona göre (zarf)</button>
+            <button type="button" data-pmode="class" aria-pressed="${paperMode === 'class'}">Şubeye göre (deste)</button>
+          </div>
+          <button type="button" class="btn small" data-print-teacher="${paperMode}">Öğretmenler odası için yazdır</button>
         </div>
       </div>
       <p class="note no-print">${paperMode === 'room'
@@ -818,6 +821,13 @@
     return true;
   }
   function onPaperClick(e) {
+    const pt = e.target.closest('[data-print-teacher]');
+    if (pt) {
+      const entry = e.target.closest('#archive-view') ? state.archive.find((a) => a.id === archiveView) : null;
+      const html = entry ? withEntry(entry, () => renderTeacherList(pt.dataset.printTeacher)) : renderTeacherList(pt.dataset.printTeacher);
+      printHtml(html);
+      return true;
+    }
     const m = e.target.closest('[data-pmode]');
     const c = e.target.closest('[data-pclear]');
     if (!m && !c) return false;
@@ -834,13 +844,15 @@
     { key: 'yer', label: 'Sınıflara göre sınav yerleri', hint: 'Her şube için 1 sayfa; öğrenciler yerini buradan öğrenir.' },
     { key: 'tablo', label: 'Kâğıt dağıtım tablosu', hint: 'Hangi salona hangi düzeyden ve şubeden kaç kâğıt gideceği.' },
     { key: 'zarf', label: 'Zarf etiketleri', hint: 'Her salonun kâğıt zarfına yapıştırılır.' },
+    { key: 'oda', label: 'Öğretmenler odası listesi (şubeye göre)', hint: 'Öğretmenler odasına asılır; her şubenin kâğıtlarının hangi salona kaçar gideceği.' },
+    { key: 'odaSalon', label: 'Öğretmenler odası listesi (salona göre)', hint: 'Her salon zarfına hangi şubeden kaç kâğıt konacağı.', def: false },
   ];
   let packEntry = null; // null = çalışma alanındaki dağıtım; yoksa kayıtlı sınav
   function packChoice() {
     let c = null;
     try { c = JSON.parse(localStorage.getItem(STORE_KEY + '.pack') || 'null'); } catch (e) { c = null; }
     const out = {};
-    for (const p of PACK_PARTS) out[p.key] = !c || c[p.key] !== false;
+    for (const p of PACK_PARTS) out[p.key] = c && p.key in c ? c[p.key] !== false : p.def !== false;
     return out;
   }
   function buildPack(choice) {
@@ -850,6 +862,8 @@
     if (choice.yer) parts.push(renderByClass());
     if (choice.tablo) parts.push(renderPapers('table'));
     if (choice.zarf) parts.push(renderPapers('labels'));
+    if (choice.oda) parts.push(renderTeacherList('class'));
+    if (choice.odaSalon) parts.push(renderTeacherList('room'));
     return parts.join('');
   }
   function packCounts() {
@@ -857,7 +871,7 @@
     const rooms = r.rooms.length;
     const used = new Set();
     for (const rm of r.rooms) for (const x of rm.seats) if (x.classId) used.add(x.classId);
-    return { plan: rooms, imza: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)) };
+    return { plan: rooms, imza: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)), oda: 1, odaSalon: 1 };
   }
   function openPack(entry) {
     packEntry = entry || null;
@@ -889,6 +903,73 @@
     const dlg = $('#pack-dlg');
     if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open');
   }
+  /** Hazır HTML'i tek başına yazdırır (evrak kabını kullanır). */
+  function printHtml(html) {
+    $('#print-pack').innerHTML = html;
+    document.body.classList.remove('print-one', 'print-archive');
+    document.body.classList.add('print-pack');
+    window.print();
+  }
+
+  /**
+   * Öğretmenler odasına asılacak kâğıt listesi: yatay A4'te tek tablo.
+   * 'class': satırlar şubeler, sütunlar salonlar (başkan öğretmen kendi
+   * şubesinin satırını okur). 'room': satırlar salonlar, sütunlar şubeler.
+   */
+  function renderTeacherList(mode) {
+    const r = state.result;
+    const ci = classIndex();
+    const rooms = r.rooms.map((room) => ({ id: room.roomId, title: roomTitle(room, ci), rc: roomCounts(room) }));
+    const cls = new Map();
+    for (const x of rooms) for (const L of x.rc.levels) for (const c of L.classes) {
+      if (!cls.has(c.id)) cls.set(c.id, { id: c.id, name: c.name, level: L.level });
+    }
+    const classes = [...cls.values()].sort((a, b) => collator.compare(a.name, b.name));
+    const count = (roomX, classId) => {
+      for (const L of roomX.rc.levels) for (const c of L.classes) if (c.id === classId) return c.n;
+      return 0;
+    };
+    const rowsDef = mode === 'class'
+      ? classes.map((c) => ({ key: c.id, label: c.name, level: c.level, hue: levelHue(c.name), get: (col) => count(col.x, c.id) }))
+      : rooms.map((x) => ({ key: x.id, label: x.title, level: A.levelOf(x.title), hue: levelHue(x.title), get: (col) => count(x, col.id) }));
+    const colsDef = mode === 'class'
+      ? rooms.map((x) => ({ label: x.title, x }))
+      : classes.map((c) => ({ label: c.name, id: c.id, hue: levelHue(c.name) }));
+    const nCols = colsDef.length;
+    const groups = new Map();
+    for (const row of rowsDef) {
+      if (!groups.has(row.level)) groups.set(row.level, []);
+      groups.get(row.level).push(row);
+    }
+    // Tek yatay sayfaya sığsın: yazı boyutu sütun ve satır sayısına göre küçülür.
+    const nRows = rowsDef.length + groups.size;
+    const byCols = nCols <= 10 ? 11 : nCols <= 16 ? 10 : nCols <= 22 ? 9 : nCols <= 30 ? 8 : 7;
+    const byRows = nRows <= 18 ? 11 : nRows <= 24 ? 10 : nRows <= 30 ? 9 : nRows <= 38 ? 8 : 7;
+    const fs = Math.min(byCols, byRows);
+    let body = '';
+    for (const [lv, list] of [...groups.entries()].sort((a, b) => collator.compare(a[0], b[0]))) {
+      body += `<tr class="tm-group"><th colspan="${nCols + 3}">${esc(levelLabel(lv))} ${mode === 'class' ? 'şubeleri' : 'salonları'}</th></tr>`;
+      for (const row of list) {
+        const vals = colsDef.map((col) => row.get(col));
+        const tot = vals.reduce((a, v) => a + v, 0);
+        body += `<tr><th class="tm-row" style="--h:${row.hue}">${esc(row.label)}</th>${vals.map((v) => `<td class="${v ? 'tm-v' : 'tm-0'}">${v || ''}</td>`).join('')}<td class="tm-tot">${tot}</td><td class="tm-chk"><span class="tbox"></span></td></tr>`;
+      }
+    }
+    const colTot = colsDef.map((col) => rowsDef.reduce((a, row) => a + row.get(col), 0));
+    const grand = colTot.reduce((a, v) => a + v, 0);
+    return `<article class="sheet teacher-sheet">
+      ${sheetHead('Öğretmenler odası', mode === 'class' ? 'Şubelere göre sınav kâğıdı dağılımı' : 'Salonlara göre sınav kâğıdı dağılımı', 'oda-' + mode, 'papers')}
+      <p class="note">${mode === 'class'
+        ? 'Kendi şubenizin satırını bulun. Sütunlar sınav salonlarıdır: her salonun zarfına, satırınızda yazan sayıda kâğıt koyun. Bitince satır sonundaki kutuyu işaretleyin.'
+        : 'Her satır bir salon zarfıdır. Sütunlardaki şubelerden yazan sayıda kâğıt koyun. Bitince satır sonundaki kutuyu işaretleyin.'} Toplam ${grand} kâğıt.</p>
+      <div class="table-scroll"><table class="tmatrix" style="font-size:${fs}pt">
+        <thead><tr><th class="tm-corner">${mode === 'class' ? 'Şube ↓ &nbsp; Salon →' : 'Salon ↓ &nbsp; Şube →'}</th>${colsDef.map((c) => `<th class="tm-col">${esc(c.label)}</th>`).join('')}<th class="tm-col">Toplam</th><th class="tm-col">Tamam</th></tr></thead>
+        <tbody>${body}</tbody>
+        <tfoot><tr><th>Toplam</th>${colTot.map((v) => `<td>${v}</td>`).join('')}<td>${grand}</td><td></td></tr></tfoot>
+      </table></div>
+    </article>`;
+  }
+
   function printPack() {
     const c = currentPackChoice();
     try { localStorage.setItem(STORE_KEY + '.pack', JSON.stringify(c)); } catch (e) { /* yoksay */ }
