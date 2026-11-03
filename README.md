@@ -43,12 +43,19 @@ Dağıtımdan sonra her kuralın kaç kez ihlal edildiği ekranda gösterilir. P
 
 ## Çıktılar
 
-- **Oturma planları:** Her salon için tahtaya göre sıra sıra yerleşim. Kapıya asmak ya da gözetmene vermek için kullanılır.
-- **Salon yoklama listeleri:** Sıra no, öğrenci no, ad soyad, sınıf ve imza sütunu. Altında gözetmen imza alanları vardır.
-- **Sınıflara göre liste:** Her sınıfın öğrencileri hangi salonda, hangi sırada sınava giriyor. Sınıflara duyurmak için kullanılır.
-- **Öğrenci ara:** Ad ya da numara ile öğrencinin sınav yerini bulun.
-- **Yazdır / PDF kaydet:** Her salon ya da sınıf ayrı bir A4 sayfaya basılır. Kartlardaki "Bu salonu yazdır" düğmesiyle tek sayfa da yazdırabilirsiniz.
-- **Excel'e aktar (CSV):** Tüm dağıtımı Excel'de açılabilen bir dosya olarak indirir.
+Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sınıfı** yazar. Numara, cinsiyet ya da sıra no yazmaz.
+
+- **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar.
+- **Salon yoklama listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
+- **Sınıflara göre liste:** Her şubenin öğrencilerinin hangi salonda sınava girdiği yazar.
+- **Öğrenci ara:** Ada göre arayıp öğrencinin salonunu bulabilirsiniz.
+- **Yazdır / PDF kaydet:** Her salon ayrı A4 sayfaya basılır. **Excel'e aktar (CSV)** ile tüm dağıtımı Excel'e alabilirsiniz.
+
+## Şubeler ve şube seçimi
+
+- Yüklenen listelerdeki sınıflar şube şube ayrılır ve düzeylere göre gruplanır (9. sınıflar, 10. sınıflar…).
+- Sınıf adı şu yerlerden okunur: sayfa başlığı ("9. Sınıf / A Şubesi"), her satırdaki "Sınıfı" sütunu ("9/A") ya da dosya adı.
+- **3. Dağıtım** adımında hangi şubelerin dağıtıma gireceğini elle seçersiniz. Tek tek şube seçebilir ya da bir düzeyin hepsini birden açıp kapatabilirsiniz. Seçilen her şube aynı zamanda salon olur.
 
 Yüklediğiniz listeler, ayarlar ve son dağıtım bu tarayıcıda saklanır. Sayfayı kapatıp açtığınızda kaldığınız yerden devam edersiniz.
 
@@ -56,7 +63,7 @@ Yüklediğiniz listeler, ayarlar ve son dağıtım bu tarayıcıda saklanır. Sa
 
 - PDF'in **metin içeren** bir PDF olması gerekir. e-Okul'dan "PDF olarak kaydet / yazdır" ile alınan listeler böyledir.
   Kâğıttan taranmış (fotoğraf) PDF'lerde metin olmadığı için okunamaz. Bu durumda uygulama sizi uyarır, listeyi elle yapıştırabilirsiniz.
-- Öğrenci satırları "sıra no, öğrenci no, ad, soyad, cinsiyet" düzenindeki tablolardan tanınır. Sütun sırası biraz farklı olsa da genellikle doğru okunur. Yine de yükledikten sonra sayıları kontrol edin.
+- Öğrenci satırları "sıra no, öğrenci no, ad, soyad, cinsiyet" düzenindeki tablolardan tanınır. Türkçe harflerin parça parça yazıldığı PDF'ler de doğru birleştirilir. Sütun sırası biraz farklı olsa da genellikle doğru okunur. Yine de yükledikten sonra sayıları kontrol edin.
 - `ornekler/` klasöründe deneme için hayali isimlerle hazırlanmış örnek PDF'ler var.
 
 ## Web adresinden yayınlama (GitHub Pages)

@@ -115,6 +115,68 @@ def sade_pdf(path, baslik, liste):
     c.save()
 
 
+TR_HARF = set("ÇĞİÖŞÜçğıöşü")
+
+
+def parcali_yaz(c, x, y, metin, font="DV", boyut=9):
+    """Türkçe harfleri ayrı metin parçaları olarak yazar (bazı e-Okul PDF'lerindeki gibi)."""
+    parca = ""
+    for ch in metin:
+        if ch in TR_HARF:
+            if parca:
+                c.drawString(x, y, parca)
+                x += pdfmetrics.stringWidth(parca, font, boyut)
+                parca = ""
+            c.drawString(x, y, ch)
+            x += pdfmetrics.stringWidth(ch, font, boyut)
+        else:
+            parca += ch
+    if parca:
+        c.drawString(x, y, parca)
+
+
+def parcali_pdf(path, siniflar):
+    """Tek dosyada çok sınıf; harfler parçalı; başlık 'Sınıfı : 9. Sınıf / A Şubesi'."""
+    c = canvas.Canvas(path, pagesize=A4)
+    w, h = A4
+    for sinif, sube, liste in siniflar:
+        c.setFont("DVB", 11)
+        parcali_yaz(c, 50, h - 60, "NECATİ ÖRNEK ANADOLU LİSESİ", "DVB", 11)
+        c.setFont("DV", 10)
+        parcali_yaz(c, 50, h - 80, f"Sınıfı : {sinif}. Sınıf / {sube} Şubesi", "DV", 10)
+        y = h - 110
+        c.setFont("DV", 9)
+        for i, (no, ad, soyad, cins) in enumerate(liste, 1):
+            y -= 16
+            c.drawString(50, y, str(i))
+            c.drawString(80, y, str(no))
+            parcali_yaz(c, 130, y, f"{tr_upper(ad)} {tr_upper(soyad)}")
+            parcali_yaz(c, 400, y, cins)
+        c.showPage()
+    c.save()
+
+
+def okul_listesi_pdf(path, siniflar):
+    """Tüm okul tek tabloda; her satırda 'Sınıfı' sütunu (ör. 10/B)."""
+    c = canvas.Canvas(path, pagesize=A4)
+    w, h = A4
+    satirlar = [(f"{s}/{b}", o) for s, b, l in siniflar for o in l]
+    rnd.shuffle(satirlar)
+    y = h - 50
+    c.setFont("DVB", 9)
+    for x, t in zip([50, 80, 130, 190, 420], ["S.No", "Sınıfı", "Okul No", "Adı Soyadı", "Cinsiyeti"]):
+        c.drawString(x, y, t)
+    c.setFont("DV", 9)
+    for i, (snf, (no, ad, soyad, cins)) in enumerate(satirlar, 1):
+        y -= 15
+        if y < 50:
+            c.showPage(); c.setFont("DV", 9); y = h - 50
+        for x, t in zip([50, 80, 130, 190, 420], [str(i), snf, str(no), f"{ad} {soyad}", cins]):
+            c.drawString(x, y, t)
+    c.showPage()
+    c.save()
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     eokul_pdf(os.path.join(OUT, "9-A.pdf"), [("9", "A", ogrenciler(30, 100))])
@@ -124,7 +186,13 @@ def main():
     eokul_pdf(os.path.join(OUT, "10-B ve 11-A.pdf"),
               [("10", "B", ogrenciler(27, 1300)), ("11", "A", ogrenciler(32, 1700))])
     sade_pdf(os.path.join(OUT, "11-B.pdf"), "11-B", ogrenciler(25, 2100))
-    print("Örnekler:", sorted(os.listdir(OUT)))
+    fx = os.path.join(ROOT, "tests", "fixtures")
+    os.makedirs(fx, exist_ok=True)
+    parcali_pdf(os.path.join(fx, "document (9).pdf"),
+                [("9", "A", ogrenciler(31, 3000)), ("9", "B", ogrenciler(29, 3400)), ("10", "A", ogrenciler(33, 3800))])
+    okul_listesi_pdf(os.path.join(fx, "okul-listesi.pdf"),
+                     [("11", "C", ogrenciler(20, 4200)), ("12", "A", ogrenciler(22, 4600)), ("12", "B", ogrenciler(18, 5000))])
+    print("Örnekler:", sorted(os.listdir(OUT)), "Test:", sorted(os.listdir(fx)))
 
 
 if __name__ == "__main__":

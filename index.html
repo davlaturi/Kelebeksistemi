@@ -50,7 +50,7 @@
       <div id="import-log" class="import-log" aria-live="polite"></div>
 
       <div id="class-summary" class="class-summary"></div>
-      <div id="class-list" class="class-grid"></div>
+      <div id="class-list" class="levels"></div>
     </section>
 
     <!-- 2. Kurallar -->
@@ -95,9 +95,10 @@
         <span class="step-no">3</span>
         <div>
           <h2 id="h-result">Dağıtım</h2>
-          <p class="hint">Dağıtımdan sonra planda iki öğrenciye sırayla tıklayarak yerlerini değiştirebilirsiniz.</p>
+          <p class="hint">Sınava girecek şubeleri seçin. Seçilen her şube aynı zamanda salon olur. Dağıtımdan sonra planda iki öğrenciye sırayla tıklayarak yerlerini değiştirebilirsiniz.</p>
         </div>
       </div>
+      <div id="picker" class="picker no-print"></div>
       <div class="row-actions no-print">
         <button type="button" class="btn primary" id="btn-run">Kelebek dağıtımını yap</button>
         <span class="spacer"></span>
@@ -140,15 +141,15 @@
         </div>
         <div class="table-scroll">
           <table class="edit-table">
-            <thead><tr><th>#</th><th>Öğrenci no</th><th>Adı soyadı</th><th></th></tr></thead>
+            <thead><tr><th>#</th><th>Adı soyadı</th><th></th></tr></thead>
             <tbody id="e-rows"></tbody>
           </table>
         </div>
         <button type="button" class="btn ghost small" id="e-add">+ Öğrenci ekle</button>
         <details class="paste">
           <summary>Listeyi metin olarak yapıştır</summary>
-          <p class="hint">Excel'den ya da başka bir yerden kopyaladığınız satırları yapıştırın. Her satır: <code>Numara Ad Soyad</code>.</p>
-          <textarea id="e-paste" rows="5" placeholder="1234 Ayşe Yılmaz&#10;1235 Mehmet Kaya"></textarea>
+          <p class="hint">Excel'den ya da başka bir yerden kopyaladığınız satırları yapıştırın. Her satıra bir öğrenci: <code>Ad Soyad</code>.</p>
+          <textarea id="e-paste" rows="5" placeholder="Ayşe Yılmaz&#10;Mehmet Kaya"></textarea>
           <button type="button" class="btn small" id="e-paste-add">Satırları ekle</button>
         </details>
       </div>

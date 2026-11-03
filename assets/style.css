@@ -147,6 +147,30 @@ main.wrap { display: grid; gap: 22px; padding-block: 24px 8px; }
   border: 1px dashed var(--line); border-radius: var(--r); padding: 18px; color: var(--ink-soft); text-align: center;
 }
 
+/* Düzeylere göre şube grupları */
+.levels { display: grid; gap: 16px; }
+.level-group { display: grid; gap: 8px; }
+.level-title { font-size: 1rem; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.level-title span { font: 400 0.88rem/1.2 var(--f-body); color: var(--ink-soft); }
+.class-card .sw { grid-row: span 2; height: 34px; }
+
+/* Şube seçimi */
+.picker { display: grid; gap: 10px; border: 1px solid var(--line); border-radius: var(--r); padding: 14px; background: var(--paper); }
+.picker:empty { display: none; }
+.pick-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.pick-row { display: grid; grid-template-columns: 9.5em 1fr; gap: 8px 12px; align-items: start; }
+.pick-level { display: flex; gap: 8px; align-items: center; font-weight: 600; padding-top: 5px; }
+.pick-classes { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick-chip {
+  --h: 200;
+  display: inline-flex; gap: 6px; align-items: center; padding: 5px 10px; border-radius: 999px; cursor: pointer;
+  background: hsl(var(--h) var(--seat-s) var(--seat-l)); color: hsl(var(--h) 60% var(--seat-ink-l));
+  border: 1px solid hsl(var(--h) 45% 55% / 45%); font-size: 0.9rem; font-weight: 500;
+}
+.pick-chip:has(input:not(:checked)) { background: var(--surface); color: var(--ink-soft); }
+.picker input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+@media (max-width: 560px) { .pick-row { grid-template-columns: 1fr; } }
+
 /* Ayarlar */
 .settings { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 16px; }
 .field { display: grid; gap: 5px; min-width: 0; }
@@ -213,13 +237,13 @@ textarea { resize: vertical; font-family: var(--f-mono); font-size: 0.9rem; }
 .seat {
   --h: 200;
   position: relative; display: grid; gap: 1px; align-content: start;
-  min-height: 62px; padding: 6px 7px 5px; border-radius: 6px; text-align: left;
+  min-height: 54px; padding: 7px 8px; border-radius: 6px; text-align: left;
   background: hsl(var(--h) var(--seat-s) var(--seat-l)); color: hsl(var(--h) 60% var(--seat-ink-l));
   border: 1px solid hsl(var(--h) 45% 55% / 45%); font: inherit; cursor: pointer;
 }
 .seat .no { font: 500 0.72rem/1 var(--f-mono); opacity: 0.8; }
-.seat .who { font-weight: 600; font-size: 0.84rem; line-height: 1.2; overflow-wrap: anywhere; }
-.seat .cls { font-size: 0.72rem; font-family: var(--f-mono); }
+.seat .who { font-weight: 600; font-size: 0.9rem; line-height: 1.2; overflow-wrap: anywhere; }
+.seat .cls { font-size: 0.8rem; font-weight: 500; opacity: 0.85; }
 .seat.sel { outline: 3px solid var(--focus); outline-offset: 1px; }
 .seat.conflict::after {
   content: "!"; position: absolute; top: 4px; right: 5px; width: 16px; height: 16px; border-radius: 50%;
@@ -305,7 +329,7 @@ table.list td.sign { width: 28%; }
   .desks { min-width: 0; gap: 9px 18px; }
   .seat { min-height: 19mm; padding: 4px 5px; cursor: default; }
   .seat .who { font-size: 9.5pt; }
-  .seat .no, .seat .cls { font-size: 7pt; }
+  .seat .cls { font-size: 8pt; }
   .seat.sel { outline: 0; }
   .seat.conflict::after { display: none; }
   table.list { font-size: 9.5pt; }

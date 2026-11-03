@@ -77,7 +77,20 @@
     for (const c of state.classes) for (const s of c.students) m.set(s.id, { s, c });
     return m;
   }
-  function included() { return state.classes.filter((c) => c.students.length > 0); }
+  function included() { return state.classes.filter((c) => c.students.length > 0 && c.selected !== false); }
+
+  /** Sınıfları düzeylere göre gruplar: [{level, label, classes}] */
+  function byLevel(classes) {
+    const map = new Map();
+    for (const c of classes) {
+      const lv = A.levelOf(c.name);
+      if (!map.has(lv)) map.set(lv, []);
+      map.get(lv).push(c);
+    }
+    return [...map.entries()]
+      .sort((a, b) => collator.compare(a[0], b[0]))
+      .map(([level, cls]) => ({ level, label: /^\d+$/.test(level) ? level + '. sınıflar' : cls[0].name.split(/[\/\-\s]/)[0], classes: cls }));
+  }
 
   function markStale() {
     if (state.result) state.stale = true;
@@ -125,7 +138,11 @@
           const r = addParsedClass(c.name, c.students, f.name);
           return r.merged ? `${c.name} (mevcut listeye ${r.added} öğrenci eklendi)` : `${c.name}: ${r.added} öğrenci`;
         });
-        setLine(line, f.name + ' → ' + parts.join(', '), 'ok');
+        if (res.usedFallback) {
+          setLine(line, f.name + ' → ' + parts.join(', ') + '. Bu dosyada sınıf/şube adı bulunamadı; sınıf kartına tıklayıp adını düzeltin (ör. 9/A).', 'warn');
+        } else {
+          setLine(line, f.name + ' → ' + res.classes.length + ' şube: ' + parts.join(', '), 'ok');
+        }
       } catch (e) {
         console.error(e);
         setLine(line, f.name + ': okunamadı (' + (e && e.message ? e.message : e) + ').', 'bad');
@@ -177,17 +194,52 @@
       sum.innerHTML = '';
       return;
     }
+    const all = state.classes.filter((c) => c.students.length > 0);
+    const total = all.reduce((a, c) => a + c.students.length, 0);
+    const groups = byLevel(state.classes);
+    sum.innerHTML = `<span><strong>${groups.length}</strong> sınıf düzeyi</span>` +
+      `<span><strong>${state.classes.length}</strong> şube</span>` +
+      `<span><strong>${total}</strong> öğrenci</span>` +
+      `<span>Bir şubeye tıklayarak listesini kontrol edin ve düzeltin.</span>`;
+    list.innerHTML = groups.map((g) => `
+      <div class="level-group">
+        <h3 class="level-title">${esc(g.label)} <span>${g.classes.length} şube · ${g.classes.reduce((a, c) => a + c.students.length, 0)} öğrenci</span></h3>
+        <div class="class-grid">${g.classes.map((c) => `
+          <button type="button" class="class-card${c.students.length ? '' : ' off'}" data-id="${esc(c.id)}" style="--h:${levelHue(c.name)}">
+            <span class="sw"></span>
+            <span class="nm">${esc(c.name)}</span>
+            <span class="ct"><b>${c.students.length}</b> öğrenci</span>
+          </button>`).join('')}
+        </div>
+      </div>`).join('');
+    renderPicker();
+  }
+
+  /** 3. adım: dağıtıma girecek şubeleri elle seçme */
+  function renderPicker() {
+    const box = $('#picker');
+    const groups = byLevel(state.classes.filter((c) => c.students.length > 0));
+    if (!groups.length) { box.innerHTML = ''; return; }
     const inc = included();
     const total = inc.reduce((a, c) => a + c.students.length, 0);
-    sum.innerHTML = `<span><strong>${inc.length}</strong> sınıf = <strong>${inc.length}</strong> salon</span>` +
-      `<span><strong>${total}</strong> öğrenci = <strong>${total}</strong> koltuk</span>` +
-      `<span>Aynı renk = aynı sınıf düzeyi. Karta tıklayarak listeyi kontrol edin ve düzeltin.</span>`;
-    list.innerHTML = state.classes.map((c, i) => `
-      <button type="button" class="class-card${c.students.length ? '' : ' off'}" data-id="${esc(c.id)}" style="--h:${levelHue(c.name)}">
-        <span class="sw"></span>
-        <span class="nm">${esc(c.name)}</span>
-        <span class="ct"><b>${c.students.length}</b> öğrenci · salon kapasitesi <b>${c.students.length}</b></span>
-      </button>`).join('');
+    box.innerHTML = `
+      <div class="pick-head">
+        <strong>Dağıtıma girecek şubeler</strong>
+        <span class="hint">${inc.length} şube seçili · ${total} öğrenci · ${inc.length} salon</span>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost small" data-pick="all">Tümünü seç</button>
+        <button type="button" class="btn ghost small" data-pick="none">Hiçbirini seçme</button>
+      </div>
+      ${groups.map((g) => {
+        const on = g.classes.filter((c) => c.selected !== false).length;
+        return `<div class="pick-row">
+          <label class="pick-level"><input type="checkbox" data-pick-level="${esc(g.level)}" ${on === g.classes.length ? 'checked' : ''} ${on > 0 && on < g.classes.length ? 'data-mixed="1"' : ''}> ${esc(g.label)}</label>
+          <div class="pick-classes">${g.classes.map((c) => `
+            <label class="pick-chip" style="--h:${levelHue(c.name)}"><input type="checkbox" data-pick-class="${esc(c.id)}" ${c.selected !== false ? 'checked' : ''}> ${esc(c.name)}</label>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}`;
+    box.querySelectorAll('[data-mixed]').forEach((el) => { el.indeterminate = true; });
   }
 
   // ---------- düzenleyici ----------
@@ -214,10 +266,9 @@
     $('#e-rows').innerHTML = editing.rows.map((s, i) => `
       <tr data-i="${i}">
         <td>${i + 1}</td>
-        <td><input type="text" inputmode="numeric" data-f="no" value="${esc(s.no)}" aria-label="Öğrenci no"></td>
         <td><input type="text" data-f="name" value="${esc(s.name)}" aria-label="Adı soyadı"></td>
         <td><button type="button" class="icon-btn" data-del="${i}" aria-label="Satırı sil">×</button></td>
-      </tr>`).join('') || '<tr><td colspan="4" class="hint">Liste boş. Öğrenci ekleyin ya da metin yapıştırın.</td></tr>';
+      </tr>`).join('') || '<tr><td colspan="3" class="hint">Liste boş. Öğrenci ekleyin ya da metin yapıştırın.</td></tr>';
   }
   function syncEditorInputs() {
     document.querySelectorAll('#e-rows tr[data-i]').forEach((tr) => {
@@ -291,7 +342,7 @@
   // ---------- 3. dağıtım ----------
   function runDistribution() {
     const inc = included();
-    if (!inc.length) { toast('Önce sınıf listelerini yükleyin.'); return; }
+    if (!inc.length) { toast(state.classes.length ? 'Dağıtıma girecek en az bir şube seçin.' : 'Önce sınıf listelerini yükleyin.'); return; }
     try {
       const r = A.distribute(inc, {
         deskCols: state.settings.deskCols,
@@ -322,19 +373,6 @@
     const r = state.result;
     const inc = state.classes;
     r.stats = A.evaluate(r.rooms, inc, { cols: state.settings.deskCols, spd: state.settings.seatsPerDesk });
-  }
-
-  function conflictSet(room) {
-    const layout = A.seatLayout(room.seats.length, room.cols, room.spd);
-    const ci = classIndex();
-    const lv = (id) => A.levelOf(ci.get(id).c.name);
-    const bad = new Set();
-    for (const e of layout.edges) {
-      if ((e.kind === 'desk' || e.kind === 'side' || e.kind === 'front') && lv(room.seats[e.a].classId) === lv(room.seats[e.b].classId)) {
-        bad.add(e.a); bad.add(e.b);
-      }
-    }
-    return bad;
   }
 
   function renderResult() {
@@ -392,22 +430,29 @@
     }
   }
 
-  function mixChips(room, ci) {
-    const counts = new Map();
-    for (const s of room.seats) counts.set(s.classId, (counts.get(s.classId) || 0) + 1);
-    return [...counts.entries()]
-      .map(([id, n]) => ({ c: ci.get(id), n }))
-      .sort((a, b) => collator.compare(a.c.c.name, b.c.c.name))
-      .map(({ c, n }) => `<span class="chip" style="--h:${levelHue(c.c.name)}">${esc(c.c.name)} <b>${n}</b></span>`).join('');
+  function roomTitle(room, ci) {
+    const rc = ci.get(room.roomId);
+    return rc ? rc.c.name : room.name;
   }
 
+  function sheetHead(sub, title, ri, kind) {
+    const meta = headerMeta();
+    return `<div class="sheet-head">
+          <div>
+            <div class="sheet-sub">${sub}</div>
+            <div class="sheet-title">${esc(title)}</div>
+          </div>
+          <div class="meta">${meta}</div>
+          <div class="sheet-tools"><button type="button" class="btn small" data-print-${kind}="${esc(ri)}">Yazdır</button></div>
+        </div>`;
+  }
+
+  /** Oturma planı: her koltukta yalnızca öğrencinin adı ve sınıfı. */
   function renderPlans() {
     const r = state.result;
     const ci = classIndex();
     const si = studentIndex();
     return r.rooms.map((room, ri) => {
-      const roomCls = ci.get(room.roomId);
-      const bad = conflictSet(room);
       const desks = [];
       const spd = room.spd;
       const nDesks = Math.ceil(room.seats.length / spd);
@@ -420,24 +465,15 @@
           const stu = si.get(seat.studentId);
           const c = ci.get(seat.classId);
           const isSel = selectedSeat && selectedSeat.roomIdx === ri && selectedSeat.seatIdx === idx;
-          cells.push(`<button type="button" class="seat${bad.has(idx) ? ' conflict' : ''}${isSel ? ' sel' : ''}" style="--h:${levelHue(c.c.name)}" data-room="${ri}" data-seat="${idx}" title="${esc(stu.s.name)} · ${esc(c.c.name)}">
-            <span class="no">${seat.seatNo}</span>
+          cells.push(`<button type="button" class="seat${isSel ? ' sel' : ''}" style="--h:${levelHue(c.c.name)}" data-room="${ri}" data-seat="${idx}">
             <span class="who">${esc(stu.s.name)}</span>
-            <span class="cls">${esc(c.c.name)}${stu.s.no ? ' · ' + esc(stu.s.no) : ''}</span>
+            <span class="cls">${esc(c.c.name)}</span>
           </button>`);
         }
         desks.push(`<div class="desk${spd === 2 ? ' spd2' : ''}">${cells.join('')}</div>`);
       }
       return `<article class="sheet" data-room="${ri}">
-        <div class="sheet-head">
-          <div>
-            <div class="sheet-sub">Sınav salonu · oturma planı</div>
-            <div class="sheet-title">${esc(roomCls ? roomCls.c.name : room.name)} sınıfı</div>
-          </div>
-          <div class="meta">${headerMeta()}${headerMeta() ? '<br>' : ''}Kapasite: <b>${room.seats.length}</b> öğrenci</div>
-          <div class="sheet-tools"><button type="button" class="btn small" data-print-room="${ri}">Bu salonu yazdır</button></div>
-        </div>
-        <div class="mix">${mixChips(room, ci)}</div>
+        ${sheetHead('Sınav salonu · oturma planı', roomTitle(room, ci) + ' sınıfı', ri, 'room')}
         <div class="plan-scroll">
           <div class="board">Yazı tahtası · öğretmen masası</div>
           <div class="desks" style="grid-template-columns:repeat(${room.cols}, minmax(0,1fr))">${desks.join('')}</div>
@@ -446,31 +482,23 @@
     }).join('');
   }
 
+  /** Salon yoklama listesi: ad, sınıf, imza. */
   function renderRoll() {
     const r = state.result;
     const ci = classIndex();
     const si = studentIndex();
     return r.rooms.map((room, ri) => {
-      const roomCls = ci.get(room.roomId);
       const rows = room.seats.map((seat) => {
         const stu = si.get(seat.studentId);
-        const c = ci.get(seat.classId);
-        return `<tr><td class="num">${seat.seatNo}</td><td class="num">${esc(stu.s.no)}</td><td>${esc(stu.s.name)}</td><td>${esc(c.c.name)}</td><td class="sign"></td></tr>`;
+        return `<tr><td>${esc(stu.s.name)}</td><td>${esc(ci.get(seat.classId).c.name)}</td><td class="sign"></td></tr>`;
       }).join('');
       return `<article class="sheet" data-room="${ri}">
-        <div class="sheet-head">
-          <div>
-            <div class="sheet-sub">Sınav salonu · yoklama listesi</div>
-            <div class="sheet-title">${esc(roomCls ? roomCls.c.name : room.name)} sınıfı</div>
-          </div>
-          <div class="meta">${headerMeta()}${headerMeta() ? '<br>' : ''}Mevcut: <b>${room.seats.length}</b></div>
-          <div class="sheet-tools"><button type="button" class="btn small" data-print-room="${ri}">Bu listeyi yazdır</button></div>
-        </div>
+        ${sheetHead('Sınav salonu · yoklama listesi', roomTitle(room, ci) + ' sınıfı', ri, 'room')}
         <div class="table-scroll"><table class="list">
-          <thead><tr><th>Sıra no</th><th>Öğrenci no</th><th>Adı soyadı</th><th>Sınıfı</th><th>İmza</th></tr></thead>
+          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>İmza</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
-        <div class="signs"><div>Sınava girmeyen öğrenci sayısı</div><div>Gözetmen öğretmen – imza</div><div>Gözetmen öğretmen – imza</div></div>
+        <div class="signs"><div>Gözetmen öğretmen – imza</div><div>Gözetmen öğretmen – imza</div></div>
       </article>`;
     }).join('');
   }
@@ -478,34 +506,25 @@
   function placements() {
     const r = state.result;
     const ci = classIndex();
-    const out = new Map(); // studentId -> {room name, seatNo}
+    const out = new Map(); // studentId -> salon adı
     for (const room of r.rooms) {
-      const rc = ci.get(room.roomId);
-      for (const s of room.seats) out.set(s.studentId, { room: rc ? rc.c.name : room.name, seatNo: s.seatNo });
+      const name = roomTitle(room, ci);
+      for (const s of room.seats) out.set(s.studentId, name);
     }
     return out;
   }
 
+  /** Sınıflara göre liste: her şubenin öğrencileri hangi salonda. */
   function renderByClass() {
     const pl = placements();
     return included().map((c) => {
       const rows = c.students.slice()
-        .sort((a, b) => collator.compare(a.no || '', b.no || '') || collator.compare(a.name, b.name))
-        .map((s) => {
-          const p = pl.get(s.id);
-          return `<tr><td class="num">${esc(s.no)}</td><td>${esc(s.name)}</td><td><b>${esc(p ? p.room : '-')}</b></td><td class="num">${p ? p.seatNo : '-'}</td></tr>`;
-        }).join('');
+        .sort((a, b) => collator.compare(a.name, b.name))
+        .map((s) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(pl.get(s.id) || '-')}</b></td></tr>`).join('');
       return `<article class="sheet" data-class="${esc(c.id)}">
-        <div class="sheet-head">
-          <div>
-            <div class="sheet-sub">Öğrencilerin sınav yerleri</div>
-            <div class="sheet-title">${esc(c.name)} sınıfı öğrencileri</div>
-          </div>
-          <div class="meta">${headerMeta()}${headerMeta() ? '<br>' : ''}Öğrenci: <b>${c.students.length}</b></div>
-          <div class="sheet-tools"><button type="button" class="btn small" data-print-class="${esc(c.id)}">Bu listeyi yazdır</button></div>
-        </div>
+        ${sheetHead('Öğrencilerin sınav salonları', c.name + ' sınıfı öğrencileri', c.id, 'class')}
         <div class="table-scroll"><table class="list">
-          <thead><tr><th>Öğrenci no</th><th>Adı soyadı</th><th>Sınav salonu</th><th>Sıra no</th></tr></thead>
+          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
       </article>`;
@@ -514,7 +533,7 @@
 
   function renderSearch() {
     return `<div class="search">
-      <div class="field"><label for="q">Ad, soyad ya da numara</label><input id="q" type="text" placeholder="Örn. Yılmaz ya da 1234"></div>
+      <div class="field"><label for="q">Öğrenci adı</label><input id="q" type="text" placeholder="Örn. Yılmaz"></div>
       <div id="q-out">${searchRows('')}</div>
     </div>`;
   }
@@ -524,15 +543,14 @@
     const nq = norm(q.trim());
     const rows = [];
     for (const c of included()) for (const s of c.students) {
-      if (nq && !norm(s.name).includes(nq) && !String(s.no).includes(nq)) continue;
-      const p = pl.get(s.id);
-      rows.push({ s, c, p });
+      if (nq && !norm(s.name).includes(nq)) continue;
+      rows.push({ s, c, room: pl.get(s.id) });
     }
     rows.sort((a, b) => collator.compare(a.s.name, b.s.name));
     if (!rows.length) return '<p class="hint">Eşleşen öğrenci yok.</p>';
     return `<div class="table-scroll"><table class="list">
-      <thead><tr><th>Adı soyadı</th><th>Öğrenci no</th><th>Sınıfı</th><th>Sınav salonu</th><th>Sıra no</th></tr></thead>
-      <tbody>${rows.slice(0, 300).map(({ s, c, p }) => `<tr><td>${esc(s.name)}</td><td class="num">${esc(s.no)}</td><td>${esc(c.name)}</td><td><b>${esc(p ? p.room : '-')}</b></td><td class="num">${p ? p.seatNo : '-'}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th></tr></thead>
+      <tbody>${rows.slice(0, 300).map(({ s, c, room }) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(room || '-')}</b></td></tr>`).join('')}</tbody>
     </table></div>${rows.length > 300 ? '<p class="hint">İlk 300 sonuç gösteriliyor; aramayı daraltın.</p>' : ''}`;
   }
 
@@ -555,13 +573,9 @@
   function exportCsv() {
     const ci = classIndex();
     const si = studentIndex();
-    const lines = [['Sınav salonu', 'Sıra no', 'Öğrenci no', 'Adı soyadı', 'Sınıfı']];
+    const lines = [['Sınav salonu', 'Adı soyadı', 'Sınıfı']];
     for (const room of state.result.rooms) {
-      const rc = ci.get(room.roomId);
-      for (const s of room.seats) {
-        const st = si.get(s.studentId);
-        lines.push([rc ? rc.c.name : room.name, s.seatNo, st.s.no, st.s.name, ci.get(s.classId).c.name]);
-      }
+      for (const s of room.seats) lines.push([roomTitle(room, ci), si.get(s.studentId).s.name, ci.get(s.classId).c.name]);
     }
     const csv = '﻿' + lines.map((l) => l.map((v) => {
       const t = String(v == null ? '' : v);
@@ -661,6 +675,24 @@
     form.addEventListener('input', readSettings);
     form.addEventListener('change', readSettings);
     form.addEventListener('submit', (e) => e.preventDefault());
+
+    // şube seçimi
+    $('#picker').addEventListener('change', (e) => {
+      const t = e.target;
+      if (t.dataset.pickClass) {
+        const c = state.classes.find((x) => x.id === t.dataset.pickClass);
+        if (c) c.selected = t.checked;
+      } else if (t.dataset.pickLevel) {
+        for (const c of state.classes) if (A.levelOf(c.name) === t.dataset.pickLevel) c.selected = t.checked;
+      } else return;
+      markStale(); save(); renderPicker(); renderResult();
+    });
+    $('#picker').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-pick]');
+      if (!b) return;
+      for (const c of state.classes) c.selected = b.dataset.pick === 'all';
+      markStale(); save(); renderPicker(); renderResult();
+    });
 
     // dağıtım
     $('#btn-run').addEventListener('click', runDistribution);

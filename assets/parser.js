@@ -38,6 +38,29 @@
     return rows;
   }
 
+  /**
+   * Satırdaki öğeleri konumlarına göre birleştirir. Bazı PDF'lerde Türkçe
+   * harfler (Ş, İ, Ğ, ı...) ayrı parçalar halinde gelir ("BÜ" "Ş" "RA");
+   * aralarında boşluk yoksa bitişik yazılır ("BÜŞRA").
+   */
+  function lineText(row) {
+    let out = '';
+    let prev = null;
+    for (const it of row.items) {
+      const str = it.str;
+      if (prev) {
+        const h = it.h || prev.h || 10;
+        const prevEnd = prev.x + (prev.w || 0);
+        const gap = it.x - prevEnd;
+        const glued = prev.w > 0 && gap < h * 0.18 && !/\s$/.test(prev.str) && !/^\s/.test(str);
+        out += glued ? '' : ' ';
+      }
+      out += str;
+      prev = it;
+    }
+    return out.replace(/\s+/g, ' ').trim();
+  }
+
   function tokenize(text) {
     return String(text)
       .replace(/ /g, ' ')
@@ -91,7 +114,13 @@
 
   /** Metinden sınıf/şube adını bulur: "9. Sınıf / A Şubesi" -> "9/A" */
   function detectClassName(text) {
-    const T = trUpper(String(text).replace(/\s+/g, ' '));
+    const m = findClass(text);
+    return m ? m.name : null;
+  }
+
+  /** Sınıf adını ve metindeki yerini döndürür: {name, start, end} */
+  function findClass(text) {
+    const T = trUpper(String(text));
     const L = '([' + UP + '])';
     const notLetter = '(?![' + UP + '0-9])';
     const patterns = [
@@ -111,7 +140,8 @@
         if (n < 1 || n > 12) continue;
       }
       const level = g === 'HAZIRLIK' ? 'Hazırlık' : String(parseInt(g, 10));
-      return level + '/' + m[2];
+      const lead = m[0].length - m[0].replace(/^[^0-9A-ZÇĞİÖŞÜ]+/u, '').length;
+      return { name: level + '/' + m[2], start: m.index + lead, end: m.index + m[0].length };
     }
     return null;
   }
@@ -132,36 +162,34 @@
     const byName = new Map();
     let current = null;
     let textFound = false;
+    let usedFallback = false;
+    const get = (name) => {
+      let g = byName.get(name);
+      if (!g) { g = { name, students: [] }; byName.set(name, g); groups.push(g); }
+      return g;
+    };
     for (const page of pages) {
       const rows = groupRows(page.items || []);
       if (rows.length) textFound = true;
-      const lines = rows.map((r) => r.items.map((i) => i.str).join(' '));
-      // Sınıf adı genelde tablodan önceki başlık satırlarındadır.
-      let headerText = '';
-      for (const line of lines) {
-        const toks = tokenize(line);
-        if (rowToStudents(toks).length) break;
-        headerText += ' ' + line;
-      }
-      const detected = detectClassName(headerText) || (current ? null : detectClassName(lines.join(' ')));
-      if (detected && (!current || current.name !== detected)) {
-        current = byName.get(detected);
-        if (!current) { current = { name: detected, students: [] }; byName.set(detected, current); groups.push(current); }
-      }
-      if (!current) {
-        current = { name: classFromFileName(fileName), students: [] };
-        byName.set(current.name, current);
-        groups.push(current);
-      }
-      for (const line of lines) {
-        const toks = tokenize(line);
-        if (!toks.length) continue;
-        if (HEADER_HINT.test(trUpper(line)) && !/^\d/.test(toks[0])) continue;
-        for (const st of rowToStudents(toks)) current.students.push(st);
+      for (const row of rows) {
+        const line = lineText(row);
+        if (!line) continue;
+        // Satırda sınıf adı var mı? (sayfa başlığı ya da "Sınıfı" sütunu)
+        const m = findClass(line);
+        const rest = m ? (line.slice(0, m.start) + ' ' + line.slice(m.end)) : line;
+        const toks = tokenize(rest);
+        const recs = toks.length && !(HEADER_HINT.test(trUpper(rest)) && !/^\d/.test(toks[0])) ? rowToStudents(toks) : [];
+        if (!recs.length) {
+          if (m) current = get(m.name); // başlık satırı: bundan sonraki öğrenciler bu sınıfın
+          continue;
+        }
+        let target = m ? get(m.name) : current;
+        if (!target) { target = get(classFromFileName(fileName)); usedFallback = true; current = target; }
+        for (const st of recs) target.students.push(st);
       }
     }
     for (const g of groups) g.students = dedupe(g.students);
-    return { classes: groups.filter((g) => g.students.length > 0), textFound };
+    return { classes: groups.filter((g) => g.students.length > 0), textFound, usedFallback };
   }
 
   function dedupe(list) {
@@ -209,6 +237,7 @@
           x: it.transform[4],
           y: it.transform[5],
           h: Math.abs(it.transform[3]) || it.height || 10,
+          w: it.width || 0,
         })),
       });
     }
@@ -216,7 +245,7 @@
     return pages;
   }
 
-  const api = { parsePages, parseText, detectClassName, classFromFileName, groupRows, rowToStudents, tokenize, extractPdf };
+  const api = { parsePages, lineText, findClass, parseText, detectClassName, classFromFileName, groupRows, rowToStudents, tokenize, extractPdf };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.KelebekParser = api;
 })(typeof self !== 'undefined' ? self : this);

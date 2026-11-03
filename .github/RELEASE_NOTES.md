@@ -6,6 +6,15 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
+## Bu sürümde (v1.1.0)
+
+- **PDF okuma düzeltildi.** Türkçe harflerin ayrı yazıldığı ("BÜ Ş RA", "K ı z") e-Okul PDF'leri artık doğru okunuyor. Tek dosyadaki tüm şubeler ayrı ayrı tanınıyor.
+- **Şubeler gruplanıyor.** Şubeler düzeylere göre sıralanıyor: 9. sınıflar, 10. sınıflar…
+- **Şube seçimi eklendi.** Dağıtım adımında hangi şubelerin dağıtıma gireceğini elle seçebilirsiniz.
+- **Çıktılar sadeleşti.** Oturma planında ve tüm listelerde yalnızca öğrencinin adı ve sınıfı yazıyor.
+
+Önceki sürümü kullandıysanız: uygulamayı açınca **Tüm sınıfları sil** deyin ve PDF'leri yeniden yükleyin.
+
 ## Neler var?
 
 - Sınıf listesi PDF'lerini (e-Okul) okuma: sınıf adını başlıktan ya da dosya adından alır, çok sayfalı listeleri ve tek dosyada birden çok sınıfı okur.

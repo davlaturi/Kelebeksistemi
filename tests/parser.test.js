@@ -13,7 +13,7 @@ async function pagesOf(file) {
   const pages = [];
   for (let p = 1; p <= doc.numPages; p++) {
     const tc = await (await doc.getPage(p)).getTextContent();
-    pages.push({ items: tc.items.map((it) => ({ str: it.str, x: it.transform[4], y: it.transform[5], h: Math.abs(it.transform[3]) })) });
+    pages.push({ items: tc.items.map((it) => ({ str: it.str, x: it.transform[4], y: it.transform[5], h: Math.abs(it.transform[3]), w: it.width })) });
   }
   return pages;
 }
@@ -27,14 +27,20 @@ async function pagesOf(file) {
     '10-B ve 11-A.pdf': { '10/B': 27, '11/A': 32 },
     '11-B.pdf': { '11/B': 25 },
   };
+  const fx = path.join(__dirname, 'fixtures');
+  expect['fixtures/document (9).pdf'] = { '9/A': 31, '9/B': 29, '10/A': 33 };
+  expect['fixtures/okul-listesi.pdf'] = { '11/C': 20, '12/A': 22, '12/B': 18 };
   for (const [file, exp] of Object.entries(expect)) {
-    const res = P.parsePages(await pagesOf(path.join(dir, file)), file);
+    const full = file.startsWith('fixtures/') ? path.join(fx, file.slice(9)) : path.join(dir, file);
+    const res = P.parsePages(await pagesOf(full), path.basename(file));
     const got = Object.fromEntries(res.classes.map((c) => [c.name, c.students.length]));
     console.log(file, '->', JSON.stringify(got), '| örnek:', res.classes[0].students[0]);
     assert.deepStrictEqual(got, exp);
     for (const c of res.classes) for (const s of c.students) {
       assert.ok(/^\d+$/.test(s.no), 'numara: ' + JSON.stringify(s));
-      assert.ok(!/(Erkek|Kız)$/.test(s.name), 'cinsiyet temizlenmeli: ' + s.name);
+      assert.ok(!/(Erkek|Kız|KIZ|ERKEK)$/.test(s.name), 'cinsiyet temizlenmeli: ' + s.name);
+      assert.ok(!/(^|\s)[ÇĞİÖŞÜçğıöşü](\s|$)/.test(s.name), 'harf parçalanmış: ' + s.name);
+      assert.ok(!/\d|\//.test(s.name), 'adda sayı/sınıf kalmamalı: ' + s.name);
     }
   }
   // Sınıf adı tanıma
