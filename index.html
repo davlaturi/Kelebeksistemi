@@ -1,13 +1,10 @@
 <!doctype html>
-<html lang="tr">
+<html lang="tr" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kelebek Sınav Dağıtımı</title>
   <meta name="description" content="Sınıf listelerini PDF olarak yükleyin; aynı sınıf düzeyindeki öğrencilerin yan yana oturmadığı kelebek sınav oturma planlarını oluşturun.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -29,7 +26,7 @@
             <button type="button" role="tab" data-view="plan" aria-selected="true">Oturma planları</button>
             <button type="button" role="tab" data-view="yoklama" aria-selected="false">Öğrenci imza listeleri</button>
             <button type="button" role="tab" data-view="sinif" aria-selected="false">Sınıflara göre sınav yerleri</button>
-            <button type="button" role="tab" data-view="evrak" aria-selected="false">Sınav kâğıdı dağıtımı</button>
+            <button type="button" role="tab" data-view="evrak" aria-selected="false">Dağıtımı paylaş/dışarı aktar</button>
             <button type="button" role="tab" data-view="ara" aria-selected="false">Öğrenci ara</button>
           </nav>
         <button type="button" class="nav-item" data-go="arsiv"><span class="nav-no">4</span><span class="nav-label">Kayıtlı sınavlar</span><span class="badge" id="archive-count"></span></button>
@@ -83,38 +80,54 @@
         </div>
       </div>
       <form id="settings" class="settings" autocomplete="off">
-        <div class="field wide"><label for="s-school">Okul adı</label><input id="s-school" name="school" type="text" placeholder="Örn. Atatürk Anadolu Lisesi"></div>
-        <div class="field wide"><label for="s-exam">Sınav adı</label><input id="s-exam" name="exam" type="text" placeholder="Örn. 1. Dönem 1. Ortak Sınav"></div>
-        <div class="field"><label for="s-date">Tarih</label><input id="s-date" name="date" type="date"></div>
-        <div class="field"><label for="s-time">Saat</label><input id="s-time" name="time" type="time"></div>
-        <div class="field"><label for="s-cols">Yan yana sıra sayısı</label>
+        <fieldset class="settings-card">
+          <legend><span class="settings-kicker">01</span> Sınav bilgileri</legend>
+          <p class="settings-description">Sınavı tanımlayın. Bilgiler raporlara ve paylaşım başlıklarına aktarılır.</p>
+          <div class="settings-grid settings-grid-two"><div class="field"><label for="s-school">Okul adı</label><input id="s-school" name="school" type="text" placeholder="Örn. Atatürk Anadolu Lisesi"></div><div class="field"><label for="s-exam">Dönem / sınav</label><select id="s-exam" name="exam">
+          <option value="">Sınav seçin</option>
+          <option>1. Dönem 1. Sınav</option><option>1. Dönem 2. Sınav</option>
+          <option>2. Dönem 1. Sınav</option><option>2. Dönem 2. Sınav</option>
+        </select></div></div>
+          <div class="settings-grid settings-grid-three"><div class="field"><label for="s-date">Tarih</label><input id="s-date" name="date" type="date"></div><div class="field"><label for="s-time">Saat</label><input id="s-time" name="time" type="time"></div><div class="field"><label for="s-lesson">Kaçıncı ders?</label><select id="s-lesson" name="lesson">
+          <option value="">Ders seçin</option><option value="1">1. ders</option><option value="2">2. ders</option>
+          <option value="3">3. ders</option><option value="4">4. ders</option><option value="5">5. ders</option>
+          <option value="6">6. ders</option><option value="7">7. ders</option><option value="8">8. ders</option>
+        </select></div></div>
+          <div class="settings-note"><div class="field"><label for="s-header-note">Başlıkta gösterilecek ek bilgi <small>(isteğe bağlı)</small></label>
+          <textarea id="s-header-note" name="headerNote" rows="2" maxlength="160" placeholder="Örn. Ortak yazılı · A grubu · Süre: 40 dakika"></textarea>
+          <small class="hint">Seçimler ve ek bilgi çıktı başlıklarına ve WhatsApp paylaşımına aktarılır.</small></div></div>
+        </fieldset>
+        <fieldset class="settings-card">
+          <legend><span class="settings-kicker">02</span> Salon düzeni</legend>
+          <p class="settings-description">Genel sıra düzenini belirleyin. Farklı salonları sınıf kartlarından ayrıca ayarlayabilirsiniz.</p>
+          <div class="settings-grid settings-grid-two"><div class="field"><label for="s-cols">Yan yana sıra sayısı</label>
           <select id="s-cols" name="deskCols">
             <option value="2">2 sıra (1 koridor)</option>
             <option value="3" selected>3 sıra (2 koridor)</option>
             <option value="4">4 sıra (3 koridor)</option>
           </select>
-        </div>
-        <div class="field"><label for="s-spd">Sıra tipi</label>
+        </div><div class="field"><label for="s-spd">Sıra tipi</label>
           <select id="s-spd" name="seatsPerDesk">
             <option value="2" selected>İkili sıra</option>
             <option value="1">Tekli sıra</option>
           </select>
-        </div>
-        <div class="field wide"><label for="s-sides">Sıra gruplarının adı</label>
+        </div></div>
+          <div class="settings-note"><div class="field"><label for="s-sides">Sıra gruplarının adı</label>
           <select id="s-sides" name="sideNames">
             <option value="lr">Sol – Orta – Sağ (öğrenci tahtaya bakarken)</option>
             <option value="doorL">Kapı tarafı – Orta – Pencere tarafı (kapı solda)</option>
             <option value="doorR">Pencere tarafı – Orta – Kapı tarafı (kapı sağda)</option>
           </select>
-        </div>
-        <div class="field wide"><label>Yazdırma</label>
-          <label class="check"><input type="checkbox" id="s-duplex" name="duplex" checked> Çift taraflı yazdırıyorum: her salonun ve şubenin evrakı ayrı kâğıttan başlasın (gereken yerlere boş sayfa eklenir)</label>
-        </div>
-        <fieldset class="checks wide">
-          <legend>Kurallar</legend>
-          <label class="check"><input type="checkbox" checked disabled> Aynı sınıf düzeyinden (ör. 9/A ile 9/B) öğrenciler aynı sıraya oturmaz</label>
-          <label class="check"><input type="checkbox" checked disabled> Önlü-arkalı ve çapraz da aynı düzeyden öğrenci olmamasına çalışılır</label>
-          <label class="check"><input type="checkbox" id="s-own" name="avoidOwnRoom"> Öğrenci kendi sınıfında sınava girmesin (işaretlenmezse kendi sınıfında oturabilir)</label>
+        </div></div>
+        </fieldset>
+        <fieldset class="settings-card settings-preferences">
+          <legend><span class="settings-kicker">03</span> Yazdırma ve kurallar</legend>
+          <label class="setting-option" for="s-duplex"><input type="checkbox" id="s-duplex" name="duplex" checked>
+            <span><strong>Çift taraflı yazdırma</strong><small>Her salonun ve şubenin evrakı ayrı kâğıttan başlar. Gereken yerlere boş sayfa eklenir.</small></span></label>
+          <label class="setting-option" for="s-own"><input type="checkbox" id="s-own" name="avoidOwnRoom">
+            <span><strong>Öğrenci kendi sınıfında sınava girmesin</strong><small>Kapalı olduğunda öğrenciler kendi sınıflarına da yerleştirilebilir.</small></span></label>
+          <div class="settings-rules"><span class="settings-rule-icon" aria-hidden="true">✓</span><div><strong>Dağıtım kuralları otomatik uygulanır</strong>
+            <p>Aynı düzeyden öğrencilerin sıra arkadaşı olmaması esas alınır. Önlü-arkalı ve çapraz komşuluklar mümkün olduğunca azaltılır; zorunlu ihlaller dağıtımda gösterilir.</p></div></div>
         </fieldset>
       </form>
       <div class="next-row"><button type="button" class="btn primary" data-go="dagitim">Devam: Dağıtım →</button></div>
@@ -126,21 +139,24 @@
         <span class="step-no">3</span>
         <div>
           <h2 id="h-result">Dağıtım</h2>
-          <p class="hint">Önce öğrencileri sınava girecek şubeleri, sonra sınav salonu olarak kullanılacak sınıfları seçin. Salonlara sınıf mevcudu kadar ya da sizin belirlediğiniz sayıda öğrenci oturur. Dağıtımdan sonra planda iki öğrenciye sırayla tıklayarak yerlerini değiştirebilirsiniz.</p>
+          <p class="hint" id="distribution-help">Sınava girecek şubeleri ve kullanılacak salonları seçin; ardından dağıtımı başlatın.</p>
         </div>
       </div>
-      <div id="picker" class="picker no-print"></div>
-      <div id="rooms-picker" class="picker no-print"></div>
-      <div id="capacity" class="picker no-print"></div>
+      <div id="picker" class="picker no-print" data-distribution-setup></div>
+      <div id="rooms-picker" class="picker no-print" data-distribution-setup></div>
+      <div id="capacity" class="picker no-print" data-distribution-setup></div>
       <div class="row-actions no-print">
-        <button type="button" class="btn primary" id="btn-run">Kelebek dağıtımını yap</button>
+        <button type="button" class="btn primary" id="btn-run" data-distribution-setup>Kelebek dağıtımını yap</button>
+        <button type="button" class="btn ghost" data-go="dagitim" data-report-actions hidden>← Dağıtım ayarları</button>
         <span class="spacer"></span>
         <button type="button" class="btn" id="btn-save" hidden>Bu dağıtımı kaydet</button>
         <button type="button" class="btn primary" id="btn-pack" hidden>Sınav evrakını yazdır</button>
         <button type="button" class="btn" id="btn-print" hidden>Bu bölümü yazdır</button>
         <button type="button" class="btn" id="btn-csv" hidden>Excel'e aktar (CSV)</button>
       </div>
+      <div class="no-print distribution-lock"><button type="button" class="btn" id="btn-lock" hidden aria-pressed="false">Dağıtımı kilitle</button></div>
       <div id="result-status" class="no-print"></div>
+      <div data-distribution-setup class="no-print"><button type="button" class="btn" id="btn-view-result" data-go="plan" hidden>Hazır dağıtımı görüntüle →</button></div>
       <div id="report"></div>
     </section>
 
@@ -233,25 +249,17 @@
     </div>
   </dialog>
 
-  <!-- WhatsApp paylaşım penceresi -->
-  <dialog id="share-dlg" class="editor share-dlg">
-    <div class="pack-form">
-      <header class="editor-head">
-        <h3>WhatsApp'ta paylaş <span class="hint">Öğretmenlerin kâğıtlarını salonlara göre ayırması için telefona uygun mesaj</span></h3>
-        <button type="button" class="icon-btn" id="share-x" aria-label="Kapat">×</button>
-      </header>
-      <div class="editor-body">
-        <div class="field"><label for="share-level">Kimin için?</label><select id="share-level"></select></div>
-        <div class="phone"><div class="phone-chat"><div class="bubble" id="share-text"></div></div></div>
+  <button type="button" class="btn quick-exam-launch no-print" id="quick-exam-launch" aria-haspopup="dialog" aria-controls="quick-exam">Sınav bilgileri</button>
+  <dialog class="editor quick-exam no-print" id="quick-exam" aria-label="Etkin sınav bilgileri">
+    <form id="quick-exam-form">
+      <div id="quick-exam-fields"></div>
+      <p id="quick-exam-hint" class="hint"></p>
+      <div class="quick-exam-actions">
+        <button class="btn ghost" type="button" id="quick-exam-close">Kapat</button>
+        <button class="btn" type="submit" value="save">Kaydet</button>
+        <button class="btn primary" type="submit" value="run">Kaydet ve dağıt</button>
       </div>
-      <footer class="editor-foot">
-        <button type="button" class="btn ghost" id="share-close">Kapat</button>
-        <span class="spacer"></span>
-        <button type="button" class="btn" id="share-copy">Mesajı kopyala</button>
-        <button type="button" class="btn" id="share-native" hidden>Paylaş…</button>
-        <a class="btn primary wa-btn" id="share-wa" href="#" target="_blank" rel="noopener">WhatsApp'ta aç</a>
-      </footer>
-    </div>
+    </form>
   </dialog>
 
   <div id="print-pack" class="pack-out"></div>
@@ -261,6 +269,7 @@
   <script src="vendor/pdfjs/pdf.min.js"></script>
   <script src="assets/parser.js"></script>
   <script src="assets/assign.js"></script>
+  <script src="assets/share.js"></script>
   <script src="assets/app.js"></script>
 </body>
 </html>

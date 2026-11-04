@@ -148,8 +148,17 @@
       }
     }
     for (let g = 0; g < G; g++) for (const j of roomOrder) {
-      mcf.addEdge(GR(g, j), RM(j), deskCap[j], 0);
-      if (caps[j] > deskCap[j]) mcf.addEdge(GR(g, j), RM(j), caps[j] - deskCap[j], COST_DESK);
+      if (opts.sideCosts) {
+        // Tekli sıralarda bir düzeyin ek öğrencisinin maliyeti sıra uzunluğuna bağlıdır.
+        const costs = opts.sideCosts[j];
+        for (let i = 0; i < costs.length;) {
+          let end = i + 1; while (end < costs.length && costs[end] === costs[i]) end++;
+          mcf.addEdge(GR(g, j), RM(j), end - i, costs[i] * COST_DESK); i = end;
+        }
+      } else {
+        mcf.addEdge(GR(g, j), RM(j), deskCap[j], 0);
+        if (caps[j] > deskCap[j]) mcf.addEdge(GR(g, j), RM(j), caps[j] - deskCap[j], COST_DESK);
+      }
     }
     for (const j of roomOrder) {
       const f = Math.min(caps[j], Math.ceil(fill[j]));
@@ -316,6 +325,28 @@
    */
   function distribute(classes, settings) {
     settings = settings || {};
+    if (!Array.isArray(classes)) throw new Error('Sınıf listesi geçersiz.');
+    const classIds = new Set(), studentIds = new Set();
+    const validCols = (value) => value == null || (Number.isSafeInteger(Number(value)) && Number(value) > 0);
+    if (!validCols(settings.deskCols)) throw new Error('Sıra grubu sayısı pozitif bir tam sayı olmalıdır.');
+    for (const c of classes) {
+      if (!c || !c.id || classIds.has(c.id) || !Array.isArray(c.students)) throw new Error('Sınıf bilgisi eksik veya sınıf kimliği tekrarlanıyor.');
+      classIds.add(c.id);
+      if (!validCols(c.deskCols)) throw new Error('Salon sıra grubu sayısı geçersiz.');
+      if (settings.capacityMode === 'custom' && c.roomCap != null && c.roomCap !== '' && (!Number.isSafeInteger(Number(c.roomCap)) || Number(c.roomCap) < 0)) throw new Error('Salon kapasitesi geçersiz.');
+      for (const student of c.students) {
+        if (!student || !student.id || studentIds.has(student.id)) throw new Error('Öğrenci kimliği eksik veya tekrarlanıyor.');
+        studentIds.add(student.id);
+      }
+    }
+    if (settings.rooms != null) {
+      if (!Array.isArray(settings.rooms)) throw new Error('Salon listesi geçersiz.');
+      const roomIds = new Set();
+      for (const room of settings.rooms) {
+        if (!room || !room.id || roomIds.has(room.id) || !Number.isSafeInteger(Number(room.capacity)) || Number(room.capacity) < 0 || !validCols(room.deskCols)) throw new Error('Salon kimliği, kapasitesi veya sıra grubu sayısı geçersiz.');
+        roomIds.add(room.id);
+      }
+    }
     const seed = settings.seed == null ? (Date.now() & 0x7fffffff) : settings.seed;
     const rnd = mulberry32(seed);
     const cols = Math.max(1, settings.deskCols || 3);
@@ -342,11 +373,16 @@
     const levels = list.map((c) => levelOf(c.name));
     const levelNames = [...new Set(levels)];
     const group = levels.map((l) => levelNames.indexOf(l));
-    if (levelNames.length === 1) warnings.push('Tüm sınıflar aynı düzeyde (' + levelNames[0] + '); aynı düzeyden öğrencilerin yan yana oturması kaçınılmaz.');
-
-    const alloc = allocate(sizes, caps, owner, group, { avoidOwnRoom: !!settings.avoidOwnRoom, rnd });
-    if (alloc.ownRoomCount > 0) warnings.push(alloc.ownRoomCount + ' öğrenci kendi sınıfında sınava giriyor; salon kapasiteleri bunu tamamen önlemeye izin vermiyor.');
-    if (alloc.deskOverflow > 0) warnings.push('Bir sınıf düzeyinin öğrenci sayısı salonlardaki sıra sayısına sığmıyor; bazı sıralarda aynı düzeyden iki öğrenci oturmak zorunda (' + alloc.deskOverflow + ' sıra).');
+    const sideCosts = spd === 1 ? usable.map((room) => {
+      const width = room.deskCols || cols, costs = [];
+      for (let remaining = room.cap; remaining > 0; remaining -= width) {
+        const length = Math.min(width, remaining);
+        for (let k = 1; k <= length; k++) costs.push(Math.max(0, 2 * k - length - 1) - Math.max(0, 2 * (k - 1) - length - 1));
+      }
+      return costs.sort((a, b) => a - b);
+    }) : null;
+    const alloc = allocate(sizes, caps, owner, group, { avoidOwnRoom: !!settings.avoidOwnRoom, rnd, sideCosts });
+    if (alloc.ownRoomCount > 0) warnings.push(alloc.ownRoomCount + ' öğrenci kendi sınıfında sınava giriyor; seçilen salonları ve dağıtım kısıtlarını kontrol edin.');
 
     // Her sınıfın öğrencilerini karıştırıp salonlara paylaştır.
     const pools = list.map((c) => shuffle(c.students, rnd));
@@ -383,6 +419,7 @@
     if (empty > 0) warnings.push(empty + ' koltuk boş kaldı; boş koltuklar aynı düzeyden öğrencileri ayırmak için kullanıldı.');
 
     const stats = evaluate(rooms, list, { cols, spd });
+    if (stats.deskmate > 0) warnings.push('Bu dağıtımda aynı düzeyden iki öğrenci ' + stats.deskmate + (spd === 1 ? ' komşulukta yan yana oturuyor.' : ' sırada birlikte oturuyor.') + ' Salon ve düzey sayılarını kontrol edin.');
     return { seed, rooms, warnings, stats, createdAt: new Date().toISOString() };
   }
 

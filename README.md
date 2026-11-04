@@ -22,6 +22,11 @@ Tek dosyayı kendiniz üretmek için `python3 tools/tek-dosya.py` komutunu çal�
 
 ## Nasıl kullanılır?
 
+Sınav bilgileri bölümünden dört dönem/sınav seçeneğinden birini ve 1–8 arasındaki ders saatini seçin.
+İsteğe bağlı ek başlık metni girebilirsiniz. Bu bilgiler çıktı başlıklarına ve WhatsApp paylaşımına
+aktarılır; eski sınav kayıtları değişmez. Önceki serbest sınav adları korunur.
+Salon kâğıt kartlarının üst şeridi her düzeyin toplamını, altındaki satırlar şube sayılarını gösterir.
+
 Menüler soldaki yan paneldedir: **1 Sınıf listeleri**, **2 Sınav bilgileri**, **3 Dağıtım** ve **4 Kayıtlı sınavlar**. Dağıtım yapıldıktan sonra oturma planları, yoklama listeleri, sınıflara göre sınav yerleri ve öğrenci arama, Dağıtım'ın altında listelenir. Yedek alma düğmeleri de yan panelin altındadır. Her bölümün sonundaki **Devam** düğmesi sizi sıradaki adıma götürür.
 
 
@@ -50,38 +55,26 @@ Sınıf düzeyi, sınıf adının başındaki sayıdan anlaşılır: `9/A`, `9-B
 
 Dağıtımdan sonra her kuralın kaç kez ihlal edildiği ekranda gösterilir. Planda kural dışı oturan öğrenciler **!** işaretiyle belirtilir.
 
-## Çıktılar
+## Çıktılar ve WhatsApp paylaşımı
 
-Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sınıfı** yazar. Numara, cinsiyet ya da sıra no yazmaz.
+- **Oturma planları:** Her salonun genel sıra ve koltuk planı korunur; iki koltuğa tıklayarak öğrenci yerleri değiştirilebilir.
+- **Öğrenci imza listeleri:** Adı soyadı, sınıfı ve imza alanı.
+- **Sınıflara göre sınav yerleri:** Küçük koltuk krokileri kaldırılmıştır. Salon, sıra no,
+  sıra grubu ve koltuk metinleri bulunur. Her şube listesi yazdırmadan önce ölçülerek bir A4 sayfaya sığdırılır.
+- **Sınav kâğıdı dağıtımı:** Salon zarfı hazırlama kartları, düzey bazında salon toplamları ve kompakt zarf etiketleri.
+  Şubeye göre deste görünümü, şube matrisi ve şubeye göre kâğıt hazırlama çıktısı kaldırılmıştır.
+- **WhatsApp için kâğıt listesi:** Sınav başlığı sınav bilgilerinden otomatik gelir; sınıf düzeyini seçin. Salon başına sayılar
+  telefon önizlemesinde görünür. WhatsApp düğmesi mesaj taslağını açar; alıcıyı seçip siz gönderirsiniz.
+  Mesajı kopyalamak veya PNG görsel hazırlamak da mümkündür. Uzun listeler birkaç görsele ayrılır.
+  Cihaz dosya paylaşımını desteklemiyorsa indirip WhatsApp'a ekleyebileceğiniz PNG bağlantıları gösterilir.
+  Yalnız kâğıt sayıları ve sınav bilgileri paylaşılır, öğrenci isimleri paylaşılmaz.
+- **Öğrenci ara:** Adla arama ve onaylı öğrenci silme. Silince güncel listeyle yeniden dağıtım gerekir;
+  eski sınav kayıtları korunur. Sınıf düzenleyicisindeki Sil düğmesi ise Kaydet ile uygulanır.
+- **Yazdır / PDF kaydet:** Seçilen evrakı yazıcı penceresiyle basın veya PDF kaydedin.
+- **Excel'e aktar (CSV):** Yerleşim listesini dışa aktarır.
 
-- **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar. Sağ alt köşede iri harflerle **sıra numarası** yer alır. Numaralar önden arkaya ve soldan sağa sayılır; aynı numara sınav yerleri listesinde ve aramada da yazar.
-- **Öğrenci imza listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
-- **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrenci için şunlar yazar: hangi salonda, **sıra no**, hangi **sıra grubunda** (Sol / Orta / Sağ ya da Kapı tarafı / Orta / Pencere tarafı), **önden kaçıncı sırada** ve sıranın hangi koltuğunda oturacağı. Her şubenin listesi tek sayfaya sığdırılır. Sıra gruplarının adını 2. Sınav bilgileri adımında seçersiniz. Oturma planında da grup adları sütunların üstünde, sıra numaraları da solda yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
-- **Sınav kâğıdı dağıtımı:** Kâğıtları kolayca dağıtmak için hazırlanmış bir sayfa. En üstte **kâğıt hazırlama kartları** vardır:
-  - **Salona göre (zarf):** Her kart bir salonun zarfıdır. Örneğin "9/A salonu: 9/A 6, 9/B 5, 10/A 5… Toplam 30". Bir şubenin kâğıtlarını zarfa koyunca satırı işaretleyin. Bütün satırlar işaretlenince kart yeşile döner ve "Zarf hazır" yazar. Gözetmen zarfını alıp gider.
-  - İşaretler dağıtımla birlikte saklanır, sayfayı kapatsanız da kaybolmaz.
-  - **Düzey özeti:** Kartların üstünde her düzeyden toplam kaç öğrenci (kâğıt) olduğu yazar, yanında şube şube sayılar ve genel toplam vardır. Örnek: "9. sınıf 192: 9/A 28, 9/B 35…". Her salon kartının altında o salondaki düzey toplamları vardır.
-  - **WhatsApp'ta paylaş:** Kâğıt dağılımını telefona uygun bir mesaj olarak hazırlar. Mesajı tüm düzeyler için ya da yalnızca bir düzeyin öğretmenleri için (ör. "9. sınıf öğretmenleri için") oluşturabilirsiniz. **WhatsApp'ta aç** ile doğrudan gönderebilir, **Mesajı kopyala** ile bir gruba yapıştırabilir ya da tablette **Paylaş…** düğmesini kullanabilirsiniz.
-  - **Öğretmenler odası için yazdır:** Ekrandaki kartların aynısını, öğretmenler odasına asılacak şekilde basar. Her kartta salon adı, şubeler ve kâğıt sayıları yazar; yanlarında kalemle işaretlenecek kutular vardır. Bir sayfaya 8 karta kadar sığar.
-
-  Kartların altında ayrıca şunlar var:
-  - Her salona hangi sınıf düzeyinden kaç kâğıt gideceğini gösteren tablo.
-  - Hangi şubeden kaç öğrenci olduğunu gösteren ayrıntılı tablo. Satır ve sütun toplamları da yazar.
-  - Her salonun kâğıt zarfına yapıştırılacak etiketler.
-
-  Ayrıca her oturma planının ve yoklama listesinin üstünde "Bu salonda: 9. sınıf 11 (9/A 6, 9/B 5)…" özeti yer alır.
-- **Öğrenci ara:** Ada göre arayıp öğrencinin salonunu bulabilirsiniz.
-- **Yazdır / PDF kaydet:** Her salon ayrı A4 sayfaya basılır. **Excel'e aktar (CSV)** ile tüm dağıtımı Excel'e alabilirsiniz.
-
-## Öğrenci silme
-
-Nakil giden ya da sınava girmeyecek bir öğrenciyi üç yerden silebilirsiniz:
-
-- **Sınıf kartı:** Kartı açıp öğrencinin satırındaki **Sil** düğmesine basın.
-- **Öğrenci ara:** Sonuçtaki **Öğrenciyi sil** düğmesine basın.
-- **Oturma planı:** Öğrenciye tıklayın, çıkan çubukta **Öğrenciyi sil** düğmesine basın.
-
-Silmek için düğmeye iki kez basılır. Dağıtım yapılmışsa öğrencinin koltuğu "Boş" kalır ve yeniden dağıtım gerekmez.
+Arayüz beyaz zemindedir; koyu sistem teması görünümü değiştirmez. Web fontu veya internet gerekmez.
+WhatsApp'a geçiş için internet gerekir. PNG hazırlama yerel çalışır.
 
 ## Şubeler ve şube seçimi
 
@@ -162,7 +155,7 @@ Bu yüzden **Yedek al** düğmesiyle verileri (kayıtlı sınavlar dahil) bir `.
 
 ## Web adresinden yayınlama (GitHub Pages)
 
-Depo ayarlarında **Settings → Pages → Branch: `main` / `(root)`** seçerseniz uygulama
+Depo ayarlarında **Settings → Pages → Branch: `ccr-1b234612-24n2cx` / `(root)`** (deponun mevcut varsayılan dalı) seçerseniz uygulama
 `https://<kullanıcı-adı>.github.io/<depo-adı>/` adresinden açılır. Bu durumda da tüm işlemler kullanıcının tarayıcısında yapılır.
 
 ## Geliştirme
@@ -171,11 +164,39 @@ Depo ayarlarında **Settings → Pages → Branch: `main` / `(root)`** seçersen
 assets/parser.js   PDF'ten sınıf adı ve öğrenci listesi çıkarma
 assets/assign.js   dağıtım algoritması (min-maliyetli akış + tavlama)
 assets/app.js      arayüz
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
+assets/share.js    telefon için PNG kâğıt listesi
 vendor/pdfjs/      Mozilla pdf.js 3.11.174 (Apache-2.0), internetsiz çalışmak için projeye dahil
 tests/             testler ve örnek PDF üretici
 ```
 
 Testleri çalıştırmak için `npm test` (Node 18+) komutunu kullanın. Örnek PDF'leri yeniden üretmek için `python3 tests/ornek_pdf_uret.py` (reportlab gerekir) komutunu kullanın.
+
+Kayıt/geri yükleme regresyonları `tests/state.test.js` içindedir. Testler gerçek uygulama işlevlerini
+yalıtılmış bir JavaScript ortamında, taklit DOM ve depolamayla çalıştırır; görsel tarayıcı veya fiziksel yazıcı testi değildir.
+Bozuk ya da daha yeni sürümden gelen yedekler mevcut veriyi değiştirmeden reddedilir.
+Depolama doluysa geri yükleme uygulanmaz. Açılışta okunamayan tarayıcı kaydının üzerine otomatik yazılmaz;
+geçerli bir yedek yüklenene kadar otomatik kayıt kapalı kalır.
+Listeler veya yerleşim ayarları değiştikten sonra arşivlemek için yeniden dağıtım gerekir.
+Salonlar arası öğrenci takası, kâğıt hazırlama işaretlerini sıfırlar.
 
 **Algoritma özeti:** Önce her sınıftan her salona kaç öğrenci gideceği minimum maliyetli akış ile hesaplanır.
 Bir salona bir sınıftan en fazla "sıra sayısı" kadar öğrenci gider. Kendi sınıfında oturma ve dengesiz dağılım maliyetle cezalandırılır.

@@ -5,7 +5,7 @@
   "description": "Sınıf listesi PDF'lerinden kelebek sınav oturma planı oluşturan tarayıcı uygulaması",
   "scripts": {
     "start": "python3 -m http.server 8080",
-    "test": "node tests/assign.test.js && node tests/parser.test.js"
+    "test": "node tests/assign.test.js && node tests/parser.test.js && node tests/state.test.js && node tests/share.test.js && node tests/assign-oracle.test.js && node tests/assign-multi-oracle.test.js"
   },
   "license": "MIT"
 }

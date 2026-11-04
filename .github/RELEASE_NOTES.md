@@ -10,7 +10,23 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.16.0)
+## Bu sürümde (v1.17.0)
+
+Bu sürüm, Codex ile yapılan güncellemeleri içerir. Ayrıntılar depodaki `Guncelleme-Notlari.md` ve `Hata-Senaryolari-Denetimi.md` dosyalarında.
+
+- **WhatsApp için kâğıt listesi.** Mesaj ve telefon görseli (PNG) hazırlanabiliyor. Düzey seçilebiliyor, her salon için düzey toplamları renkli etiketlerle gösteriliyor. Paylaşımda öğrenci adı yok.
+- **Sınav bilgileri.** Sınav (1./2. Dönem, 1./2. Sınav), ders saati (1–8) ve ek başlık listeden seçiliyor. Bu bilgiler tüm çıktılara, CSV'ye, paylaşıma ve arşive aktarılıyor.
+- **Dağıtım kilidi ve sürüm numarası.** Kilitli dağıtım değiştirilemiyor. Basılı evrak, CSV ve paylaşım aynı dağıtım numarasını taşıyor.
+- **Dağıtım kontrol özeti.** Beklenen ve yerleşen öğrenci, tekrar ve kapasite denetimi var; salon bazında komşuluk uyarıları gösteriliyor.
+- **İmza listesi.** Sınav kuralları ve gözetmen ad-soyad/imza alanı eklendi.
+- **Sınav yerleri.** Sınıflar açılır listeler halinde görünüyor; her şubenin listesi tek A4 sayfa.
+- **Oturma planı.** Her salonun planı her zaman tek sayfaya sığdırılıyor.
+- **Menü.** Raporlar ayrı sayfalarda açılıyor; "Dağıtım ayarları"na tek tıkla dönülüyor.
+- **Görünüm.** Beyaz tema ve belirgin düğmeler var. Harici yazı tipi yok; uygulama tamamen çevrimdışı çalışıyor.
+- **Hata düzeltmeleri.** Tekli sıralarda daha iyi dağıtım yapılıyor. Hatalı ya da eksik veriler dağıtımdan önce denetleniyor. Depolama dolu olduğunda işlemler güvenle geri alınıyor.
+- **Testler.** Kayıt/arşiv, paylaşım, kilit ve dağıtım doğruluğu testleri eklendi.
+
+## Önceki sürümde (v1.16.0)
 
 - **WhatsApp'ta paylaş.** Kâğıt dağılımı telefona uygun bir mesaja dönüştürülüyor. Mesaj tüm düzeyler için ya da sadece bir düzeyin öğretmenleri için hazırlanabiliyor; tek tıkla WhatsApp'ta açılıyor ya da kopyalanıyor.
 - **Sınav yerleri tek sayfa.** Krokiler kaldırıldı; her şubenin listesi tek kâğıda sığdırılıyor. Oturma planı ve imza listeleri de her zaman tek sayfa.
@@ -18,7 +34,7 @@ Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkm
 - **Zarf etiketleri yeniden tasarlandı.** Etiketler sıkı ve kesik çizgili; bir sayfaya 8 etiket sığıyor.
 - **"Şubeye göre" bölümü kaldırıldı.** Kâğıt hazırlama artık yalnızca salona göre.
 
-## Önceki sürümde (v1.15.0)
+## Daha önce (v1.15.0)
 
 - **Tablet için tek dosya.** Tabletlerde index.html tek başına açılınca görünüm ve PDF okuyucu yüklenmiyordu. Her şeyi içinde taşıyan tek dosyalık sürüm eklendi.
 

@@ -35,7 +35,7 @@ worker_boot = (
     "window.__KELEBEK_WORKER__=url;}catch(e){}})();</script>"
 )
 
-for rel in ["vendor/pdfjs/pdf.min.js", "assets/parser.js", "assets/assign.js", "assets/app.js"]:
+for rel in ["vendor/pdfjs/pdf.min.js", "assets/parser.js", "assets/assign.js", "assets/share.js", "assets/app.js"]:
     tag = '<script src="%s"></script>' % rel
     if tag not in html:
         raise SystemExit("Bulunamadı: " + tag)
