@@ -10,11 +10,23 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.17.1)
+## Bu sürümde (v1.18.0)
+
+- **Raporlar ekranın üstünden başlıyor.** Oturma planı, imza listesi ve sınav yerlerinin üstündeki büyük özet kutusu ile istatistik etiketleri kaldırıldı. Yerine tek satırlık bir durum çubuğu geldi: "✓ 174 öğrencinin hepsi yerleşti · aynı sırada aynı düzey yok". Ayrıntılar tıklanınca açılıyor; sorun varsa çubuk sarı oluyor ve sorunları yazıyor.
+- **Düğmelerde önem sırası.** Öne yalnızca **Kaydet** ve **Sınav evrakını yazdır** çıktı. "Bu bölümü yazdır", "Excel'e aktar" ve "Dağıtımı kilitle" **Diğer ▾** menüsünde. Kilitliyken durum çubuğunda "🔒 Kilitli" yazıyor.
+- **"Belirtilmedi" kalabalığı kalktı.** Girilmeyen sınav bilgileri başlıklara ve kâğıda yazılmıyor. Sınav adı ya da tarih eksikse dağıtım düğmesinin altında bir hatırlatma ve "Sınav bilgilerini gir" bağlantısı çıkıyor.
+- **Dağıtım kodu sayfanın altında.** Kod başlıktan kaldırıldı; her sayfanın altında küçük yazıyla duruyor.
+- **Sınav salonları.** Salon seçimi varsayılan olarak tek satır: "Salonlar: sınava girenlerle aynı (6 salon) · Değiştir". Açılınca şube seçiminden farklı, mavi salon kutucuklarıyla görünüyor.
+- **Bildirimler** sağ altta, sarı "Sınav bilgileri" düğmesinin üstünde çıkıyor ve daha kısa süre görünüyor.
+- **Sarı "Sınav bilgileri" düğmesi kaldı.** Her sayfadan tek tıkla sınav bilgilerini girip dağıtım yapılabiliyor. Sayfanın sonundaki içerik artık bu düğmenin altında kalmıyor.
+- **Tablet düzeltmesi.** İçerik kısa olduğunda üst menü uzayıp boşluklu görünüyordu; düzeltildi.
+- **Kâğıtta isimler** artık kelime ortasından bölünmüyor.
+
+## Önceki sürümde (v1.17.1)
 
 - **Yan menü düzeltmesi.** Codex güncellemesinden sonra bazı bilgisayar ve tabletlerde yan menüye tıklayınca sayfa değişmiyordu. Bütün bölümler alt alta açık kalıyordu. Sebep, eski tarayıcılarda bulunmayan bir özelliğin (`Object.hasOwn`) kullanılmasıydı. Her tarayıcıda çalışan karşılığıyla değiştirildi ve bunu denetleyen bir test eklendi.
 
-## Önceki sürümde (v1.17.0)
+## Daha önce (v1.17.0)
 
 Bu sürüm, Codex ile yapılan güncellemeleri içerir. Ayrıntılar depodaki `Guncelleme-Notlari.md` ve `Hata-Senaryolari-Denetimi.md` dosyalarında.
 

@@ -865,3 +865,78 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .btn.quick-exam-launch {background:#ffb23e;color:#352008;border-color:#bb7116}
 .btn.quick-exam-launch:hover {background:#ffa529;color:#352008}
 .btn.quick-exam-launch:focus-visible {outline:3px solid #774309;outline-offset:3px}
+
+
+/* ---------- Arayüz sadeleştirme (v1.18) ---------- */
+/* Durum çubuğu: tek satır; ayrıntılar tıklanınca açılır */
+.status-bar { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.status-bar > summary { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 10px 14px; cursor: pointer; }
+.status-bar > summary::-webkit-details-marker { display: none; }
+.status-bar.ok > summary { background: #e8f5ee; color: #17603f; border-radius: 10px; }
+.status-bar.warn > summary { background: #fdf0d5; color: #7a4b00; border-radius: 10px 10px 0 0; }
+.status-main { font-weight: 600; flex: 1 1 auto; min-width: 0; }
+.status-lock { font-size: .85rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #fff; border: 1px solid currentColor; }
+.status-more { font-size: .82rem; text-decoration: underline; opacity: .8; }
+.status-bar[open] .status-more { opacity: .5; }
+.status-details { margin: 0; padding: 10px 14px 4px 34px; display: grid; gap: 4px; font-size: .9rem; color: var(--ink-soft); }
+.status-details b { color: var(--ink); }
+.status-code { margin: 0; padding: 4px 14px 10px; font-size: .72rem; color: var(--ink-soft); opacity: .8; }
+#result-status { display: block; }
+
+/* Dağıtım kodu: sayfanın en altında, küçük */
+.sheet .sheet-code, .document-sheet .sheet-code { order: 99; margin: 4px 0 0; font-size: .7rem; color: var(--ink-soft); opacity: .75; text-align: right; }
+.pack-out .sheet-code { font-size: 6.5pt; color: #777; }
+.empty-identity { display: none; }
+
+/* Düğme önem sırası: tek ana işlem, ikincil, "Diğer" menüsü */
+.action-bar { align-items: center; }
+.btn.secondary { background: #fff; color: #1f4d3a; border: 1.5px solid #1f4d3a; }
+.btn.secondary:hover { background: #eef6f1; }
+.more-menu { position: relative; }
+.more-menu > summary { list-style: none; cursor: pointer; }
+.more-menu > summary::-webkit-details-marker { display: none; }
+.more-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 12; min-width: 230px; display: grid; gap: 2px; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 28px rgb(20 40 30 / 18%); }
+.more-list .btn { justify-content: flex-start; width: 100%; border: 0; background: transparent; color: var(--ink); font-weight: 500; }
+.more-list .btn:hover { background: #eef6f1; }
+.more-list .btn[hidden] { display: none; }
+.distribution-lock { display: none; }
+
+/* Sınav bilgisi hatırlatması */
+.exam-reminder { margin: 0; padding: 8px 12px; border-radius: 8px; background: #fff6e0; color: #6d4700; font-size: .9rem; }
+.link-btn { appearance: none; border: 0; background: none; padding: 0; color: #9a4f00; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+/* Sınav salonları: kapalı özet / açık kutucuklar (öğrenci şube seçiminden farklı görünüm) */
+.rooms-picker.closed { padding: 10px 14px; background: #f4f7fb; border-color: #c9d6e6; }
+.rooms-summary { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.rooms-icon { font-size: 1.1rem; }
+.rooms-text { color: var(--ink-soft); }
+.rooms-text b { color: var(--ink); }
+.rooms-picker.open { background: #f4f7fb; border: 1.5px solid #8eabd0; }
+.room-tiles { display: grid; gap: 10px; }
+.room-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.room-group-h { width: 9.5em; font-weight: 600; }
+.room-tile { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; min-width: 120px; padding: 8px 12px; border-radius: 6px; border: 1.5px dashed #9fb3cc; background: #fff; color: #5a6b80; cursor: pointer; }
+.room-tile input { grid-row: span 2; width: 18px; height: 18px; accent-color: #2f5f9a; margin: 0; }
+.room-tile .room-name { font-weight: 700; }
+.room-tile small { font-size: .78rem; }
+.room-tile.on { border-style: solid; border-color: #2f5f9a; background: #e8f0fa; color: #1d3f68; }
+.rooms-foot { margin: 0; }
+@media (max-width: 560px) { .room-group-h { width: 100%; } }
+
+/* Bildirimler: sağ altta, sarı düğmenin üstünde */
+.toast { left: auto; right: max(18px, env(safe-area-inset-right, 0px)); transform: none; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); max-width: min(380px, calc(100vw - 36px)); }
+
+/* Sarı "Sınav bilgileri" düğmesi kalır; sayfa sonu içeriği altında kalmasın diye boşluk */
+.content { padding-bottom: 72px; }
+.rooms-picker.open .pick-head { align-items: center; }
+.rooms-picker.open .pick-head .hint { flex: 1 1 100%; order: 10; margin: 0; }
+.room-tile input { accent-color: #2f5f9a; }
+/* Tablet/telefon: içerik kısa olsa da üst menü uzamasın */
+@media (max-width: 900px) {
+  .shell { grid-template-rows: auto 1fr; align-content: start; }
+  .sidebar { align-content: flex-start; align-self: start; }
+}
+/* Kâğıtta isimler kelime ortasından bölünmesin; sıra numarası biraz küçülür */
+.pack-out .seat .who { overflow-wrap: normal; word-break: normal; hyphens: none; font-size: 8.5pt; line-height: 1.15; }
+.pack-out .seat .sno { font-size: 14pt; padding-left: 3px; }
+.pack-out .seat { padding: 3px 4px; column-gap: 2px; }

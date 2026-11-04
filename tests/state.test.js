@@ -295,7 +295,9 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   assert.equal(a.state.result.distributionId, firstId);
   assert.equal(a.state.result.revision, 2);
   const label = a.distributionLabel();
-  assert.match(a.headerMeta(), /Dağıtım D-/);
+  // Dağıtım kodu basılı evrakta kalır (başlık yerine sayfanın altında küçük yazıyla).
+  assert.match(a.renderRoll(), /class="sheet-code">Dağıtım D-/);
+  assert.doesNotMatch(a.headerMeta(), /Dağıtım D-/);
   assert.equal(a.paperShareData('').distribution, label);
   assert.ok(a.paperShareText(a.paperShareData('')).includes(label));
   assert.ok(a.paperSharePreview(a.paperShareData('')).includes(label));

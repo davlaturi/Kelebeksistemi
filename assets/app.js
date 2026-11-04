@@ -165,7 +165,7 @@
     t.textContent = msg;
     t.hidden = false;
     clearTimeout(toast._t);
-    toast._t = setTimeout(() => { t.hidden = true; }, 3200);
+    toast._t = setTimeout(() => { t.hidden = true; }, 2200);
   }
 
   function sortClasses() {
@@ -227,6 +227,43 @@
     const missing = [...expected].filter(id => !seen.has(id)).length;
     return { expected: expected.size, placed: expected.size - missing, missing, duplicates, unexpected, capacityErrors, rooms };
   }
+  /**
+   * Rapor sayfalarının üstündeki tek satırlık durum çubuğu. Her şey yolundaysa
+   * kısa bir onay; sorun varsa sorunlar yazar. Ayrıntılar tıklanınca açılır.
+   */
+  function statusBarHtml() {
+    const r = state.result, st = r.stats, a = distributionAudit();
+    const twin = state.settings.seatsPerDesk !== 1;
+    const problems = [];
+    if (state.stale) problems.push('Listeler ya da ayarlar değişti; yeniden dağıtım yapın');
+    if (a.missing) problems.push(a.missing + ' öğrenci yerleşmedi');
+    if (a.duplicates) problems.push(a.duplicates + ' öğrenci iki kez yerleşti');
+    if (a.unexpected) problems.push(a.unexpected + ' seçilmemiş öğrenci yerleşti');
+    if (a.capacityErrors) problems.push(a.capacityErrors + ' salonda kapasite aşıldı');
+    if (st.deskmate) problems.push(st.deskmate + (twin ? ' sırada aynı düzeyden iki öğrenci var' : ' yerde aynı düzeyden öğrenciler yan yana'));
+    if (st.frontBack) problems.push(st.frontBack + ' yerde aynı düzeyden öğrenciler önlü-arkalı');
+    if (state.settings.avoidOwnRoom && st.ownRoom) problems.push(st.ownRoom + ' öğrenci kendi sınıfında');
+    const ok = !problems.length;
+    const main = ok
+      ? `✓ ${a.placed} öğrencinin hepsi yerleşti · ${twin ? 'aynı sırada' : 'yan yana'} aynı düzey yok · önlü-arkalı aynı düzey yok`
+      : '⚠ ' + problems.join(' · ');
+    const info = [
+      `<li>Yerleşen / beklenen öğrenci: <b>${a.placed} / ${a.expected}</b></li>`,
+      `<li>Öğrenci tekrarı: <b>${a.duplicates ? a.duplicates : 'yok'}</b> · Salon kapasitesi: <b>${a.capacityErrors ? a.capacityErrors + ' salonda aşım' : 'uygun'}</b></li>`,
+      `<li>Çapraz ya da koridorun karşısında aynı düzey: <b>${st.aisle + st.diagonal}</b> (sorun sayılmaz; mümkün olduğunca azaltılır)</li>`,
+      `<li>Kendi sınıfında oturan öğrenci: <b>${st.ownRoom}</b>${state.settings.avoidOwnRoom ? '' : ' (izin veriliyor)'}</li>`,
+      ...(r.warnings || []).filter((w) => !/aynı düzeyden iki öğrenci/.test(w)).map((w) => `<li>${esc(w)}</li>`),
+    ];
+    const rooms = a.rooms.filter((x) => x.deskmate || x.frontBack);
+    return `<details class="status-bar ${ok ? 'ok' : 'warn'}"${ok ? '' : ' open'}>
+      <summary><span class="status-main">${esc(main)}</span>${r.locked ? '<span class="status-lock">🔒 Kilitli</span>' : ''}<span class="status-more">Ayrıntılar</span></summary>
+      <ul class="status-details">${info.join('')}
+        ${rooms.length ? `<li>Komşuluk sorunu olan salonlar: ${rooms.map((x) => `<b>${esc(x.name)}</b> (yan yana ${x.deskmate}, önlü-arkalı ${x.frontBack})`).join(' · ')}</li>` : ''}
+      </ul>
+      <p class="status-code">${esc(distributionLabel())}</p>
+    </details>`;
+  }
+
   function auditHtml() {
     const a = distributionAudit();
     const good = !state.stale && !a.missing && !a.duplicates && !a.unexpected && !a.capacityErrors;
@@ -463,30 +500,39 @@
     return { seats: rooms.reduce((a, c) => a + capOf(c), 0), students: inc.reduce((a, c) => a + c.students.length, 0), rooms: rooms.filter((c) => capOf(c) > 0).length };
   }
 
+  let roomsOpen = false;
   function renderRoomPicker() {
     const box = $('#rooms-picker');
     const all = state.classes.filter((c) => c.students.length > 0);
     if (!all.length) { box.innerHTML = ''; return; }
-    const groups = byLevel(all);
     const on = roomClasses();
+    const inc = included();
+    const onIds = new Set(on.map((c) => c.id));
+    const same = on.length === inc.length && inc.every((c) => onIds.has(c.id));
+    const summary = same
+      ? `Salonlar: <b>sınava girenlerle aynı</b> (${on.length} salon)`
+      : `Salonlar: <b>${on.length} salon seçildi</b>${inc.filter((c) => !onIds.has(c.id)).length ? ' · salon olmayan: ' + esc(inc.filter((c) => !onIds.has(c.id)).map((c) => c.name).join(', ')) : ''}${on.filter((c) => !inc.includes(c)).length ? ' · ek salon: ' + esc(on.filter((c) => !inc.includes(c)).map((c) => c.name).join(', ')) : ''}`;
+    if (!roomsOpen) {
+      box.className = 'picker rooms-picker closed no-print';
+      box.innerHTML = `<div class="rooms-summary"><span class="rooms-icon" aria-hidden="true">🚪</span><strong>Sınav salonları</strong><span class="rooms-text">${summary}</span><span class="spacer"></span><button type="button" class="btn small" data-rooms-toggle="1">Değiştir</button></div>`;
+      return;
+    }
+    box.className = 'picker rooms-picker open no-print';
     box.innerHTML = `
       <div class="pick-head">
-        <strong>Sınav salonu olarak kullanılacak sınıflar</strong>
-        <span class="hint">${on.length} salon seçili. İşaretini kaldırdığınız sınıfa öğrenci oturtulmaz; o şubenin öğrencileri yine sınava girer ve başka salonlara dağıtılır.</span>
+        <span class="rooms-icon" aria-hidden="true">🚪</span><strong>Sınav salonları</strong>
+        <span class="hint">Öğrencilerin oturacağı sınıfları seçin. Seçmediğiniz sınıfa öğrenci oturtulmaz; o şubenin öğrencileri yine sınava girer ve başka salonlara dağıtılır.</span>
         <span class="spacer"></span>
         <button type="button" class="btn ghost small" data-room-pick="all">Tümünü seç</button>
         <button type="button" class="btn ghost small" data-room-pick="same">Sınava girenlerle aynı</button>
+        <button type="button" class="btn small" data-rooms-toggle="1">Kapat</button>
       </div>
-      ${groups.map((g) => {
-        const n = g.classes.filter((c) => c.useAsRoom !== false).length;
-        return `<div class="pick-row">
-          <label class="pick-level"><input type="checkbox" data-room-level="${esc(g.level)}" ${n === g.classes.length ? 'checked' : ''} ${n > 0 && n < g.classes.length ? 'data-mixed="1"' : ''}> ${esc(g.label)}</label>
-          <div class="pick-classes">${g.classes.map((c) => `
-            <label class="pick-chip room-chip" style="--h:${levelHue(c.name)}"><input type="checkbox" data-room-class="${esc(c.id)}" ${c.useAsRoom !== false ? 'checked' : ''}> ${esc(c.name)}</label>`).join('')}
-          </div>
-        </div>`;
-      }).join('')}`;
-    box.querySelectorAll('[data-mixed]').forEach((el) => { el.indeterminate = true; });
+      <div class="room-tiles">${byLevel(all).map((g) => `
+        <div class="room-group"><span class="room-group-h">${esc(g.label)}</span>
+          ${g.classes.map((c) => `<label class="room-tile${c.useAsRoom !== false ? ' on' : ''}"><input type="checkbox" data-room-class="${esc(c.id)}" ${c.useAsRoom !== false ? 'checked' : ''}><span class="room-name">${esc(c.name)}</span><small>${c.students.length} koltuk</small></label>`).join('')}
+        </div>`).join('')}
+      </div>
+      <p class="hint rooms-foot">${summary}</p>`;
   }
   function capSummaryHtml() {
     const t = capTotals();
@@ -646,7 +692,7 @@
     if (state.result && previousSettings !== JSON.stringify(s)) stampResult(state.result);
     if (!save()) { state = previousState; renderSettings(); return; }
     if (ev && ev.type === 'change') renderResult();
-    else renderReportOnly();
+    else { renderReportOnly(); updateReminder(); }
   }
 
   // ---------- 3. dağıtım ----------
@@ -705,11 +751,19 @@
     r.stats = A.evaluate(r.rooms, inc, { cols: state.settings.deskCols, spd: state.settings.seatsPerDesk });
   }
 
+  function updateReminder() {
+    const miss = [!state.settings.exam && 'sınav adı', !state.settings.date && 'tarih'].filter(Boolean);
+    const rem = $('#exam-reminder');
+    rem.hidden = !miss.length || isReportPage(page);
+    if (miss.length) rem.innerHTML = `${esc(miss.join(' ve ').replace(/^./, (c) => c.toLocaleUpperCase('tr-TR')))} girilmedi; çıktılarda görünmeyecek. <button type="button" class="link-btn" data-open-quick-exam="1">Sınav bilgilerini gir</button>`;
+  }
+
   function renderResult() {
     const r = state.result;
     const has = !!r && resultValid();
     $('#btn-lock').hidden = !r;
-    $('#btn-lock').textContent = r && r.locked ? 'Dağıtım kilidini aç' : 'Dağıtımı kilitle';
+    $('#btn-lock').textContent = r && r.locked ? '🔓 Dağıtım kilidini aç' : '🔒 Dağıtımı kilitle';
+    $('#more-menu').hidden = !r;
     $('#btn-lock').setAttribute('aria-pressed', String(!!(r && r.locked)));
     $('#btn-view-result').hidden = !has;
     $('#btn-print').hidden = !has;
@@ -720,6 +774,7 @@
     $('#nav-result').textContent = has ? '✓' : '';
     $('#nav-result').title = has ? 'Dağıtım hazır' : '';
     $('#btn-run').textContent = has ? 'Yeniden karıştır ve dağıt' : 'Kelebek dağıtımını yap';
+    updateReminder();
     const status = $('#result-status');
     if (!has) {
       status.innerHTML = r ? '<div class="log-item warn">Listelerde değişiklik yapıldığı için önceki dağıtım geçersiz. Yeniden dağıtım yapın.</div>' : '';
@@ -728,17 +783,7 @@
         : '<div class="empty">Dağıtım için önce sınıf listelerini yükleyin.</div>';
       return;
     }
-    const st = r.stats;
-    const pill = (n, label, zeroKind, kind) => `<span class="pill ${n === 0 ? zeroKind : kind}">${label}: <b>${n}</b></span>`;
-    let html = auditHtml() + '<div class="status-grid">' +
-      pill(st.deskmate, state.settings.seatsPerDesk === 1 ? 'Yan yana aynı düzey' : 'Aynı sırada aynı düzey', 'ok', 'bad') +
-      pill(st.frontBack, 'Önlü-arkalı aynı düzey', 'ok', 'warn') +
-      pill(st.aisle + st.diagonal, 'Çapraz / koridor komşusu aynı düzey', 'ok', '') +
-      (state.settings.avoidOwnRoom ? pill(st.ownRoom, 'Kendi sınıfında sınava giren', 'ok', 'warn') : `<span class="pill">Kendi sınıfında oturan: <b>${st.ownRoom}</b></span>`) +
-      '</div>';
-    if (state.stale) html += '<div class="log-item warn">Ayarlar ya da listeler dağıtımdan sonra değişti. Güncel hali için dağıtımı yeniden yapın.</div>';
-    for (const w of r.warnings || []) html += `<div class="log-item warn">${esc(w)}</div>`;
-    status.innerHTML = html;
+    status.innerHTML = statusBarHtml();
     document.querySelectorAll('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === view)));
     renderReportOnly();
   }
@@ -746,12 +791,15 @@
   function headerMeta(s = state.settings, result = state.result) {
     const date = s.date ? fmtDay(parseDay(s.date), { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }) : '';
     const fields = [['Tarih', date], ['Saat', s.time], ['Ders', s.lesson && s.lesson + '. ders']];
+    // Boş bırakılan bilgiler başlığa hiç yazılmaz ("Belirtilmedi" kalabalığı olmasın).
+    const filled = fields.filter(([, value]) => value);
+    void result;
+    if (!s.school && !s.exam && !filled.length && !s.headerNote) return '<div class="exam-identity empty-identity"></div>';
     return `<div class="exam-identity">
-      <div class="identity-school">${esc(s.school || 'Okul adı belirtilmedi')}</div>
-      <strong class="identity-exam">${esc(s.exam || 'Sınav belirtilmedi')}</strong>
-      <dl class="identity-fields">${fields.map(([label,value]) => `<div><dt>${label}</dt><dd>${esc(value || 'Belirtilmedi')}</dd></div>`).join('')}</dl>
+      ${s.school ? `<div class="identity-school">${esc(s.school)}</div>` : ''}
+      ${s.exam ? `<strong class="identity-exam">${esc(s.exam)}</strong>` : ''}
+      ${filled.length ? `<dl class="identity-fields">${filled.map(([label,value]) => `<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>` : ''}
       ${s.headerNote ? `<div class="identity-note">${esc(s.headerNote)}</div>` : ''}
-      ${result ? `<small class="distribution-version">${esc(distributionLabel(result))}</small>` : ''}
     </div>`;
   }
 
@@ -781,7 +829,7 @@
       <div class="document-title"><div class="document-scope">${esc(scope)}</div><h3>${esc(title)}</h3></div>
       ${headerMeta()}
       <div class="sheet-tools"><button type="button" class="btn small" data-print-${kind}="${esc(ri)}">${esc(buttonLabel)}</button></div>
-    </header>`;
+    </header>${state.result ? `<p class="sheet-code">${esc(distributionLabel())}</p>` : ''}`;
   }
 
   /** Oturma planı: her koltukta yalnızca öğrencinin adı ve sınıfı. */
@@ -1806,6 +1854,12 @@
 
   function bind() {
     bindQuickExam();
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('[data-open-quick-exam]')) { $('#quick-exam-launch').click(); return; }
+      // "Diğer" menüsü: bir seçenek seçilince ya da dışarı tıklanınca kapanır
+      const menu = $('#more-menu');
+      if (menu && menu.open && (!menu.contains(e.target) || e.target.closest('.more-list button'))) menu.open = false;
+    });
     let archiveMinute = '';
     setInterval(() => {
       const minute = Math.floor(Date.now() / 60000);
@@ -1977,7 +2031,9 @@
       markStale(); save(); renderRoomPicker(); renderCapacity(); renderResult();
     });
     $('#rooms-picker').addEventListener('click', (e) => {
+      if (e.target.closest('[data-rooms-toggle]')) { roomsOpen = !roomsOpen; renderRoomPicker(); return; }
       if (!editAllowed()) { renderRoomPicker(); return; }
+      if (e.target.closest('[data-rooms-toggle]')) { roomsOpen = !roomsOpen; renderRoomPicker(); return; }
       const b = e.target.closest('[data-room-pick]');
       if (!b) return;
       for (const c of state.classes) c.useAsRoom = b.dataset.roomPick === 'all' ? true : c.selected !== false;
@@ -2064,6 +2120,7 @@
     document.querySelectorAll('[data-report-actions]').forEach((el) => { el.hidden = !isReport; });
     $('#report').hidden = !isReport;
     $('#result-status').hidden = !isReport;
+    updateReminder();
     $('#h-result').textContent = isReport ? REPORT_PAGES[p] : 'Dağıtım';
     $('#distribution-help').textContent = isReport
       ? 'Seçtiğiniz çıktı aşağıdadır. Diğer çıktılara sol menüden, salon seçimlerine “Dağıtım ayarları” düğmesinden ulaşabilirsiniz.'

@@ -145,16 +145,22 @@
       <div id="picker" class="picker no-print" data-distribution-setup></div>
       <div id="rooms-picker" class="picker no-print" data-distribution-setup></div>
       <div id="capacity" class="picker no-print" data-distribution-setup></div>
-      <div class="row-actions no-print">
+      <div class="row-actions no-print action-bar">
         <button type="button" class="btn primary" id="btn-run" data-distribution-setup>Kelebek dağıtımını yap</button>
         <button type="button" class="btn ghost" data-go="dagitim" data-report-actions hidden>← Dağıtım ayarları</button>
         <span class="spacer"></span>
-        <button type="button" class="btn" id="btn-save" hidden>Bu dağıtımı kaydet</button>
+        <button type="button" class="btn secondary" id="btn-save" hidden>Kaydet</button>
         <button type="button" class="btn primary" id="btn-pack" hidden>Sınav evrakını yazdır</button>
-        <button type="button" class="btn" id="btn-print" hidden>Bu bölümü yazdır</button>
-        <button type="button" class="btn" id="btn-csv" hidden>Excel'e aktar (CSV)</button>
+        <details class="more-menu" id="more-menu" hidden>
+          <summary class="btn ghost">Diğer ▾</summary>
+          <div class="more-list" role="menu">
+            <button type="button" class="btn ghost" id="btn-print" role="menuitem" hidden>Bu bölümü yazdır</button>
+            <button type="button" class="btn ghost" id="btn-csv" role="menuitem" hidden>Excel'e aktar (CSV)</button>
+            <button type="button" class="btn ghost" id="btn-lock" role="menuitem" hidden aria-pressed="false">Dağıtımı kilitle</button>
+          </div>
+        </details>
       </div>
-      <div class="no-print distribution-lock"><button type="button" class="btn" id="btn-lock" hidden aria-pressed="false">Dağıtımı kilitle</button></div>
+      <p class="exam-reminder no-print" id="exam-reminder" hidden></p>
       <div id="result-status" class="no-print"></div>
       <div data-distribution-setup class="no-print"><button type="button" class="btn" id="btn-view-result" data-go="plan" hidden>Hazır dağıtımı görüntüle →</button></div>
       <div id="report"></div>
