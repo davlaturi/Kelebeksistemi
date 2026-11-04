@@ -32,7 +32,7 @@ function harness(initial) {
       renderSharePanel, searchRows, deleteStudent, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
       readSettings, headerMeta, renderTeacherList, renderRoll, showPage, pageFromHash, toggleClassList, expandPrintSections,
-      distributionAudit, auditHtml, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
+      distributionAudit, auditHtml, renderThemePreview, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
       packChoice, deleteArchive, deleteClassFromEditor, resultValid, exportCsv, printAll, onSeatClick,
       get state() { return state; }, set state(s) { state = s; } };
   `), context);
@@ -319,6 +319,18 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   a.runDistribution(); assert.notEqual(a.state.result.distributionId,generatedId);
   const invalidLock=fixture(); invalidLock.result.locked='true';
   assert.throws(()=>a.validateState(invalidLock), /kilidi/);
+  // Çıktı tasarımı önizlemesi kayıtlı dağıtıma ve ayarlara dokunmaz
+  a.state = a.validateState(fixture());
+  const beforePreview = JSON.stringify(a.state);
+  h.node('#s-theme').value = 'resmi';
+  a.renderThemePreview();
+  assert.equal(JSON.stringify(a.state), beforePreview);
+  const previewHtml = h.node('#theme-preview').innerHTML;
+  assert.match(previewHtml, /class="pack-out tp-doc" data-doc-theme="resmi"/);
+  assert.match(previewHtml, /Oturma planı/); assert.match(previewHtml, /Öğrenci imza listesi/);
+  assert.doesNotMatch(previewHtml, /Örnek Öğrenci/, 'önizleme gerçek öğrenci adı göstermemeli');
+  assert.match(previewHtml, /Örnek Okul/, 'girilen okul adı önizlemede görünür');
+  h.node('#s-theme').value = '';
   console.log('Dağıtım özeti, kilit kalıcılığı, kilitli değişiklikler, sürüm, paylaşım ve arşiv regresyonları geçti.');
   console.log('Paylaşım sayıları/gizlilik, kaldırılan görünümler ve öğrenci silme regresyonları geçti.');
   console.log('Kayıt, arşiv, yedek, kota, göç, takas, tarih ve CSV regresyon testleri geçti.');

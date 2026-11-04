@@ -129,6 +129,10 @@
               <option value="modern">C · Modern (ferah, ince çizgili)</option>
             </select>
           </div>
+          <div class="theme-preview-wrap">
+            <div class="theme-preview" id="theme-preview" aria-hidden="true" inert></div>
+            <p class="theme-preview-note">Önizleme hayali öğrencilerle gösterilir; okul adı ve sınav bilgileri girdiğiniz gibi basılır.</p>
+          </div>
           <label class="setting-option" for="s-duplex"><input type="checkbox" id="s-duplex" name="duplex" checked>
             <span><strong>Çift taraflı yazdırma</strong><small>Her salonun ve şubenin evrakı ayrı kâğıttan başlar. Gereken yerlere boş sayfa eklenir.</small></span></label>
           <label class="setting-option" for="s-own"><input type="checkbox" id="s-own" name="avoidOwnRoom">
@@ -157,13 +161,13 @@
         <button type="button" class="btn ghost" data-go="dagitim" data-report-actions hidden>← Dağıtım ayarları</button>
         <span class="spacer"></span>
         <button type="button" class="btn secondary" id="btn-save" hidden>Kaydet</button>
+        <button type="button" class="btn secondary lock-btn" id="btn-lock" hidden aria-pressed="false">🔒 Dağıtımı kilitle</button>
         <button type="button" class="btn primary" id="btn-pack" hidden>Sınav evrakını yazdır</button>
         <details class="more-menu" id="more-menu" hidden>
           <summary class="btn ghost">Diğer ▾</summary>
           <div class="more-list" role="menu">
             <button type="button" class="btn ghost" id="btn-print" role="menuitem" hidden>Bu bölümü yazdır</button>
             <button type="button" class="btn ghost" id="btn-csv" role="menuitem" hidden>Excel'e aktar (CSV)</button>
-            <button type="button" class="btn ghost" id="btn-lock" role="menuitem" hidden aria-pressed="false">Dağıtımı kilitle</button>
           </div>
         </details>
       </div>

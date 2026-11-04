@@ -672,6 +672,7 @@
     $('#s-duplex').checked = s.duplex !== false;
     $('#s-theme').value = s.docTheme || 'kurumsal';
     $('#s-own').checked = !!s.avoidOwnRoom;
+    renderThemePreview();
   }
   function readSettings(ev) {
     if (!editAllowed()) { renderSettings(); return; }
@@ -696,6 +697,7 @@
     if (!save()) { state = previousState; renderSettings(); return; }
     if (ev && ev.type === 'change') renderResult();
     else { renderReportOnly(); updateReminder(); }
+    renderThemePreview();
   }
 
   // ---------- 3. dağıtım ----------
@@ -766,7 +768,8 @@
     const has = !!r && resultValid();
     $('#btn-lock').hidden = !r;
     $('#btn-lock').textContent = r && r.locked ? '🔓 Dağıtım kilidini aç' : '🔒 Dağıtımı kilitle';
-    $('#more-menu').hidden = !r;
+    $('#more-menu').hidden = !has;
+    $('#btn-lock').classList.toggle('is-locked', !!(r && r.locked));
     $('#btn-lock').setAttribute('aria-pressed', String(!!(r && r.locked)));
     $('#btn-view-result').hidden = !has;
     $('#btn-print').hidden = !has;
@@ -845,6 +848,67 @@
   /** Düzenleyen / onaylayan imza alanı. */
   function approvalBlock(left = 'Düzenleyen', right = 'Onaylayan') {
     return `<div class="doc-approval">${[left, right].map((t) => `<div><span class="doc-approval-t">${esc(t)}</span><span class="doc-approval-line">Adı Soyadı</span><span class="doc-approval-line">İmza</span></div>`).join('')}</div>`;
+  }
+
+  // ---------- çıktı tasarımı önizlemesi ----------
+  /**
+   * Seçilen çıktı tasarımını hayali bir salonla gösterir. Gerçek çıktıların
+   * oluşturulduğu işlevler (renderPlans, renderRoll) kullanılır; böylece önizleme
+   * yazdırılacak kâğıtla birebir aynı düzendedir. Kayıtlı veriye dokunmaz.
+   */
+  const PREVIEW_NAMES = ['Elif Yıldız', 'Kerem Aydın', 'Zeynep Kaya', 'Emre Doğan', 'Defne Çelik', 'Yusuf Arslan',
+    'Ece Şahin', 'Burak Koç', 'Nazlı Polat', 'Ömer Kurt', 'Duru Aksoy', 'Efe Güneş'];
+  function previewState(base) {
+    const names = ['9/A', '10/B', '11/C'];
+    const classes = names.map((name, i) => ({ id: 'onizleme-' + i, name, students: [], selected: true }));
+    const order = [0, 1, 2, 0, 1, 2, 2, 0, 1, 2, 0, 1]; // sıra arkadaşları farklı düzeyde
+    const seats = order.map((k, i) => {
+      const stu = { id: 'onizleme-s' + i, name: PREVIEW_NAMES[i] };
+      classes[k].students.push(stu);
+      return { studentId: stu.id, classId: classes[k].id, seatNo: i + 1 };
+    });
+    const st = base.settings;
+    return {
+      classes,
+      settings: { ...st,
+        school: st.school || 'Örnek Anadolu Lisesi',
+        exam: st.exam || '1. Dönem 1. Ortak Yazılı',
+        date: st.date || '2026-11-12', time: st.time || '10:40', lesson: st.lesson || '3' },
+      result: { rooms: [{ roomId: classes[0].id, name: names[0], cols: 3, spd: 2, seats }],
+        distributionId: 'D-ORNEK', revision: 1, updatedAt: '2026-11-04T09:00:00.000Z' },
+      stale: false, archive: [],
+    };
+  }
+  function renderThemePreview() {
+    const box = $('#theme-preview');
+    if (!box) return;
+    const theme = ($('#s-theme') && $('#s-theme').value) || state.settings.docTheme || 'kurumsal';
+    const saved = state, savedSel = selectedSeat;
+    let pages;
+    try {
+      state = previewState(saved); selectedSeat = null;
+      pages = [['Oturma planı', renderPlans()], ['İmza listesi', renderRoll()]];
+    } catch (e) {
+      pages = [];
+    } finally { state = saved; selectedSeat = savedSel; }
+    box.innerHTML = pages.map(([label, html]) => `<figure class="tp-item">
+        <div class="tp-paper"><div class="tp-scale"><div class="pack-out tp-doc" data-doc-theme="${esc(theme)}">${html}</div></div></div>
+        <figcaption>${esc(label)}</figcaption>
+      </figure>`).join('');
+    fitThemePreview();
+  }
+  /** Önizleme kâğıtlarını kutunun genişliğine göre küçültür. */
+  function fitThemePreview() {
+    document.querySelectorAll('#theme-preview .tp-paper').forEach((paper) => {
+      const inner = paper.querySelector('.tp-scale');
+      const w = paper.clientWidth;
+      if (!w || !inner) return;
+      const z = w / inner.offsetWidth;
+      inner.style.transform = 'scale(' + z + ')';
+      // Sayfanın boş alt kısmını göstermeden içerik kadar yükseklik (en çok A4)
+      const h = Math.min(inner.offsetWidth * 297 / 210, inner.offsetHeight + 12);
+      paper.style.height = Math.round(h * z) + 'px';
+    });
   }
 
   /** Oturma planı: her koltukta yalnızca öğrencinin adı ve sınıfı. */
@@ -1968,6 +2032,7 @@
     // kayıtlı sınavlar
     $('#btn-save').addEventListener('click', saveToArchive);
     $('#btn-lock').addEventListener('click', toggleDistributionLock);
+    window.addEventListener('resize', fitThemePreview);
     // yan panel ve "Devam" düğmeleri
     document.addEventListener('click', (e) => {
       const g = e.target.closest('[data-go]');
@@ -2158,6 +2223,7 @@
     if (!fromHash && location.hash !== '#' + p) {
       try { history.replaceState(null, '', '#' + p); } catch (e) { /* file:// bazı tarayıcılarda */ }
     }
+    if (sectionPage === 'bilgiler') fitThemePreview();
     if (changed) window.scrollTo(0, 0);
   }
 
