@@ -2046,13 +2046,15 @@
   const PAGES = ['listeler', 'bilgiler', 'dagitim', 'arsiv'];
   const REPORT_PAGES = { plan: 'Oturma planları', yoklama: 'Öğrenci imza listeleri', sinif: 'Sınıflara göre sınav yerleri', evrak: 'Dağıtımı paylaş/dışarı aktar', ara: 'Öğrenci ara' };
   let page = 'listeler';
+  // Object.hasOwn yalnız 2021 sonrası tarayıcılarda var; okuldaki eski tarayıcılarda menü çalışmıyordu.
+  const isReportPage = (p) => Object.prototype.hasOwnProperty.call(REPORT_PAGES, p);
   function pageFromHash() {
     const h = (location.hash || '').replace('#', '');
-    return PAGES.includes(h) || Object.hasOwn(REPORT_PAGES, h) ? h : null;
+    return PAGES.includes(h) || isReportPage(h) ? h : null;
   }
   function showPage(p, fromHash) {
-    if (!PAGES.includes(p) && !Object.hasOwn(REPORT_PAGES, p)) p = 'listeler';
-    const isReport = Object.hasOwn(REPORT_PAGES, p);
+    if (!PAGES.includes(p) && !isReportPage(p)) p = 'listeler';
+    const isReport = isReportPage(p);
     const sectionPage = isReport ? 'dagitim' : p;
     const changed = p !== page;
     page = p;

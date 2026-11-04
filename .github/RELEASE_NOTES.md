@@ -10,7 +10,11 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.17.0)
+## Bu sürümde (v1.17.1)
+
+- **Yan menü düzeltmesi.** Codex güncellemesinden sonra bazı bilgisayar ve tabletlerde yan menüye tıklayınca sayfa değişmiyordu. Bütün bölümler alt alta açık kalıyordu. Sebep, eski tarayıcılarda bulunmayan bir özelliğin (`Object.hasOwn`) kullanılmasıydı. Her tarayıcıda çalışan karşılığıyla değiştirildi ve bunu denetleyen bir test eklendi.
+
+## Önceki sürümde (v1.17.0)
 
 Bu sürüm, Codex ile yapılan güncellemeleri içerir. Ayrıntılar depodaki `Guncelleme-Notlari.md` ve `Hata-Senaryolari-Denetimi.md` dosyalarında.
 
@@ -26,7 +30,7 @@ Bu sürüm, Codex ile yapılan güncellemeleri içerir. Ayrıntılar depodaki `G
 - **Hata düzeltmeleri.** Tekli sıralarda daha iyi dağıtım yapılıyor. Hatalı ya da eksik veriler dağıtımdan önce denetleniyor. Depolama dolu olduğunda işlemler güvenle geri alınıyor.
 - **Testler.** Kayıt/arşiv, paylaşım, kilit ve dağıtım doğruluğu testleri eklendi.
 
-## Önceki sürümde (v1.16.0)
+## Daha önce (v1.16.0)
 
 - **WhatsApp'ta paylaş.** Kâğıt dağılımı telefona uygun bir mesaja dönüştürülüyor. Mesaj tüm düzeyler için ya da sadece bir düzeyin öğretmenleri için hazırlanabiliyor; tek tıkla WhatsApp'ta açılıyor ya da kopyalanıyor.
 - **Sınav yerleri tek sayfa.** Krokiler kaldırıldı; her şubenin listesi tek kâğıda sığdırılıyor. Oturma planı ve imza listeleri de her zaman tek sayfa.
