@@ -60,9 +60,9 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 - **Sınav kâğıdı dağıtımı:** Kâğıtları kolayca dağıtmak için hazırlanmış bir sayfa. En üstte **kâğıt hazırlama kartları** vardır:
   - **Salona göre (zarf):** Her kart bir salonun zarfıdır. Örneğin "9/A salonu: 9/A 6, 9/B 5, 10/A 5… Toplam 30". Bir şubenin kâğıtlarını zarfa koyunca satırı işaretleyin. Bütün satırlar işaretlenince kart yeşile döner ve "Zarf hazır" yazar. Gözetmen zarfını alıp gider.
   - İşaretler dağıtımla birlikte saklanır, sayfayı kapatsanız da kaybolmaz.
-  - **Düzey özeti:** Kartların üstünde her düzeyden toplam kaç öğrenci (kâğıt) olduğu yazar, yanında şube şube sayılar ve genel toplam vardır. Örnek: "9. sınıf 192: 9/A 28, 9/B 35…". Şubeye göre görünümde kartlar düzeylere göre gruplanır, her grubun başlığında düzey toplamı yazar. Salona göre görünümde her salon kartının altında o salondaki düzey toplamları vardır.
+  - **Düzey özeti:** Kartların üstünde her düzeyden toplam kaç öğrenci (kâğıt) olduğu yazar, yanında şube şube sayılar ve genel toplam vardır. Örnek: "9. sınıf 192: 9/A 28, 9/B 35…". Her salon kartının altında o salondaki düzey toplamları vardır.
   - **WhatsApp'ta paylaş:** Kâğıt dağılımını telefona uygun bir mesaj olarak hazırlar. Mesajı tüm düzeyler için ya da yalnızca bir düzeyin öğretmenleri için (ör. "9. sınıf öğretmenleri için") oluşturabilirsiniz. **WhatsApp'ta aç** ile doğrudan gönderebilir, **Mesajı kopyala** ile bir gruba yapıştırabilir ya da tablette **Paylaş…** düğmesini kullanabilirsiniz.
-  - **Öğretmenler odası için yazdır:** Ekrandaki kartların aynısını, öğretmenler odasına asılacak şekilde basar. Her kartta salon adı, şubeler ve kâğıt sayıları yazar; yanlarında kalemle işaretlenecek kutular vardır. Bir sayfaya 8 karta kadar sığar. "Şubeye göre" görünümündeyseniz o görünümün kartları basılır.
+  - **Öğretmenler odası için yazdır:** Ekrandaki kartların aynısını, öğretmenler odasına asılacak şekilde basar. Her kartta salon adı, şubeler ve kâğıt sayıları yazar; yanlarında kalemle işaretlenecek kutular vardır. Bir sayfaya 8 karta kadar sığar.
 
   Kartların altında ayrıca şunlar var:
   - Her salona hangi sınıf düzeyinden kaç kâğıt gideceğini gösteren tablo.
