@@ -10,7 +10,17 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.18.0)
+## Bu sürümde (v1.19.0)
+
+- **Kurumsal belge tasarımı.** Tüm çıktılar ortak bir düzene geçti: üstte antet (okul adı), belge adı bandı ve sınav bilgileri kutusu var; altta belge numarası yer alıyor. İmza listesinde sıra numarası, kâğıt tablosunda "Hazırlayan / Kontrol eden" imza alanları eklendi.
+- **Üç tasarım seçeneği.** 2. adımdaki "Çıktı tasarımı" ayarından seçiliyor:
+  - **A · Kurumsal:** lacivert vurgulu.
+  - **B · Resmî:** tamamen siyah-beyaz ve çerçeveli; fotokopiye en uygun olanı.
+  - **C · Modern:** ferah, ince çizgili.
+- **Tek sayfaya sığdırma düzeltmesi.** Çok kalabalık salonların imza listesi küçültülse de A4 sınırında kalıyor ve alt bilgi sonraki sayfaya taşıyordu; çift taraflı baskıda sıra kayıyordu. Küçültme artık ölçülerek yapılıyor.
+- **Harf taşması düzeltmesi.** Art arda basılan sayfalarda bir sonraki sayfanın antetindeki İ/Ğ işaretleri önceki sayfanın altına basılıyordu; düzeltildi.
+
+## Önceki sürümde (v1.18.0)
 
 - **Raporlar ekranın üstünden başlıyor.** Oturma planı, imza listesi ve sınav yerlerinin üstündeki büyük özet kutusu ile istatistik etiketleri kaldırıldı. Yerine tek satırlık bir durum çubuğu geldi: "✓ 174 öğrencinin hepsi yerleşti · aynı sırada aynı düzey yok". Ayrıntılar tıklanınca açılıyor; sorun varsa çubuk sarı oluyor ve sorunları yazıyor.
 - **Düğmelerde önem sırası.** Öne yalnızca **Kaydet** ve **Sınav evrakını yazdır** çıktı. "Bu bölümü yazdır", "Excel'e aktar" ve "Dağıtımı kilitle" **Diğer ▾** menüsünde. Kilitliyken durum çubuğunda "🔒 Kilitli" yazıyor.
@@ -22,7 +32,7 @@ Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkm
 - **Tablet düzeltmesi.** İçerik kısa olduğunda üst menü uzayıp boşluklu görünüyordu; düzeltildi.
 - **Kâğıtta isimler** artık kelime ortasından bölünmüyor.
 
-## Önceki sürümde (v1.17.1)
+## Daha önce (v1.17.1)
 
 - **Yan menü düzeltmesi.** Codex güncellemesinden sonra bazı bilgisayar ve tabletlerde yan menüye tıklayınca sayfa değişmiyordu. Bütün bölümler alt alta açık kalıyordu. Sebep, eski tarayıcılarda bulunmayan bir özelliğin (`Object.hasOwn`) kullanılmasıydı. Her tarayıcıda çalışan karşılığıyla değiştirildi ve bunu denetleyen bir test eklendi.
 

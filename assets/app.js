@@ -14,7 +14,7 @@
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
-    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'lr', duplex: true,
+    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'lr', duplex: true, docTheme: 'kurumsal',
   };
   let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false, archive: [] };
   let view = 'plan';
@@ -40,6 +40,7 @@
       require([1, 2, 3, 4].includes(out.deskCols) && [1, 2].includes(out.seatsPerDesk), 'Sıra düzeni geçersiz.');
       require(['class', 'custom'].includes(out.capacityMode) && ['lr', 'doorL', 'doorR'].includes(out.sideNames), 'Salon ayarları geçersiz.');
       for (const k of ['duplex', 'avoidOwnRoom']) require(typeof out[k] === 'boolean', 'Sınav seçeneği geçersiz.');
+      if (!['kurumsal', 'resmi', 'modern'].includes(out.docTheme)) out.docTheme = 'kurumsal';
       return out;
     }
     function classes(list) {
@@ -669,6 +670,7 @@
     $('#s-spd').value = String(s.seatsPerDesk);
     $('#s-sides').value = s.sideNames || 'lr';
     $('#s-duplex').checked = s.duplex !== false;
+    $('#s-theme').value = s.docTheme || 'kurumsal';
     $('#s-own').checked = !!s.avoidOwnRoom;
   }
   function readSettings(ev) {
@@ -687,6 +689,7 @@
     s.seatsPerDesk = parseInt($('#s-spd').value, 10) === 1 ? 1 : 2;
     s.sideNames = $('#s-sides').value || 'lr';
     s.duplex = $('#s-duplex').checked;
+    s.docTheme = $('#s-theme').value || 'kurumsal';
     s.avoidOwnRoom = $('#s-own').checked;
     if (JSON.stringify([s.deskCols, s.seatsPerDesk, s.avoidOwnRoom]) !== before) markStale();
     if (state.result && previousSettings !== JSON.stringify(s)) stampResult(state.result);
@@ -788,17 +791,14 @@
     renderReportOnly();
   }
 
+  /** Belgenin sınav bilgileri (boş olanlar yazılmaz). */
   function headerMeta(s = state.settings, result = state.result) {
-    const date = s.date ? fmtDay(parseDay(s.date), { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }) : '';
-    const fields = [['Tarih', date], ['Saat', s.time], ['Ders', s.lesson && s.lesson + '. ders']];
-    // Boş bırakılan bilgiler başlığa hiç yazılmaz ("Belirtilmedi" kalabalığı olmasın).
-    const filled = fields.filter(([, value]) => value);
     void result;
-    if (!s.school && !s.exam && !filled.length && !s.headerNote) return '<div class="exam-identity empty-identity"></div>';
+    const date = s.date ? fmtDay(parseDay(s.date), { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }) : '';
+    const fields = [['Sınav', s.exam], ['Tarih', date], ['Saat', s.time], ['Ders', s.lesson && s.lesson + '. ders']].filter(([, v]) => v);
+    if (!fields.length && !s.headerNote) return '<div class="exam-identity empty-identity"></div>';
     return `<div class="exam-identity">
-      ${s.school ? `<div class="identity-school">${esc(s.school)}</div>` : ''}
-      ${s.exam ? `<strong class="identity-exam">${esc(s.exam)}</strong>` : ''}
-      ${filled.length ? `<dl class="identity-fields">${filled.map(([label,value]) => `<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>` : ''}
+      ${fields.length ? `<dl class="doc-facts">${fields.map(([label, value]) => `<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>` : ''}
       ${s.headerNote ? `<div class="identity-note">${esc(s.headerNote)}</div>` : ''}
     </div>`;
   }
@@ -824,12 +824,27 @@
     return rc ? rc.c.name : room.name;
   }
 
+  /**
+   * Kurumsal belge başlığı: üstte antet (okul adı), altında belge adı ve sınav
+   * bilgileri; sayfanın en altında belge numarası. Bütün çıktılar bunu kullanır.
+   */
   function sheetHead(scope, title, ri, kind, buttonLabel = 'Yazdır') {
-    return `<header class="document-masthead">
-      <div class="document-title"><div class="document-scope">${esc(scope)}</div><h3>${esc(title)}</h3></div>
-      ${headerMeta()}
+    const st = state.settings;
+    return `<header class="doc-head">
+      <div class="doc-letterhead">
+        <div class="doc-org">${st.school ? esc(st.school) : 'Sınav Evrakı'}</div>
+        <div class="doc-unit">${st.school ? 'Sınav Evrakı' : 'Kelebek Sınav Dağıtımı'}</div>
+      </div>
+      <div class="doc-titlebar">
+        <div class="doc-title"><span class="doc-kicker">${esc(scope)}</span><h3>${esc(title)}</h3></div>
+        ${headerMeta()}
+      </div>
       <div class="sheet-tools"><button type="button" class="btn small" data-print-${kind}="${esc(ri)}">${esc(buttonLabel)}</button></div>
-    </header>${state.result ? `<p class="sheet-code">${esc(distributionLabel())}</p>` : ''}`;
+    </header>${state.result ? `<footer class="sheet-code"><span>Belge No: ${esc(distributionLabel())}</span><span>Kelebek Sınav Dağıtım Sistemi</span></footer>` : ''}`;
+  }
+  /** Düzenleyen / onaylayan imza alanı. */
+  function approvalBlock(left = 'Düzenleyen', right = 'Onaylayan') {
+    return `<div class="doc-approval">${[left, right].map((t) => `<div><span class="doc-approval-t">${esc(t)}</span><span class="doc-approval-line">Adı Soyadı</span><span class="doc-approval-line">İmza</span></div>`).join('')}</div>`;
   }
 
   /** Oturma planı: her koltukta yalnızca öğrencinin adı ve sınıfı. */
@@ -942,9 +957,11 @@
       <tfoot><tr><th>Toplam</th>${levels.map((L) => `<th class="num">${lvColTotal(L.lv)}</th>`).join('')}<th class="num">${grand}</th></tr></tfoot>
     </table></div>`;
 
+    const st = state.settings;
+    const envMeta = [st.exam, st.date ? fmtDay(parseDay(st.date), { day: 'numeric', month: 'long', year: 'numeric' }) : '', st.time, st.lesson && st.lesson + '. ders'].filter(Boolean).join(' · ');
     const labels = rooms.map((x) => `<div class="env">
       <div class="env-head"><span>SALON ZARFI</span><b>${esc(x.title)}</b><strong>${x.rc.total}<small> kâğıt</small></strong></div>
-      <div class="env-meta">${headerMeta()}</div>
+      <div class="env-meta">${esc(envMeta)}</div>
       <div class="env-lines">${x.rc.levels.map((L) => `<div class="env-level"><b>${esc(levelLabel(L.level))} · ${L.total}</b><span>${L.classes.map((c) => `${esc(c.name)}: <strong>${c.n}</strong>`).join(' &nbsp; / &nbsp; ')}</span></div>`).join('')}</div>
       <div class="env-check">□ Kâğıt sayısı kontrol edildi &nbsp; □ Teslim alındı</div>
     </div>`).join('');
@@ -954,6 +971,7 @@
         <h3 class="sub-h">Sınıf düzeyine göre</h3>
         <p class="note">Her salona hangi düzeyden kaç sınav kâğıdı gideceğini gösterir.</p>
         ${levelTable}
+        ${approvalBlock('Hazırlayan', 'Kontrol eden')}
       </article>`;
     const labelSheet = `<article class="sheet" data-papers="2">
         ${sheetHead('Sınav kâğıdı dağıtımı', 'Salon zarfı etiketleri', 'all2', 'papers')}
@@ -1218,6 +1236,7 @@
    */
   function preparePrint(html, duplex) {
     const box = $('#print-pack');
+    box.dataset.docTheme = state.settings.docTheme || 'kurumsal';
     box.innerHTML = html;
     expandPrintSections(box);
     box.classList.add('measuring');
@@ -1238,8 +1257,14 @@
       let pages = Math.max(1, Math.ceil(ratio - 0.001));
       // Sayfa sınırına çok yakınsa (taşacak gibi ya da az taşmış) küçült: belirsizlik kalmasın.
       if (sh.dataset.fitOne === '1') {
-        const z = Math.min(1, 0.96 / Math.max(ratio, 0.001));
+        // Küçültme doğrusal değil (uzun listelerde yarıya küçültmek yüksekliği tam yarıya indirmez);
+        // sayfaya gerçekten sığana kadar ölçerek tekrar küçült.
+        let z = Math.min(1, 0.96 / Math.max(ratio, 0.001));
         sh.style.zoom = z.toFixed(5);
+        for (let k = 0; k < 12 && sh.getBoundingClientRect().height / pxPerMm > PAGE_MM * 0.95 && z > 0.3; k++) {
+          z *= 0.95;
+          sh.style.zoom = z.toFixed(5);
+        }
         sh.dataset.pages = 1;
         pagesTotal++;
         continue;
@@ -1428,13 +1453,13 @@
     return r.rooms.map((room, ri) => {
       const rows = room.seats.filter((seat) => !seat.empty).map((seat) => {
         const stu = si.get(seat.studentId);
-        return `<tr><td>${esc(stu.s.name)}</td><td>${esc(ci.get(seat.classId).c.name)}</td><td class="sign"></td></tr>`;
+        return `<tr><td class="num seat-no">${seat.seatNo}</td><td>${esc(stu.s.name)}</td><td>${esc(ci.get(seat.classId).c.name)}</td><td class="sign"></td></tr>`;
       }).join('');
       return `<article class="sheet roll-sheet" data-fit-one="1" data-room="${ri}">
         ${sheetHead('Sınav salonu · ' + roomTitle(room, ci), 'Öğrenci imza listesi', ri, 'room')}
         ${roomCountsLine(room)}
         <div class="table-scroll"><table class="list">
-          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>İmza</th></tr></thead>
+          <thead><tr><th class="num">Sıra</th><th>Adı soyadı</th><th>Sınıfı</th><th>İmza</th></tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
         <footer class="exam-rules">

@@ -940,3 +940,183 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .pack-out .seat .who { overflow-wrap: normal; word-break: normal; hyphens: none; font-size: 8.5pt; line-height: 1.15; }
 .pack-out .seat .sno { font-size: 14pt; padding-left: 3px; }
 .pack-out .seat { padding: 3px 4px; column-gap: 2px; }
+
+/* ======================================================================
+   Kurumsal belge tasarımı (v1.19)
+   Tek vurgu rengi (lacivert), tırnaklı başlıklar, ince çizgiler, antet,
+   belge numaralı alt bilgi. Düzey renkleri yalnız ince şerit olarak kalır.
+   ====================================================================== */
+:root {
+  --doc-ink: #141a26;
+  --doc-accent: #1d3557;
+  --doc-soft: #f2f4f8;
+  --doc-rule: #c5cbd6;
+  --doc-muted: #5b6475;
+  --doc-serif: "Cambria", "Georgia", "Times New Roman", "DejaVu Serif", serif;
+  --doc-sans: "Segoe UI", "Calibri", "Helvetica Neue", Arial, "DejaVu Sans", sans-serif;
+}
+
+/* Başlık: antet + belge adı bandı */
+.doc-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; color: var(--doc-ink); font-family: var(--doc-sans); }
+.doc-letterhead { grid-column: 1 / 2; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding-bottom: 6px; border-bottom: 3px solid var(--doc-accent); box-shadow: 0 2px 0 #fff, 0 3px 0 var(--doc-accent); margin-bottom: 10px; }
+.doc-org { font: 700 1.05rem/1.15 var(--doc-serif); letter-spacing: .09em; text-transform: uppercase; color: var(--doc-accent); }
+.doc-unit { font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--doc-muted); white-space: nowrap; }
+.doc-titlebar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 20px; padding-bottom: 8px; border-bottom: 1px solid var(--doc-rule); }
+.doc-title { display: grid; gap: 2px; min-width: 0; }
+.doc-kicker { font-size: .68rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--doc-muted); }
+.doc-title h3 { margin: 0; font: 600 1.55rem/1.1 var(--doc-serif); color: var(--doc-ink); letter-spacing: -.005em; }
+.doc-head .sheet-tools { grid-column: 2; grid-row: 1; align-self: start; }
+.doc-head .exam-identity { display: grid; gap: 4px; justify-items: end; border: 0; padding: 0; margin: 0; background: none; }
+.doc-facts { display: flex; flex-wrap: wrap; margin: 0; border: 1px solid var(--doc-rule); border-radius: 2px; }
+.doc-facts > div { padding: 4px 12px; border-left: 1px solid var(--doc-rule); }
+.doc-facts > div:first-child { border-left: 0; }
+.doc-facts dt { font-size: .6rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--doc-muted); }
+.doc-facts dd { margin: 0; font-size: .9rem; font-weight: 600; color: var(--doc-ink); white-space: nowrap; }
+.doc-head .identity-note { font-size: .78rem; color: var(--doc-muted); font-style: italic; }
+
+/* Alt bilgi: belge numarası */
+.sheet .sheet-code { order: 99; display: flex; justify-content: space-between; gap: 12px; margin: 6px 0 0; padding-top: 5px; border-top: 1px solid var(--doc-rule); font-size: .66rem; color: var(--doc-muted); letter-spacing: .02em; text-align: left; opacity: 1; }
+
+/* Onay / imza alanı */
+.doc-approval { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 18px; }
+.doc-approval > div { display: grid; gap: 14px; }
+.doc-approval-t { font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--doc-accent); border-bottom: 1px solid var(--doc-accent); padding-bottom: 3px; }
+.doc-approval-line { font-size: .7rem; color: var(--doc-muted); border-bottom: 1px dotted var(--doc-muted); padding-bottom: 14px; }
+
+/* ---------- Kâğıtta (yazdırma) ---------- */
+.pack-out { --ink: var(--doc-ink); --ink-soft: var(--doc-muted); --line: var(--doc-rule); font-family: var(--doc-sans); color: var(--doc-ink); }
+.pack-out .doc-org { font-size: 13pt; }
+.pack-out .doc-title h3 { font-size: 18pt; }
+.pack-out .doc-facts dd { font-size: 9.5pt; }
+.pack-out .sheet-code { font-size: 6.5pt; }
+
+/* Salon özeti: nötr etiketler, renkli nokta */
+.pack-out .counts-line .counts-title { color: var(--doc-accent); letter-spacing: .14em; }
+.pack-out .counts-line .chip { background: #fff !important; color: var(--doc-ink) !important; border: 1px solid var(--doc-rule) !important; border-radius: 2px; box-shadow: inset 3px 0 0 hsl(var(--h) 55% 48%); padding-left: 8px; }
+
+/* Oturma planı: beyaz koltuk, sol kenarda düzey şeridi */
+.pack-out .board { background: var(--doc-accent) !important; color: #fff; border-radius: 1px; letter-spacing: .22em; font-size: 7.5pt; }
+.pack-out .col-label { color: var(--doc-accent); border-bottom: 1.5px solid var(--doc-accent); letter-spacing: .18em; }
+.pack-out .row-label { color: var(--doc-muted); font-size: 7pt; }
+.pack-out .desk { background: var(--doc-soft) !important; border: 1px solid var(--doc-rule) !important; border-radius: 2px; padding: 3px; gap: 3px; }
+.pack-out .seat { background: #fff !important; color: var(--doc-ink) !important; border: 1px solid var(--doc-rule) !important; border-radius: 1px; box-shadow: inset 4px 0 0 hsl(var(--h) 55% 46%); padding-left: 8px !important; }
+.pack-out .seat .who { color: var(--doc-ink); font-weight: 600; }
+.pack-out .seat .cls { color: var(--doc-muted); }
+.pack-out .seat .sno { color: var(--doc-accent) !important; font-family: var(--doc-serif); font-weight: 700; }
+.pack-out .seat.vacant { box-shadow: none; border-style: dashed !important; }
+
+/* Tablolar: lacivert başlık satırı, ince çizgiler, zebra */
+.pack-out table.list { border-collapse: collapse; border: 1px solid var(--doc-rule); }
+.pack-out table.list thead th { background: var(--doc-accent) !important; color: #fff !important; font-size: 7pt; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; border: 0; padding: 4px 6px; }
+.pack-out table.list tbody td { border-bottom: 1px solid #e1e5ec; }
+.pack-out table.list tbody tr:nth-child(even) td { background: var(--doc-soft); }
+.pack-out table.list td.seat-no { width: 2.6em; font-family: var(--doc-serif); font-weight: 700; color: var(--doc-accent); text-align: center; }
+.pack-out table.list td.sign { width: 34%; border-left: 1px solid #e1e5ec; }
+.pack-out table.list tfoot th, .pack-out table.list tfoot td { border-top: 2px solid var(--doc-accent); color: var(--doc-accent); }
+.pack-out table.matrix td.num, .pack-out table.matrix th.num { font-family: var(--doc-sans); }
+
+/* İmza listesi alt kısmı: kurallar ve gözetmen */
+.pack-out .exam-rules { border-top: 0; border-left: 3px solid var(--doc-accent); background: var(--doc-soft); padding: 6px 10px; }
+.pack-out .exam-rules h3 { color: var(--doc-accent); letter-spacing: .14em; font-size: 7.5pt; }
+
+/* Zarf etiketleri: lacivert başlık bandı */
+.pack-out .env { border: 1px solid var(--doc-ink) !important; border-radius: 2px; padding: 0 !important; overflow: hidden; background: #fff; }
+.pack-out .env-head { background: var(--doc-accent); color: #fff; padding: 5px 8px !important; margin: 0 !important; border: 0 !important; }
+.pack-out .env-head span { color: #c9d3e3 !important; letter-spacing: .18em; }
+.pack-out .env-head b, .pack-out .env-head strong { color: #fff !important; font-family: var(--doc-serif); }
+.pack-out .env-meta, .pack-out .env-lines, .pack-out .env-check { padding-left: 8px; padding-right: 8px; }
+.pack-out .env-meta .doc-facts { border: 0; }
+.pack-out .env-meta .doc-facts > div { padding: 2px 8px 2px 0; border-left: 0; }
+.pack-out .env-check { border-top: 1px solid var(--doc-rule); padding-top: 3px; padding-bottom: 4px; }
+
+/* Öğretmenler odası kartları */
+.pack-out .tcard { border: 1px solid var(--doc-ink) !important; border-radius: 2px !important; padding: 0 !important; overflow: hidden; }
+.pack-out .tcard .qhead { background: var(--doc-accent); color: #fff; padding: 4px 7px !important; margin: 0; border: 0; }
+.pack-out .tcard .qhead .qtitle, .pack-out .tcard .qhead .qtotal, .pack-out .tcard .qhead b { color: #fff !important; font-family: var(--doc-serif); }
+.pack-out .tcard .qline, .pack-out .tcard .tlv, .pack-out .tcard > :not(.qhead) { margin-left: 6px; margin-right: 6px; }
+.pack-out .lvsum-t th { font-family: var(--doc-serif); }
+.pack-out .env-meta { border: 0 !important; padding: 4px 8px 2px !important; margin: 0 !important; background: none !important; font-size: 8pt; font-weight: 600; color: var(--doc-ink); }
+.pack-out .env-meta:empty { display: none; }
+.env-meta:empty { display: none; }
+/* Oturma planı sayfayı doldursun: koltuklar daha yüksek (tek sayfaya sığdırma yine geçerli) */
+.pack-out .seat { min-height: 23mm; }
+.pack-out .desks { row-gap: 12px !important; }
+.pack-out .seat .who { font-size: 9.5pt; }
+.pack-out .seat .sno { font-size: 16pt; }
+.pack-out .sub-h { font-family: var(--doc-serif); color: var(--doc-accent); }
+
+/* ======================================================================
+   B · RESMÎ — geleneksel resmî yazı düzeni. Tamamen siyah-beyaz, ortalanmış
+   antet, çerçeveli tablolar. Fotokopide hiçbir bilgi kaybolmaz.
+   ====================================================================== */
+.pack-out[data-doc-theme="resmi"] { --doc-accent: #000; --doc-ink: #000; --doc-muted: #333; --doc-rule: #000; --doc-soft: #fff; font-family: var(--doc-serif); }
+.pack-out[data-doc-theme="resmi"] .doc-letterhead { flex-direction: column; align-items: center; text-align: center; gap: 2px; border-bottom: 1.5pt solid #000; box-shadow: 0 2px 0 #fff, 0 2.6px 0 #000; }
+.pack-out[data-doc-theme="resmi"] .doc-org { color: #000; font-size: 13.5pt; letter-spacing: .06em; }
+.pack-out[data-doc-theme="resmi"] .doc-unit { color: #000; font-family: var(--doc-serif); letter-spacing: .3em; font-size: 7.5pt; }
+.pack-out[data-doc-theme="resmi"] .doc-titlebar { flex-direction: column; align-items: center; text-align: center; border-bottom: 0; gap: 6px; }
+.pack-out[data-doc-theme="resmi"] .doc-title { justify-items: center; }
+.pack-out[data-doc-theme="resmi"] .doc-kicker { color: #000; font-family: var(--doc-serif); letter-spacing: .1em; }
+.pack-out[data-doc-theme="resmi"] .doc-title h3 { font-size: 15pt; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: .8pt; }
+.pack-out[data-doc-theme="resmi"] .doc-head .exam-identity { justify-items: center; }
+.pack-out[data-doc-theme="resmi"] .doc-facts { border: .75pt solid #000; border-radius: 0; }
+.pack-out[data-doc-theme="resmi"] .doc-facts > div { border-left: .75pt solid #000; }
+.pack-out[data-doc-theme="resmi"] .doc-facts dt { color: #000; font-family: var(--doc-serif); letter-spacing: .04em; text-transform: none; font-size: 7pt; }
+.pack-out[data-doc-theme="resmi"] .doc-facts dd { font-family: var(--doc-serif); }
+.pack-out[data-doc-theme="resmi"] table.list { border: .75pt solid #000; }
+.pack-out[data-doc-theme="resmi"] table.list thead th { background: #e4e4e4 !important; color: #000 !important; border: .75pt solid #000; font-family: var(--doc-serif); letter-spacing: .04em; text-transform: uppercase; }
+.pack-out[data-doc-theme="resmi"] table.list tbody td { border: .5pt solid #000; background: #fff !important; font-family: var(--doc-serif); }
+.pack-out[data-doc-theme="resmi"] table.list td.seat-no { color: #000; }
+.pack-out[data-doc-theme="resmi"] table.list tfoot th, .pack-out[data-doc-theme="resmi"] table.list tfoot td { border: .75pt solid #000; border-top: 1.5pt solid #000; color: #000; }
+.pack-out[data-doc-theme="resmi"] .seat { box-shadow: none !important; border: .75pt solid #000 !important; padding-left: 5px !important; }
+.pack-out[data-doc-theme="resmi"] .seat .cls { color: #000; font-weight: 600; }
+.pack-out[data-doc-theme="resmi"] .seat .sno { color: #000 !important; }
+.pack-out[data-doc-theme="resmi"] .desk { background: #fff !important; border: .5pt solid #000 !important; }
+.pack-out[data-doc-theme="resmi"] .board { background: #fff !important; color: #000 !important; border: 1.2pt solid #000; font-weight: 700; }
+.pack-out[data-doc-theme="resmi"] .col-label { color: #000; border-bottom-color: #000; }
+.pack-out[data-doc-theme="resmi"] .counts-line .chip { box-shadow: none; border: .5pt solid #000 !important; }
+.pack-out[data-doc-theme="resmi"] .counts-line .counts-title { color: #000; }
+.pack-out[data-doc-theme="resmi"] .exam-rules { background: #fff; border: .75pt solid #000; }
+.pack-out[data-doc-theme="resmi"] .exam-rules h3 { color: #000; }
+.pack-out[data-doc-theme="resmi"] .env, .pack-out[data-doc-theme="resmi"] .tcard { border: 1pt solid #000 !important; }
+.pack-out[data-doc-theme="resmi"] .env-head, .pack-out[data-doc-theme="resmi"] .tcard .qhead { background: #fff !important; color: #000 !important; border-bottom: 1pt solid #000 !important; }
+.pack-out[data-doc-theme="resmi"] .env-head span, .pack-out[data-doc-theme="resmi"] .env-head b, .pack-out[data-doc-theme="resmi"] .env-head strong,
+.pack-out[data-doc-theme="resmi"] .tcard .qhead .qtitle, .pack-out[data-doc-theme="resmi"] .tcard .qhead .qtotal, .pack-out[data-doc-theme="resmi"] .tcard .qhead b { color: #000 !important; }
+.pack-out[data-doc-theme="resmi"] .doc-approval-t { color: #000; border-bottom-color: #000; font-family: var(--doc-serif); }
+.pack-out[data-doc-theme="resmi"] .sheet-code { border-top: .5pt solid #000; color: #000; }
+.pack-out[data-doc-theme="resmi"] .qdot, .pack-out[data-doc-theme="resmi"] .env-lv .qdot { background: #000 !important; }
+
+/* ======================================================================
+   C · MODERN — ferah, tırnaksız yazı; renkli dolgu yerine çizgi vurgusu.
+   Koyu dolgu yok; fotokopide temiz çıkar.
+   ====================================================================== */
+.pack-out[data-doc-theme="modern"] { --doc-accent: #0f5c4c; --doc-ink: #101828; --doc-muted: #475467; --doc-rule: #d0d5dd; --doc-soft: #f9fafb; font-family: var(--doc-sans); }
+.pack-out[data-doc-theme="modern"] .doc-letterhead { border-bottom: 0; box-shadow: none; padding: 0 0 4px; border-top: 5px solid var(--doc-accent); padding-top: 7px; }
+.pack-out[data-doc-theme="modern"] .doc-org { font-family: var(--doc-sans); font-weight: 700; letter-spacing: .02em; text-transform: none; font-size: 12pt; color: var(--doc-ink); }
+.pack-out[data-doc-theme="modern"] .doc-unit { color: var(--doc-accent); font-weight: 700; }
+.pack-out[data-doc-theme="modern"] .doc-titlebar { border-bottom: 0; padding-bottom: 6px; }
+.pack-out[data-doc-theme="modern"] .doc-kicker { color: var(--doc-accent); }
+.pack-out[data-doc-theme="modern"] .doc-title h3 { font-family: var(--doc-sans); font-weight: 300; font-size: 22pt; letter-spacing: -.02em; }
+.pack-out[data-doc-theme="modern"] .doc-facts { border: 0; gap: 0 4px; }
+.pack-out[data-doc-theme="modern"] .doc-facts > div { border-left: 0; border-top: 2px solid var(--doc-accent); padding: 3px 10px 0 0; margin-right: 8px; }
+.pack-out[data-doc-theme="modern"] table.list { border: 0; }
+.pack-out[data-doc-theme="modern"] table.list thead th { background: #fff !important; color: var(--doc-ink) !important; border-bottom: 2px solid var(--doc-ink) !important; letter-spacing: .08em; }
+.pack-out[data-doc-theme="modern"] table.list tbody td { border-bottom: 1px solid var(--doc-rule); }
+.pack-out[data-doc-theme="modern"] table.list tbody tr:nth-child(even) td { background: #fff; }
+.pack-out[data-doc-theme="modern"] table.list td.seat-no { color: var(--doc-accent); font-family: var(--doc-sans); }
+.pack-out[data-doc-theme="modern"] .seat { border-radius: 6px; border-color: var(--doc-rule) !important; box-shadow: inset 0 3px 0 hsl(var(--h) 55% 46%); padding-left: 6px !important; padding-top: 6px !important; }
+.pack-out[data-doc-theme="modern"] .seat .sno { font-family: var(--doc-sans); font-weight: 300; color: var(--doc-ink) !important; }
+.pack-out[data-doc-theme="modern"] .desk { background: #fff !important; border: 0 !important; padding: 0; }
+.pack-out[data-doc-theme="modern"] .board { background: #fff !important; color: var(--doc-ink) !important; border-bottom: 3px solid var(--doc-ink); border-radius: 0; font-weight: 700; }
+.pack-out[data-doc-theme="modern"] .col-label { color: var(--doc-muted); border-bottom: 1px solid var(--doc-rule); }
+.pack-out[data-doc-theme="modern"] .exam-rules { background: #fff; border-left: 0; border-top: 2px solid var(--doc-ink); }
+.pack-out[data-doc-theme="modern"] .env, .pack-out[data-doc-theme="modern"] .tcard { border: 1px solid var(--doc-rule) !important; border-radius: 8px !important; }
+.pack-out[data-doc-theme="modern"] .env-head, .pack-out[data-doc-theme="modern"] .tcard .qhead { background: #fff !important; color: var(--doc-ink) !important; border-bottom: 2px solid var(--doc-accent) !important; }
+.pack-out[data-doc-theme="modern"] .env-head span { color: var(--doc-accent) !important; }
+.pack-out[data-doc-theme="modern"] .env-head b, .pack-out[data-doc-theme="modern"] .env-head strong,
+.pack-out[data-doc-theme="modern"] .tcard .qhead .qtitle, .pack-out[data-doc-theme="modern"] .tcard .qhead .qtotal, .pack-out[data-doc-theme="modern"] .tcard .qhead b { color: var(--doc-ink) !important; font-family: var(--doc-sans); }
+.pack-out[data-doc-theme="modern"] .doc-approval-t { color: var(--doc-ink); border-bottom: 2px solid var(--doc-ink); }
+/* Resmî: antet düz blok olarak ortalanır (esnek kutuda Türkçe harfler yanlış konuma çiziliyordu) */
+.pack-out[data-doc-theme="resmi"] .doc-letterhead { display: block; text-align: center; }
+.pack-out[data-doc-theme="resmi"] .doc-org, .pack-out[data-doc-theme="resmi"] .doc-unit { display: block; }
+/* Antet sayfanın en tepesine dayanmasın: İ, Ğ gibi büyük harflerin nokta/şapkaları önceki sayfaya taşıyordu */
+.pack-out .doc-head { padding-top: 3mm; }
