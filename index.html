@@ -66,6 +66,15 @@
       <div id="import-log" class="import-log" aria-live="polite"></div>
 
       <div id="class-summary" class="class-summary"></div>
+      <section class="student-delete" id="student-delete" hidden aria-labelledby="sd-title">
+        <div class="sd-head">
+          <h3 id="sd-title">Öğrenci sil</h3>
+          <p class="hint">Nakil giden ya da sınava girmeyecek öğrencinin adını yazın, sonra “Öğrenciyi sil” düğmesine iki kez basın. Hazır bir dağıtım varsa yeniden dağıtım yapmanız gerekir; kayıtlı sınavlar değişmez.</p>
+        </div>
+        <div class="field sd-field"><label for="sd-q" class="sr-only">Silinecek öğrencinin adı</label>
+          <input id="sd-q" type="search" placeholder="Öğrenci adı yazın (örn. Yılmaz)" autocomplete="off"></div>
+        <div id="sd-out" aria-live="polite"></div>
+      </section>
       <div id="class-list" class="levels"></div>
       <div class="next-row"><button type="button" class="btn primary" data-go="bilgiler">Devam: Sınav bilgileri →</button></div>
     </section>

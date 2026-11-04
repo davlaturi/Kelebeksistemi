@@ -10,14 +10,20 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.20.0)
+## Bu sürümde (v1.21.0)
+
+- **Öğrenci silme Sınıf listelerinde.** 1. adımda, şube kartlarının üstünde **Öğrenci sil** kutusu var. Öğrencinin adını yazınca eşleşen öğrenciler şubeleriyle birlikte listeleniyor. Aynı adlı iki öğrenci varsa ayrı satırlarda görünüyor. Yanlışlıkla silmeye karşı "Öğrenciyi sil" düğmesine iki kez basmak gerekiyor.
+- Silme düğmesi "Öğrenci ara" sayfasından kaldırıldı; o sayfa artık yalnızca öğrencinin sınav yerini gösteriyor.
+- Hazır bir dağıtım varken öğrenci silinirse dağıtım sıfırlanıyor ve yeniden dağıtım yapmanız isteniyor. Kayıtlı sınavlar değişmiyor.
+
+## Önceki sürümde (v1.20.0)
 
 - **"Dağıtımı kilitle" öne çıktı.** Düğme Diğer menüsünden alındı, **Kaydet**'in hemen sağında duruyor. Kilitliyken sarı görünüyor ve "Dağıtım kilidini aç" yazıyor.
 - **Çıktı tasarımı önizlemesi.** 2. adımdaki "Çıktı tasarımı" seçiminin altında, seçilen tasarımla basılmış örnek bir **oturma planı** ve **imza listesi** görünüyor. Tasarımı değiştirince önizleme hemen değişiyor. Önizlemede hayali öğrenciler var; okul adı ve sınav bilgileri sizin girdiğiniz gibi görünüyor.
 - **Kapsamlı test.** Dağıtım, 1500 rastgele sanal okulda denendi: 1–5 düzey, düzey başına 1–8 şube, şube başına 5–42 öğrenci; tekli/ikili sıra, 2–4 sıra grubu, öğretmen kapasitesi, ek salonlar, "kendi sınıfında oturmasın" seçeneği. Bütün denemelerde herkes bir kez yerleşti ve salon kapasitesi aşılmadı. Yer yeterliyse aynı düzeyden sıra arkadaşı hiç çıkmadı.
 - **Çıktıların verileri karşılaştırıldı.** Üç sanal okulda (703 öğrenci) oturma planı, imza listesi, sınav yerleri, kâğıt tablosu, zarf etiketleri, kâğıt hazırlama kartları, WhatsApp özeti ve Excel (CSV) dosyası satır satır karşılaştırıldı; uyuşmayan kayıt çıkmadı. Evrak paketinde her belge tek sayfaya sığdı. Çift taraflı baskıda her salon ve şube yeni bir kâğıttan başladı.
 
-## Önceki sürümde (v1.19.0)
+## Daha önce (v1.19.0)
 
 - **Kurumsal belge tasarımı.** Tüm çıktılar ortak bir düzene geçti: üstte antet (okul adı), belge adı bandı ve sınav bilgileri kutusu var; altta belge numarası yer alıyor. İmza listesinde sıra numarası, kâğıt tablosunda "Hazırlayan / Kontrol eden" imza alanları eklendi.
 - **Üç tasarım seçeneği.** 2. adımdaki "Çıktı tasarımı" ayarından seçiliyor:

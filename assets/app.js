@@ -435,6 +435,7 @@
     if (!state.classes.length) {
       list.innerHTML = '<div class="empty" style="grid-column:1/-1">Henüz sınıf yok. PDF yükleyin ya da “Örnek listelerle dene” ile uygulamayı tanıyın.</div>';
       sum.innerHTML = '';
+      renderStudentDelete();
       return;
     }
     const all = state.classes.filter((c) => c.students.length > 0);
@@ -456,6 +457,7 @@
         </div>
       </div>`).join('');
     renderPicker();
+    renderStudentDelete();
   }
 
   /** 3. adım: dağıtıma girecek şubeleri elle seçme */
@@ -1187,12 +1189,14 @@
       setTimeout(() => { if (button.isConnected) { button.dataset.confirm = ''; button.textContent = 'Öğrenciyi sil'; } }, 4000);
       return;
     }
+    const hadResult = !!state.result;
     const next = JSON.parse(JSON.stringify(state));
     next.classes.find((cl) => cl.id === c.id).students = c.students.filter((s) => s.id !== id);
     next.result = null; next.stale = false;
     if (!save(next)) return;
     state = next; selectedSeat = null; renderAll();
-    toast('Öğrenci silindi. Güncel listeyle yeniden dağıtım yapın.');
+    const who = c.students.find((x) => x.id === id);
+    toast((who ? who.name + ' · ' + c.name : 'Öğrenci') + ' silindi.' + (state.classes.length && hadResult ? ' Güncel listeyle yeniden dağıtım yapın.' : ''));
   }
   function onPaperCheck(e) {
     const t = e.target;
@@ -1677,9 +1681,31 @@
     rows.sort((a, b) => collator.compare(a.s.name, b.s.name));
     if (!rows.length) return '<p class="hint">Eşleşen öğrenci yok.</p>';
     return `<div class="table-scroll"><table class="list">
-      <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Yeri</th><th class="no-print">İşlem</th></tr></thead>
-      <tbody>${rows.slice(0, 300).map(({ s, c, p }) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p ? p.room : '-')}</b></td><td>${p ? esc(placeText(p)) : '-'}</td><td class="no-print"><button type="button" class="btn small danger" data-delete-student="${esc(s.id)}">Öğrenciyi sil</button></td></tr>`).join('')}</tbody>
+      <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Yeri</th></tr></thead>
+      <tbody>${rows.slice(0, 300).map(({ s, c, p }) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p ? p.room : '-')}</b></td><td>${p ? esc(placeText(p)) : '-'}</td></tr>`).join('')}</tbody>
     </table></div>${rows.length > 300 ? '<p class="hint">İlk 300 sonuç gösteriliyor; aramayı daraltın.</p>' : ''}`;
+  }
+
+  /** Sınıf listeleri sayfasındaki "Öğrenci sil" arama sonuçları (tüm şubeler). */
+  function studentDeleteRows(q) {
+    const norm = (x) => String(x).toLocaleLowerCase('tr-TR');
+    const nq = norm(String(q || '').trim());
+    if (!nq) return '';
+    const rows = [];
+    for (const c of state.classes) for (const s of c.students) if (norm(s.name).includes(nq)) rows.push({ s, c });
+    rows.sort((a, b) => collator.compare(a.s.name, b.s.name) || collator.compare(a.c.name, b.c.name));
+    if (!rows.length) return '<p class="hint">Bu adla öğrenci bulunamadı.</p>';
+    return `<ul class="sd-list">${rows.slice(0, 40).map(({ s, c }) => `<li>
+        <span class="sd-name">${esc(s.name)}</span><span class="sd-class" style="--h:${levelHue(c.name)}">${esc(c.name)}</span>
+        <button type="button" class="btn small danger" data-delete-student="${esc(s.id)}">Öğrenciyi sil</button>
+      </li>`).join('')}</ul>${rows.length > 40 ? '<p class="hint">İlk 40 sonuç gösteriliyor; adı daha ayrıntılı yazın.</p>' : ''}`;
+  }
+  function renderStudentDelete() {
+    const box = $('#student-delete');
+    if (!box) return;
+    box.hidden = state.classes.length === 0;
+    const q = $('#sd-q') ? $('#sd-q').value : '';
+    $('#sd-out').innerHTML = studentDeleteRows(q);
   }
 
   // ---------- yer değiştirme ----------
@@ -2174,9 +2200,12 @@
       target.addEventListener('click', toggleClassList);
     }
     $('#archive-view').addEventListener('change', onPaperCheck);
-    $('#report').addEventListener('click', (e) => {
+    $('#sd-q').addEventListener('input', renderStudentDelete);
+    $('#sd-out').addEventListener('click', (e) => {
       const del = e.target.closest('[data-delete-student]');
-      if (del) { deleteStudent(del); return; }
+      if (del) deleteStudent(del);
+    });
+    $('#report').addEventListener('click', (e) => {
       if (onPaperClick(e)) return;
       const seat = e.target.closest('.seat[data-room]');
       if (seat) { onSeatClick(+seat.dataset.room, +seat.dataset.seat); return; }

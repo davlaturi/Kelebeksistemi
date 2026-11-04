@@ -29,7 +29,7 @@ function harness(initial) {
     globalThis.api = { validateState, importBackup, load, save, saveToArchive,
       onSeatClick, localDateKey, weekStart, csvCell, withEntry, openPack,
       paperShareData, paperShareText, paperSharePreview, renderByClass, renderPapers,
-      renderSharePanel, searchRows, deleteStudent, buildPack,
+      renderSharePanel, searchRows, studentDeleteRows, deleteStudent, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
       readSettings, headerMeta, renderTeacherList, renderRoll, showPage, pageFromHash, toggleClassList, expandPrintSections,
       distributionAudit, auditHtml, renderThemePreview, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
@@ -247,7 +247,10 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   assert.equal((classHtml.match(/data-fit-one="1"/g) || []).length, 2);
   assert.ok(!classHtml.includes('mm-cell') && !classHtml.includes('Krokide'));
   assert.ok(!a.searchRows('').includes('mm-cell'));
-  assert.ok(a.searchRows('').includes('data-delete-student'));
+  assert.ok(!a.searchRows('').includes('data-delete-student'), 'Silme Öğrenci ara sayfasında değil');
+  assert.equal(a.studentDeleteRows(''), '', 'Ad yazılmadan liste çıkmamalı');
+  assert.ok(a.studentDeleteRows('Öğrenci 0-0').includes('data-delete-student="s0-0"'));
+  assert.match(a.studentDeleteRows('yok-böyle-biri'), /bulunamadı/);
   const papers = a.renderPapers();
   assert.ok(papers.includes('data-share-action="text"') && papers.includes('SALON ZARFI'));
   assert.ok(!papers.includes('data-pmode') && !papers.includes('Şubeye göre') && !papers.includes('Şubelere göre'));
