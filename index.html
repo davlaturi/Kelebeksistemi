@@ -233,6 +233,27 @@
     </div>
   </dialog>
 
+  <!-- WhatsApp paylaşım penceresi -->
+  <dialog id="share-dlg" class="editor share-dlg">
+    <div class="pack-form">
+      <header class="editor-head">
+        <h3>WhatsApp'ta paylaş <span class="hint">Öğretmenlerin kâğıtlarını salonlara göre ayırması için telefona uygun mesaj</span></h3>
+        <button type="button" class="icon-btn" id="share-x" aria-label="Kapat">×</button>
+      </header>
+      <div class="editor-body">
+        <div class="field"><label for="share-level">Kimin için?</label><select id="share-level"></select></div>
+        <div class="phone"><div class="phone-chat"><div class="bubble" id="share-text"></div></div></div>
+      </div>
+      <footer class="editor-foot">
+        <button type="button" class="btn ghost" id="share-close">Kapat</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="share-copy">Mesajı kopyala</button>
+        <button type="button" class="btn" id="share-native" hidden>Paylaş…</button>
+        <a class="btn primary wa-btn" id="share-wa" href="#" target="_blank" rel="noopener">WhatsApp'ta aç</a>
+      </footer>
+    </div>
+  </dialog>
+
   <div id="print-pack" class="pack-out"></div>
 
   <div id="toast" class="toast no-print" role="status" aria-live="polite" hidden></div>

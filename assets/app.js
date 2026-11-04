@@ -394,7 +394,7 @@
       <tr data-i="${i}">
         <td>${i + 1}</td>
         <td><input type="text" data-f="name" value="${esc(s.name)}" aria-label="Adı soyadı"></td>
-        <td><button type="button" class="icon-btn" data-del="${i}" aria-label="Satırı sil">×</button></td>
+        <td><button type="button" class="btn ghost small danger" data-del="${i}">Sil</button></td>
       </tr>`).join('') || '<tr><td colspan="3" class="hint">Liste boş. Öğrenci ekleyin ya da metin yapıştırın.</td></tr>';
   }
   function syncEditorInputs() {
@@ -413,7 +413,10 @@
     const cols = $('#e-cols').value ? parseInt($('#e-cols').value, 10) : null;
     if (editing.id) {
       const c = state.classes.find((x) => x.id === editing.id);
+      const keep = new Set(students.map((x) => x.id));
+      const removed = c.students.filter((x) => !keep.has(x.id)).map((x) => x.id);
       c.name = name; c.students = students; c.deskCols = cols;
+      if (removed.length) vacateSeats(removed);
     } else {
       state.classes.push({ id: uid('c'), name, students, deskCols: cols, source: 'elle' });
     }
@@ -628,8 +631,17 @@
         gridCells.push(`<span class="row-label">${rr + 1}. sıra</span>`);
         for (let cc = 0; cc < room.cols; cc++) gridCells.push(desks[rr * room.cols + cc] || '<span></span>');
       }
-      return `<article class="sheet" data-room="${ri}">
+      let selBar = '';
+      if (selectedSeat && selectedSeat.roomIdx === ri) {
+        const sSeat = room.seats[selectedSeat.seatIdx];
+        const sStu = sSeat && !sSeat.empty ? si.get(sSeat.studentId) : null;
+        selBar = `<div class="sel-bar no-print"><span>${sStu ? '<b>' + esc(sStu.s.name) + '</b> seçildi. Yerini değiştirmek için başka bir koltuğa tıklayın.' : 'Boş koltuk seçildi. Buraya taşımak istediğiniz öğrenciye tıklayın.'}</span>
+          ${sStu ? `<button type="button" class="btn small danger" data-del-student="${esc(sStu.s.id)}">Öğrenciyi sil</button>` : ''}
+          <button type="button" class="btn ghost small" data-sel-cancel="1">Vazgeç</button></div>`;
+      }
+      return `<article class="sheet fit1" data-room="${ri}">
         ${sheetHead('Sınav salonu · oturma planı', roomTitle(room, ci) + ' sınıfı', ri, 'room')}
+        ${selBar}
         ${roomCountsLine(room)}
         <div class="plan-scroll">
           <div class="board">Yazı tahtası · öğretmen masası</div>
@@ -708,12 +720,16 @@
       <tfoot><tr><th>Toplam</th>${levels.map((L) => L.classes.map((c) => `<th class="num">${colTotal(c.id)}</th>`).join('')).join('')}<th class="num">${grand}</th></tr></tfoot>
     </table></div>`;
 
+    const meta = [state.settings.date ? new Date(state.settings.date + 'T00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }) : '', state.settings.time].filter(Boolean).join(' ');
     const labels = rooms.map((x) => `<div class="env">
-        <div class="env-head"><span class="sheet-sub">Sınav kâğıdı zarfı</span><b>${esc(x.title)} salonu</b></div>
-        <table class="env-table"><tbody>${x.rc.levels.map((L) => `
-          <tr class="env-lv"><td>${esc(levelLabel(L.level))}</td><td class="num">${L.total}</td></tr>
-          ${L.classes.map((c) => `<tr class="env-cl"><td>${esc(c.name)}</td><td class="num">${c.n}</td></tr>`).join('')}`).join('')}
-        </tbody><tfoot><tr><td>Toplam</td><td class="num">${x.rc.total}</td></tr></tfoot></table>
+        <div class="env-head">
+          <div><b>${esc(x.title)} salonu</b><span class="env-sub">Sınav kâğıdı zarfı${meta ? ' · ' + esc(meta) : ''}</span></div>
+          <div class="env-total"><b>${x.rc.total}</b><span>kâğıt</span></div>
+        </div>
+        ${x.rc.levels.map((L) => `<div class="env-row" style="--h:${levelHue(L.classes[0].name)}">
+          <span class="env-lv"><span class="qdot"></span>${esc(levelLabel(L.level))} <b>${L.total}</b></span>
+          <span class="env-cls">${L.classes.map((c) => `<span>${esc(c.name)} <b>${c.n}</b></span>`).join('')}</span>
+        </div>`).join('')}
       </div>`).join('');
 
     const tableSheet = `<article class="sheet" data-papers="1">
@@ -726,12 +742,12 @@
       </article>`;
     const labelSheet = `<article class="sheet" data-papers="2">
         ${sheetHead('Sınav kâğıdı dağıtımı', 'Salon zarfı etiketleri', 'all2', 'papers')}
-        <p class="note">Her salonun kâğıt zarfına yapıştırabilirsiniz.</p>
+        <p class="note">Kesik çizgilerden kesip her salonun kâğıt zarfına yapıştırın.</p>
         <div class="env-grid">${labels}</div>
       </article>`;
     if (part === 'table') return tableSheet;
     if (part === 'labels') return labelSheet;
-    return renderQuickPapers(rooms, levels) + tableSheet + labelSheet;
+    return renderQuickPapers(rooms) + tableSheet + labelSheet;
   }
 
   /**
@@ -739,67 +755,38 @@
    * 'class': her şubenin kâğıt destesinden hangi salona kaç kâğıt.
    * Kutular, kâğıdı koydukça işaretlemek içindir (dağıtım kaydıyla saklanır).
    */
-  let paperMode = 'room';
-  function renderQuickPapers(rooms, levels) {
+  /** Hızlı kâğıt listesi: her salonun zarfına hangi şubeden kaç kâğıt (işaretlenebilir). */
+  function renderQuickPapers(rooms) {
     const r = state.result;
     const checks = r.paperChecks || {};
     const key = (ri, id) => ri + '|' + id;
-    const ci = classIndex();
-    let cards;
-    if (paperMode === 'room') {
-      cards = rooms.map((x) => {
-        const lines = [];
-        for (const L of x.rc.levels) for (const c of L.classes) lines.push({ id: c.id, name: c.name, n: c.n });
-        const done = lines.filter((l) => checks[key(x.ri, l.id)]).length;
-        const full = done === lines.length && lines.length > 0;
-        return `<div class="qcard${full ? ' done' : ''}">
-          <div class="qhead"><span class="qtitle">${esc(x.title)} salonu</span><span class="qtotal">${x.rc.total} kâğıt</span></div>
-          ${lines.map((l) => `<label class="qline${checks[key(x.ri, l.id)] ? ' on' : ''}" style="--h:${levelHue(l.name)}">
-            <input type="checkbox" data-pc="${esc(key(x.ri, l.id))}" ${checks[key(x.ri, l.id)] ? 'checked' : ''}>
-            <span class="qname">${esc(l.name)}</span><span class="qn">${l.n}</span></label>`).join('')}
-          <div class="qfoot">${full ? 'Zarf hazır ✓' : done + ' / ' + lines.length + ' şube konuldu'}</div>
-        </div>`;
-      }).join('');
-    } else {
-      const allClasses = [];
-      for (const L of levels) for (const c of L.classes) allClasses.push(c);
-      cards = allClasses.map((c) => {
-        const lines = rooms.map((x) => {
-          let n = 0;
-          for (const L of x.rc.levels) for (const cc of L.classes) if (cc.id === c.id) n = cc.n;
-          return { ri: x.ri, title: x.title, n };
-        }).filter((l) => l.n > 0);
-        const total = lines.reduce((a, l) => a + l.n, 0);
-        const done = lines.filter((l) => checks[key(l.ri, c.id)]).length;
-        const full = done === lines.length && lines.length > 0;
-        return `<div class="qcard${full ? ' done' : ''}">
-          <div class="qhead" style="--h:${levelHue(c.name)}"><span class="qtitle"><span class="qdot"></span>${esc(c.name)} kâğıtları</span><span class="qtotal">${total} kâğıt</span></div>
-          ${lines.map((l) => `<label class="qline${checks[key(l.ri, c.id)] ? ' on' : ''}">
-            <input type="checkbox" data-pc="${esc(key(l.ri, c.id))}" ${checks[key(l.ri, c.id)] ? 'checked' : ''}>
-            <span class="qname">${esc(l.title)} salonuna</span><span class="qn">${l.n}</span></label>`).join('')}
-          <div class="qfoot">${full ? 'Deste dağıtıldı ✓' : done + ' / ' + lines.length + ' salon'}</div>
-        </div>`;
-      }).join('');
-    }
-    void ci;
+    const cards = rooms.map((x) => {
+      const lines = [];
+      for (const L of x.rc.levels) for (const c of L.classes) lines.push({ id: c.id, name: c.name, n: c.n });
+      const done = lines.filter((l) => checks[key(x.ri, l.id)]).length;
+      const full = done === lines.length && lines.length > 0;
+      return `<div class="qcard${full ? ' done' : ''}">
+        <div class="qhead"><span class="qtitle">${esc(x.title)} salonu</span><span class="qtotal"><b>${x.rc.total}</b> kâğıt</span></div>
+        ${lines.map((l) => `<label class="qline${checks[key(x.ri, l.id)] ? ' on' : ''}" style="--h:${levelHue(l.name)}">
+          <input type="checkbox" data-pc="${esc(key(x.ri, l.id))}" ${checks[key(x.ri, l.id)] ? 'checked' : ''}>
+          <span class="qname">${esc(l.name)}</span><span class="qn">${l.n}</span></label>`).join('')}
+        <div class="tlv">${x.rc.levels.map((L) => `<span>${esc(levelLabel(L.level))}: <b>${L.total}</b></span>`).join('')}</div>
+        <div class="qfoot">${full ? 'Zarf hazır ✓' : done + ' / ' + lines.length + ' şube konuldu'}</div>
+      </div>`;
+    }).join('');
     const all = Object.keys(checks).filter((k) => checks[k]).length;
     return `<article class="sheet quick-sheet" data-papers="0">
       <div class="sheet-head">
         <div>
           <div class="sheet-sub">Kâğıt hazırlama</div>
-          <div class="sheet-title">${paperMode === 'room' ? 'Hangi salona hangi şubeden kaç kâğıt' : 'Her şubenin kâğıtları hangi salona'}</div>
+          <div class="sheet-title">Hangi salona hangi şubeden kaç kâğıt</div>
         </div>
         <div class="quick-tools no-print">
-          <div class="seg" role="group" aria-label="Görünüm">
-            <button type="button" data-pmode="room" aria-pressed="${paperMode === 'room'}">Salona göre (zarf)</button>
-            <button type="button" data-pmode="class" aria-pressed="${paperMode === 'class'}">Şubeye göre (deste)</button>
-          </div>
-          <button type="button" class="btn small" data-print-teacher="${paperMode}">Öğretmenler odası için yazdır</button>
+          <button type="button" class="btn small wa-btn" data-wa="1">WhatsApp'ta paylaş</button>
+          <button type="button" class="btn small" data-print-teacher="room">Öğretmenler odası için yazdır</button>
         </div>
       </div>
-      <p class="note no-print">${paperMode === 'room'
-        ? 'Her kart bir salonun zarfıdır. Şubenin kâğıtlarını koyduktan sonra satırı işaretleyin; tüm satırlar işaretlenince kart “Zarf hazır” olur.'
-        : 'Her kart bir şubenin kâğıt destesidir. Desteyi salonlara ayırırken satırları işaretleyin.'}
+      <p class="note no-print">Her kart bir salonun zarfıdır. Şubenin kâğıtlarını koyduktan sonra satırı işaretleyin; tüm satırlar işaretlenince kart “Zarf hazır” olur.
         ${all ? ' <button type="button" class="btn ghost small" data-pclear="1">İşaretleri temizle</button>' : ''}</p>
       ${levelSummaryHtml()}
       <div class="qgrid">${cards}</div>
@@ -832,10 +819,14 @@
       printHtml(html);
       return true;
     }
-    const m = e.target.closest('[data-pmode]');
+    const wa = e.target.closest('[data-wa]');
+    if (wa) {
+      const entry = e.target.closest('#archive-view') ? state.archive.find((a) => a.id === archiveView) : null;
+      openShare(entry);
+      return true;
+    }
     const c = e.target.closest('[data-pclear]');
-    if (!m && !c) return false;
-    if (m) paperMode = m.dataset.pmode;
+    if (!c) return false;
     if (c) { const r = paperResult(c); if (r) { r.paperChecks = {}; save(); } }
     if (e.target.closest('#archive-view')) renderArchiveView(); else renderReportOnly();
     return true;
@@ -848,8 +839,7 @@
     { key: 'yer', label: 'Sınıflara göre sınav yerleri', hint: 'Her şube için 1 sayfa; öğrenciler yerini buradan öğrenir.' },
     { key: 'tablo', label: 'Kâğıt dağıtım tablosu', hint: 'Hangi salona hangi düzeyden ve şubeden kaç kâğıt gideceği.' },
     { key: 'zarf', label: 'Zarf etiketleri', hint: 'Her salonun kâğıt zarfına yapıştırılır.' },
-    { key: 'oda', label: 'Öğretmenler odası listesi (şubeye göre)', hint: 'Öğretmenler odasına asılır; her şubenin kâğıtlarının hangi salona kaçar gideceği.' },
-    { key: 'odaSalon', label: 'Öğretmenler odası listesi (salona göre)', hint: 'Her salon zarfına hangi şubeden kaç kâğıt konacağı.', def: false },
+    { key: 'odaSalon', label: 'Öğretmenler odası listesi', hint: 'Öğretmenler odasına asılır; her salonun zarfına hangi şubeden kaç kâğıt konacağı ve düzey toplamları.' },
   ];
   let packEntry = null; // null = çalışma alanındaki dağıtım; yoksa kayıtlı sınav
   function packChoice() {
@@ -866,7 +856,6 @@
     if (choice.yer) parts.push(renderByClass());
     if (choice.tablo) parts.push(renderPapers('table'));
     if (choice.zarf) parts.push(renderPapers('labels'));
-    if (choice.oda) parts.push(renderTeacherList('class'));
     if (choice.odaSalon) parts.push(renderTeacherList('room'));
     return parts.join('');
   }
@@ -875,7 +864,7 @@
     const rooms = r.rooms.length;
     const used = new Set();
     for (const rm of r.rooms) for (const x of rm.seats) if (x.classId) used.add(x.classId);
-    return { plan: rooms, imza: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)), oda: teacherPages('class'), odaSalon: teacherPages('room') };
+    return { plan: rooms, imza: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)), odaSalon: teacherPages('room') };
   }
   function openPack(entry) {
     packEntry = entry || null;
@@ -937,6 +926,14 @@
       const mm = sh.getBoundingClientRect().height / pxPerMm;
       let ratio = mm / PAGE_MM;
       let pages = Math.max(1, Math.ceil(ratio - 0.001));
+      // Salon/şube sayfaları her zaman tek kâğıda sığar.
+      if (sh.classList.contains('fit1') && ratio > 0.95) {
+        const z = Math.max(0.5, 0.94 / ratio);
+        sh.style.zoom = z.toFixed(3);
+        sh.dataset.pages = 1;
+        pagesTotal += 1;
+        continue;
+      }
       // Sayfa sınırına çok yakınsa (taşacak gibi ya da az taşmış) küçült: belirsizlik kalmasın.
       const frac = ratio - Math.floor(ratio);
       if (ratio > 0.94 && (frac > 0.94 || (frac > 0 && frac < 0.12))) {
@@ -1139,7 +1136,7 @@
         const stu = si.get(seat.studentId);
         return `<tr><td>${esc(stu.s.name)}</td><td>${esc(ci.get(seat.classId).c.name)}</td><td class="sign"></td></tr>`;
       }).join('');
-      return `<article class="sheet" data-room="${ri}">
+      return `<article class="sheet fit1" data-room="${ri}">
         ${sheetHead('Sınav salonu · öğrenci imza listesi', roomTitle(room, ci) + ' sınıfı', ri, 'room')}
         ${roomCountsLine(room)}
         <div class="table-scroll"><table class="list">
@@ -1211,25 +1208,7 @@
     return out;
   }
 
-  /** Salonun küçük krokisi; öğrencinin koltuğu işaretli. */
-  function miniMap(p) {
-    const room = p.room0;
-    const nDesks = Math.ceil(room.seats.length / p.spd);
-    let cells = '';
-    for (let r = 0; r < p.rows; r++) {
-      for (let c = 0; c < p.cols; c++) {
-        const d = r * p.cols + c;
-        if (d >= nDesks) { cells += '<i class="mm-desk mm-none"></i>'; continue; }
-        let inner = '';
-        for (let k = 0; k < p.spd; k++) {
-          const exists = d * p.spd + k < room.seats.length;
-          inner += `<b class="${!exists ? 'mm-x' : (r === p.row && c === p.col && k === p.side) ? 'mm-me' : ''}"></b>`;
-        }
-        cells += `<i class="mm-desk${r === p.row && c === p.col ? ' mm-on' : ''}">${inner}</i>`;
-      }
-    }
-    return `<span class="mm" role="img" aria-label="${esc(placeText(p))}"><span class="mm-board"></span><span class="mm-grid" style="grid-template-columns:repeat(${p.cols},auto)">${cells}</span></span>`;
-  }
+
 
   /** Sınıflara göre liste: her şubenin öğrencileri hangi salonda, hangi sırada. */
   function renderByClass() {
@@ -1240,17 +1219,17 @@
         .sort((a, b) => collator.compare(a.name, b.name))
         .map((s) => {
           const p = pl.get(s.id);
-          if (!p) return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td colspan="${twin ? 6 : 5}">-</td></tr>`;
+          if (!p) return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td colspan="${twin ? 5 : 4}">-</td></tr>`;
           return `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p.room)}</b></td>` +
-            `<td class="no-cell">${p.no}</td><td>${esc(p.group)}</td><td>Önden ${p.rowNo}. sıra</td>${twin ? `<td>${esc(p.seat)}</td>` : ''}<td class="mm-cell">${miniMap(p)}</td></tr>`;
+            `<td class="no-cell">${p.no}</td><td>${esc(p.group)}</td><td>Önden ${p.rowNo}. sıra</td>${twin ? `<td>${esc(p.seat)}</td>` : ''}</tr>`;
         }).join('');
-      return `<article class="sheet" data-class="${esc(c.id)}">
+      return `<article class="sheet fit1" data-class="${esc(c.id)}">
         ${sheetHead('Sınav yerleri', c.name + ' sınıfı öğrencileri', c.id, 'class')}
         <div class="table-scroll"><table class="list">
-          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Sıra no</th><th>Sıra grubu</th><th>Sıra</th>${twin ? '<th>Koltuk</th>' : ''}<th>Yeri</th></tr></thead>
+          <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Sıra no</th><th>Sıra grubu</th><th>Sıra</th>${twin ? '<th>Koltuk</th>' : ''}</tr></thead>
           <tbody>${rows}</tbody>
         </table></div>
-        <p class="note">${placeLegend()} Krokide üstteki çizgi tahtadır; öğrencinin koltuğu koyu renkle işaretlidir.</p>
+        <p class="note">${placeLegend()} Sıra no, salondaki oturma planında koltuğun sağ altında yazan numaradır.</p>
       </article>`;
     }).join('');
   }
@@ -1284,11 +1263,108 @@
     if (!rows.length) return '<p class="hint">Eşleşen öğrenci yok.</p>';
     return `<div class="table-scroll"><table class="list">
       <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Yeri</th><th></th></tr></thead>
-      <tbody>${rows.slice(0, 300).map(({ s, c, p }) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p ? p.room : '-')}</b></td><td>${p ? esc(placeText(p)) : '-'}</td><td class="mm-cell">${p ? miniMap(p) : ''}</td></tr>`).join('')}</tbody>
+      <tbody>${rows.slice(0, 300).map(({ s, c, p }) => `<tr><td>${esc(s.name)}</td><td>${esc(c.name)}</td><td><b>${esc(p ? p.room : '-')}</b></td><td>${p ? esc(placeText(p)) : '-'}</td><td><button type="button" class="btn ghost small danger" data-del-student="${esc(s.id)}">Öğrenciyi sil</button></td></tr>`).join('')}</tbody>
     </table></div>${rows.length > 300 ? '<p class="hint">İlk 300 sonuç gösteriliyor; aramayı daraltın.</p>' : ''}`;
   }
 
   // ---------- yer değiştirme ----------
+  // ---------- WhatsApp paylaşımı ----------
+  let shareEntry = null;
+  function shareText(levelFilter) {
+    const st = state.settings;
+    const ci = classIndex();
+    const head = [st.school, st.exam].filter(Boolean).join(' – ');
+    const when = [st.date ? new Date(st.date + 'T00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }) : '', st.time].filter(Boolean).join(' · ');
+    const sm = levelSummary();
+    const lines = [];
+    if (head) lines.push('*' + head + '*');
+    if (when) lines.push(when);
+    lines.push(levelFilter ? '*' + levelLabel(levelFilter) + ' sınav kâğıtları – salonlara dağılım*' : '*Sınav kâğıdı dağılımı – salonlara göre*');
+    lines.push('');
+    const groups = sm.list.filter((g) => !levelFilter || g.level === levelFilter);
+    lines.push('*Toplam kâğıt*');
+    for (const g of groups) lines.push(`${levelLabel(g.level)}: *${g.total}* (${[...g.classes.entries()].sort((a, b) => collator.compare(a[0], b[0])).map(([n, k]) => n + ' ' + k).join(', ')})`);
+    if (!levelFilter) lines.push(`Genel toplam: *${sm.total}*`);
+    lines.push('');
+    for (const room of state.result.rooms) {
+      const rc = roomCounts(room);
+      const lvls = rc.levels.filter((L) => !levelFilter || L.level === levelFilter);
+      if (!lvls.length) continue;
+      const tot = lvls.reduce((a, L) => a + L.total, 0);
+      lines.push(`📁 *${roomTitle(room, ci)} salonu – ${tot} kâğıt*`);
+      for (const L of lvls) {
+        const cls = L.classes.map((c) => `${c.name}: ${c.n}`).join(' · ');
+        lines.push(levelFilter ? cls : `${levelLabel(L.level)} (${L.total}) → ${cls}`);
+      }
+      lines.push('');
+    }
+    lines.push('_Kelebek Sınav Dağıtımı_');
+    return lines.join('\n');
+  }
+  function openShare(entry) {
+    shareEntry = entry || null;
+    const run = (fn) => (shareEntry ? withEntry(shareEntry, fn) : fn());
+    const levels = run(() => levelSummary().list.map((g) => g.level));
+    const sel = $('#share-level');
+    sel.innerHTML = '<option value="">Tüm düzeyler (bütün öğretmenler için)</option>' + levels.map((l) => `<option value="${esc(l)}">${esc(levelLabel(l))} öğretmenleri için</option>`).join('');
+    updateShare();
+    $('#share-native').hidden = !navigator.share;
+    const dlg = $('#share-dlg');
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+  }
+  function updateShare() {
+    const lv = $('#share-level').value;
+    const text = shareEntry ? withEntry(shareEntry, () => shareText(lv)) : shareText(lv);
+    $('#share-text').textContent = text;
+    $('#share-wa').href = 'https://wa.me/?text=' + encodeURIComponent(text);
+  }
+  async function copyShare() {
+    const text = $('#share-text').textContent;
+    try { await navigator.clipboard.writeText(text); toast('Mesaj kopyalandı. WhatsApp sohbetine yapıştırabilirsiniz.'); }
+    catch (e) {
+      const r = document.createRange(); r.selectNodeContents($('#share-text'));
+      const s2 = getSelection(); s2.removeAllRanges(); s2.addRange(r);
+      toast('Metin seçildi; Ctrl+C ile kopyalayın.');
+    }
+  }
+  function closeShare() {
+    const dlg = $('#share-dlg');
+    if (typeof dlg.close === 'function') dlg.close(); else dlg.removeAttribute('open');
+  }
+
+  // ---------- öğrenci silme ----------
+  /** Öğrenciyi listesinden siler; dağıtımdaki koltuğu boş kalır (yeniden dağıtım gerekmez). */
+  function deleteStudent(id) {
+    const c = state.classes.find((x) => x.students.some((st) => st.id === id));
+    if (!c) return;
+    const st = c.students.find((x) => x.id === id);
+    c.students = c.students.filter((x) => x.id !== id);
+    vacateSeats([id]);
+    selectedSeat = null;
+    save();
+    renderAll();
+    toast('“' + st.name + '” silindi. Dağıtımdaki koltuğu boş kaldı.');
+  }
+  function vacateSeats(ids) {
+    const r = state.result;
+    if (!r) return;
+    const set = new Set(ids);
+    for (const room of r.rooms) for (const seat of room.seats) {
+      if (seat.studentId && set.has(seat.studentId)) { seat.studentId = null; seat.classId = null; seat.empty = true; }
+    }
+    recomputeStats();
+  }
+  function confirmClick(btn, label, fn) {
+    if (btn.dataset.confirm !== '1') {
+      btn.dataset.confirm = '1';
+      const old = btn.textContent;
+      btn.textContent = label;
+      setTimeout(() => { if (btn.isConnected) { btn.dataset.confirm = ''; btn.textContent = old; } }, 3000);
+      return;
+    }
+    fn();
+  }
+
   function onSeatClick(ri, si) {
     if (!selectedSeat) { selectedSeat = { roomIdx: ri, seatIdx: si }; renderReportOnly(); return; }
     if (selectedSeat.roomIdx === ri && selectedSeat.seatIdx === si) { selectedSeat = null; renderReportOnly(); return; }
@@ -1673,6 +1749,13 @@
     $('#pack-list').addEventListener('change', () => updatePackTotal($('#pack-dlg')._counts));
     $('#pack-duplex').addEventListener('change', () => updatePackTotal($('#pack-dlg')._counts));
     $('#pack-go').addEventListener('click', printPack);
+    $('#share-level').addEventListener('change', updateShare);
+    $('#share-copy').addEventListener('click', copyShare);
+    $('#share-native').addEventListener('click', async () => {
+      try { await navigator.share({ text: $('#share-text').textContent }); } catch (e) { /* vazgeçildi */ }
+    });
+    $('#share-x').addEventListener('click', closeShare);
+    $('#share-close').addEventListener('click', closeShare);
     $('#pack-cancel').addEventListener('click', closePack);
     $('#pack-x').addEventListener('click', closePack);
     $('#btn-csv').addEventListener('click', exportCsv);
@@ -1688,6 +1771,9 @@
     $('#archive-view').addEventListener('change', onPaperCheck);
     $('#report').addEventListener('click', (e) => {
       if (onPaperClick(e)) return;
+      const del = e.target.closest('[data-del-student]');
+      if (del) { confirmClick(del, 'Silmek için tekrar tıklayın', () => deleteStudent(del.dataset.delStudent)); return; }
+      if (e.target.closest('[data-sel-cancel]')) { selectedSeat = null; renderReportOnly(); return; }
       const seat = e.target.closest('.seat[data-room]');
       if (seat) { onSeatClick(+seat.dataset.room, +seat.dataset.seat); return; }
       const pr = e.target.closest('[data-print-room],[data-print-class],[data-print-papers]');

@@ -10,11 +10,19 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.15.0)
+## Bu sürümde (v1.16.0)
+
+- **WhatsApp'ta paylaş.** Kâğıt dağılımı telefona uygun bir mesaja dönüştürülüyor. Mesaj tüm düzeyler için ya da sadece bir düzeyin öğretmenleri için hazırlanabiliyor; tek tıkla WhatsApp'ta açılıyor ya da kopyalanıyor.
+- **Sınav yerleri tek sayfa.** Krokiler kaldırıldı; her şubenin listesi tek kâğıda sığdırılıyor. Oturma planı ve imza listeleri de her zaman tek sayfa.
+- **Öğrenci silme.** Öğrenci sınıf kartından, aramadan ya da oturma planından silinebiliyor; koltuğu boş kalıyor, yeniden dağıtım gerekmiyor.
+- **Zarf etiketleri yeniden tasarlandı.** Etiketler sıkı ve kesik çizgili; bir sayfaya 8 etiket sığıyor.
+- **"Şubeye göre" bölümü kaldırıldı.** Kâğıt hazırlama artık yalnızca salona göre.
+
+## Önceki sürümde (v1.15.0)
 
 - **Tablet için tek dosya.** Tabletlerde index.html tek başına açılınca görünüm ve PDF okuyucu yüklenmiyordu. Her şeyi içinde taşıyan tek dosyalık sürüm eklendi.
 
-## Önceki sürümde (v1.14.0)
+## Daha önce (v1.14.0)
 
 - **Çift taraflı yazdırma.** Her salonun ve şubenin evrakı ayrı bir kâğıttan başlıyor. Gereken yerlere boş sayfa ekleniyor; iki farklı salonun planı artık aynı kâğıdın iki yüzüne düşmüyor. Sayfalar basmadan önce ölçülüyor ve sınıra yakın olanlar küçültülüyor. Bu ayar 2. adımda ve sınav evrakı penceresinde açılıp kapatılabiliyor.
 - **Düzey toplamları.** Kâğıt hazırlama kartlarında ve öğretmenler odası çıktısında her düzeyin toplam öğrenci/kâğıt sayısı, şube şube sayılar ve genel toplam yazıyor. Şube kartları düzeylere göre gruplanıyor.

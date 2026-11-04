@@ -56,12 +56,12 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
 
 - **Oturma planları:** Her salon için, tahtaya göre sıra sıra yerleşim gösterilir. Her koltukta öğrencinin adı ve sınıfı yazar. Sağ alt köşede iri harflerle **sıra numarası** yer alır. Numaralar önden arkaya ve soldan sağa sayılır; aynı numara sınav yerleri listesinde ve aramada da yazar.
 - **Öğrenci imza listeleri:** Adı soyadı, sınıfı ve imza sütunu vardır.
-- **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrenci için şunlar yazar: hangi salonda, hangi **sıra grubunda** (Sol / Orta / Sağ ya da Kapı tarafı / Orta / Pencere tarafı), **önden kaçıncı sırada** ve sıranın hangi koltuğunda oturacağı. Yanında salonun küçük bir krokisi vardır; öğrencinin koltuğu bu krokide işaretlidir. Sıra gruplarının adını 2. Sınav bilgileri adımında seçersiniz. Oturma planında da grup adları sütunların üstünde, sıra numaraları da solda yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
+- **Sınıflara göre sınav yerleri:** Her şube için ayrı bir sayfa hazırlanır. Her öğrenci için şunlar yazar: hangi salonda, **sıra no**, hangi **sıra grubunda** (Sol / Orta / Sağ ya da Kapı tarafı / Orta / Pencere tarafı), **önden kaçıncı sırada** ve sıranın hangi koltuğunda oturacağı. Her şubenin listesi tek sayfaya sığdırılır. Sıra gruplarının adını 2. Sınav bilgileri adımında seçersiniz. Oturma planında da grup adları sütunların üstünde, sıra numaraları da solda yazar. Sınıflara asmak ya da duyurmak için kullanabilirsiniz.
 - **Sınav kâğıdı dağıtımı:** Kâğıtları kolayca dağıtmak için hazırlanmış bir sayfa. En üstte **kâğıt hazırlama kartları** vardır:
   - **Salona göre (zarf):** Her kart bir salonun zarfıdır. Örneğin "9/A salonu: 9/A 6, 9/B 5, 10/A 5… Toplam 30". Bir şubenin kâğıtlarını zarfa koyunca satırı işaretleyin. Bütün satırlar işaretlenince kart yeşile döner ve "Zarf hazır" yazar. Gözetmen zarfını alıp gider.
-  - **Şubeye göre (deste):** Elinizdeki bir şubenin kâğıt destesinin hangi salona kaçar kaçar ayrılacağını gösterir.
   - İşaretler dağıtımla birlikte saklanır, sayfayı kapatsanız da kaybolmaz.
   - **Düzey özeti:** Kartların üstünde her düzeyden toplam kaç öğrenci (kâğıt) olduğu yazar, yanında şube şube sayılar ve genel toplam vardır. Örnek: "9. sınıf 192: 9/A 28, 9/B 35…". Şubeye göre görünümde kartlar düzeylere göre gruplanır, her grubun başlığında düzey toplamı yazar. Salona göre görünümde her salon kartının altında o salondaki düzey toplamları vardır.
+  - **WhatsApp'ta paylaş:** Kâğıt dağılımını telefona uygun bir mesaj olarak hazırlar. Mesajı tüm düzeyler için ya da yalnızca bir düzeyin öğretmenleri için (ör. "9. sınıf öğretmenleri için") oluşturabilirsiniz. **WhatsApp'ta aç** ile doğrudan gönderebilir, **Mesajı kopyala** ile bir gruba yapıştırabilir ya da tablette **Paylaş…** düğmesini kullanabilirsiniz.
   - **Öğretmenler odası için yazdır:** Ekrandaki kartların aynısını, öğretmenler odasına asılacak şekilde basar. Her kartta salon adı, şubeler ve kâğıt sayıları yazar; yanlarında kalemle işaretlenecek kutular vardır. Bir sayfaya 8 karta kadar sığar. "Şubeye göre" görünümündeyseniz o görünümün kartları basılır.
 
   Kartların altında ayrıca şunlar var:
@@ -72,6 +72,16 @@ Uygulamada ve çıktılarda öğrenci için yalnızca **adı soyadı** ve **sın
   Ayrıca her oturma planının ve yoklama listesinin üstünde "Bu salonda: 9. sınıf 11 (9/A 6, 9/B 5)…" özeti yer alır.
 - **Öğrenci ara:** Ada göre arayıp öğrencinin salonunu bulabilirsiniz.
 - **Yazdır / PDF kaydet:** Her salon ayrı A4 sayfaya basılır. **Excel'e aktar (CSV)** ile tüm dağıtımı Excel'e alabilirsiniz.
+
+## Öğrenci silme
+
+Nakil giden ya da sınava girmeyecek bir öğrenciyi üç yerden silebilirsiniz:
+
+- **Sınıf kartı:** Kartı açıp öğrencinin satırındaki **Sil** düğmesine basın.
+- **Öğrenci ara:** Sonuçtaki **Öğrenciyi sil** düğmesine basın.
+- **Oturma planı:** Öğrenciye tıklayın, çıkan çubukta **Öğrenciyi sil** düğmesine basın.
+
+Silmek için düğmeye iki kez basılır. Dağıtım yapılmışsa öğrencinin koltuğu "Boş" kalır ve yeniden dağıtım gerekmez.
 
 ## Şubeler ve şube seçimi
 

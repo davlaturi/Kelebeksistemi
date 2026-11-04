@@ -421,6 +421,36 @@ table.list td.sign { width: 28%; }
 .tlv b { color: var(--ink); }
 .qtotal b { color: var(--ink); font-size: 1.05em; }
 
+/* Zarf etiketleri (sıkı) */
+.env-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0; border-top: 1.5px dashed var(--ink-soft); border-left: 1.5px dashed var(--ink-soft); }
+.env { display: grid; gap: 3px; align-content: start; padding: 8px 10px; border-right: 1.5px dashed var(--ink-soft); border-bottom: 1.5px dashed var(--ink-soft); break-inside: avoid; }
+.env-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; border-bottom: 2px solid var(--ink); padding-bottom: 4px; margin-bottom: 2px; }
+.env-head > div:first-child { display: grid; gap: 1px; min-width: 0; }
+.env-sub { font-size: 0.72rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.env-head b { font: 700 1.25rem/1.1 var(--f-display); }
+.env-total { text-align: right; line-height: 1; }
+.env-total b { display: block; font: 700 1.6rem/1 var(--f-display); }
+.env-total span { font-size: 0.72rem; color: var(--ink-soft); }
+.env-row { --h: 200; display: grid; grid-template-columns: 7.5em 1fr; gap: 6px; align-items: baseline; padding: 1px 0; border-bottom: 1px dotted var(--line); }
+.env-row:last-child { border-bottom: 0; }
+.env-lv { font-weight: 600; font-size: 0.88rem; white-space: nowrap; }
+.env-lv .qdot { display: inline-block; width: 8px; height: 8px; margin-right: 5px; vertical-align: 1px; }
+.env-cls { display: flex; flex-wrap: wrap; gap: 0 10px; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.env-cls b { font-weight: 700; }
+
+/* Seçili koltuk çubuğu */
+.sel-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--ink); }
+.sel-bar span { flex: 1 1 auto; font-size: 0.92rem; }
+
+/* WhatsApp paylaşımı */
+.wa-btn { border-color: #25d366; }
+.btn.primary.wa-btn { background: #1f9e4f; border-color: #1f9e4f; color: #fff; }
+a.btn { text-decoration: none; }
+.share-dlg { width: min(560px, calc(100vw - 24px)); }
+.phone { margin: 0 auto; width: min(360px, 100%); border: 8px solid #1d1f24; border-radius: 26px; background: #e9e1d6; padding: 12px 10px; max-height: 52vh; overflow: auto; }
+.phone-chat { display: flex; }
+.bubble { background: #d9fdd3; color: #111b21; border-radius: 8px 0 8px 8px; padding: 8px 10px; font: 14px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; margin-left: auto; max-width: 100%; box-shadow: 0 1px 1px rgb(0 0 0 / 12%); user-select: text; }
+
 /* Hızlı kâğıt listesi */
 .quick-sheet .sheet-head { align-items: center; }
 .qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
@@ -456,16 +486,6 @@ table.matrix td.zero { color: var(--line); }
 table.matrix th.grp { text-align: center; border-bottom: 1px solid var(--line); }
 table.matrix tfoot th { border-top: 2px solid var(--ink); border-bottom: 0; color: var(--ink); font-size: 0.85rem; }
 table.matrix tbody tr:nth-child(even) { background: var(--paper); }
-.env-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.env { border: 1.5px dashed var(--ink-soft); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; break-inside: avoid; }
-.env-head { display: grid; gap: 2px; }
-.env-head b { font: 700 1.15rem/1.1 var(--f-display); }
-.env-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
-.env-table td { padding: 2px 0; }
-.env-table td.num { text-align: right; font-family: var(--f-mono); }
-.env-lv td { font-weight: 600; border-top: 1px solid var(--line); padding-top: 5px; }
-.env-cl td { color: var(--ink-soft); padding-left: 12px; font-size: 0.85rem; }
-.env-table tfoot td { border-top: 2px solid var(--ink); font-weight: 700; padding-top: 5px; }
 .search { display: grid; gap: 12px; }
 .search input { max-width: 420px; }
 
@@ -527,7 +547,7 @@ table.matrix tbody tr:nth-child(even) { background: var(--paper); }
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 .pack-out.measuring { display: block; position: absolute; left: -10000px; top: 0; width: 186mm; visibility: hidden; }
-.pack-out .no-print, .pack-out .sheet-tools, .pack-out .tabs, .pack-out .search .field { display: none !important; }
+.pack-out .sel-bar, .pack-out .no-print, .pack-out .sheet-tools, .pack-out .tabs, .pack-out .search .field { display: none !important; }
 .pack-out > .sheet, .pack-out > .blank-page { break-after: page; page-break-after: always; }
 .pack-out > :last-child { break-after: auto; page-break-after: auto; }
 .pack-out .sheet { border: 0; border-radius: 0; padding: 0; gap: 8px; background: #fff; }
@@ -574,8 +594,7 @@ table.matrix tbody tr:nth-child(even) { background: var(--paper); }
 .pack-out .qline { padding: 2px 4px; grid-template-columns: 1fr auto; }
 .pack-out .qline.on .qname, .pack-out .qline.on .qn { text-decoration: none; opacity: 1; }
 .pack-out .qcard.done { background: none; border-color: #999; }
-.pack-out .env-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.pack-out .lvsum-t th, .pack-out .lvsum-t td { padding: 2px 6px; border-bottom-color: #bbb; }
+.pack-out .pack-out .lvsum-t th, .pack-out .lvsum-t td { padding: 2px 6px; border-bottom-color: #bbb; }
 .pack-out .lvsum-t th { font-size: 10pt; }
 .pack-out .lvsum-n { font-size: 13pt; }
 .pack-out .lvsum-c { font-size: 8.5pt; gap: 2px 10px; color: #333; }
