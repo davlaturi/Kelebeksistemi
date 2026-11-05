@@ -69,7 +69,7 @@
       <section class="student-delete" id="student-delete" hidden aria-labelledby="sd-title">
         <div class="sd-head">
           <h3 id="sd-title">Öğrenci ekle / sil</h3>
-          <p class="hint">Listede olmayan öğrenciyi adını yazıp şubesini seçerek ekleyin. Silmek için adını aşağıya yazın ve “Öğrenciyi sil” düğmesine iki kez basın. Hazır bir dağıtım varsa yeniden dağıtım yapmanız gerekir; kayıtlı sınavlar değişmez.</p>
+          <p class="hint">Listede olmayan öğrenciyi ekleyin, nakil gideni silin. Hazır dağıtım varsa sonra yeniden dağıtın.</p>
         </div>
         <div class="sa-row">
           <div class="field sa-name"><label for="sa-name">Yeni öğrencinin adı soyadı</label>
@@ -95,15 +95,12 @@
           <p class="hint">Bu bilgiler çıktıların başlığında yer alır.</p>
         </div>
       </div>
-      <section class="calendar-card" id="calendar-card" aria-label="Sınav takvimi"></section>
       <input type="file" id="cal-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
       <form id="settings" class="settings" autocomplete="off">
         <fieldset class="settings-card">
           <legend><span class="settings-kicker">01</span> Sınav bilgileri</legend>
           <p class="settings-description">Sınavı tanımlayın. Bilgiler raporlara ve paylaşım başlıklarına aktarılır.</p>
-          <div class="field" id="session-field" hidden><label for="s-session">Takvimdeki oturum</label>
-            <select id="s-session" name="sessionId"></select>
-            <small class="hint">Oturum seçilince tarih ve ders saati takvimden gelir; sınavı olan şubeler dağıtıma ve salona alınır.</small></div>
+          <div class="planned-bar" id="planned-bar"></div>
           <div class="settings-grid settings-grid-two"><div class="field"><label for="s-school">Okul adı</label><input id="s-school" name="school" type="text" placeholder="Örn. Atatürk Anadolu Lisesi"></div><div class="field"><label for="s-exam">Dönem / sınav</label><select id="s-exam" name="exam">
           <option value="">Sınav seçin</option>
           <option>1. Dönem 1. Sınav</option><option>1. Dönem 2. Sınav</option>
@@ -289,6 +286,10 @@
   </dialog>
 
   <button type="button" class="btn quick-exam-launch no-print" id="quick-exam-launch" aria-haspopup="dialog" aria-controls="quick-exam">Sınav bilgileri</button>
+  <dialog class="editor planned-dlg no-print" id="planned-dlg" aria-label="Planlanmış sınavlar">
+    <button type="button" class="dlg-x" data-planned-close="1" aria-label="Kapat">×</button>
+    <div id="planned-body"></div>
+  </dialog>
   <dialog class="editor cal-dlg no-print" id="cal-dlg" aria-label="Sınav takvimi önizlemesi">
     <div id="cal-dlg-body"></div>
     <div class="cal-dlg-actions"><button type="button" class="btn ghost" id="cal-dlg-cancel">Vazgeç</button><button type="button" class="btn primary" id="cal-dlg-ok">Onayla</button></div>

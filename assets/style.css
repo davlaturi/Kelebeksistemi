@@ -1228,3 +1228,48 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .cal-rules ol { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 3px; }
 .cal-past .cal-days { margin-top: 8px; }
 .cal-sources { margin: 0; font-size: .8rem; }
+
+/* ---------- v1.25: Planlanmış sınavlar, sade takvim paneli ---------- */
+.planned-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; margin: 0 0 12px; border-radius: 10px; background: #f3f7fb; border: 1px solid #d5dfe9; }
+.planned-bar .hint { margin: 0; }
+.planned-btn { white-space: nowrap; }
+.planned-count { display: inline-block; min-width: 1.5em; padding: 0 6px; margin-left: 4px; border-radius: 99px; background: rgba(255,255,255,.25); font-size: .85em; }
+.planned-on b { color: #1d3557; }
+.planned-dlg { width: min(900px, 96vw); padding: 18px 22px; box-sizing: border-box; position: relative; }
+.planned-dlg .dlg-x { position: absolute; top: 8px; right: 10px; border: 0; background: none; font-size: 1.6rem; line-height: 1; cursor: pointer; color: #555; }
+.planned-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; padding-right: 28px; }
+.planned-head h3 { margin: 0; font-size: 1.15rem; }
+.planned-head .hint { margin: 2px 0 0; }
+.planned-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.planned-warn { margin: 10px 0; padding: 8px 12px; border-radius: 10px; background: #fff4d6; color: #5c3b00; font-size: .9rem; }
+.planned-warn ul { margin: 4px 0 0; padding-left: 18px; }
+.planned-table { width: 100%; font-size: .92rem; }
+.planned-table th { text-align: left; }
+.planned-table td { vertical-align: middle; padding-top: 6px; padding-bottom: 6px; }
+.planned-table td.p-date { white-space: nowrap; vertical-align: top; border-right: 1px solid #e6ebf0; }
+.planned-table td.p-subj { color: #4a5565; font-size: .85rem; }
+.planned-table td.p-act { text-align: right; width: 1%; white-space: nowrap; }
+.planned-table tr.on td:not(.p-date) { background: #e8f1fb; font-weight: 600; }
+.planned-table tr.none td:not(.p-date) { color: #8a929c; }
+.planned-notes { margin: 6px 0 0; padding-left: 18px; font-size: .86rem; color: #4a5565; }
+.planned-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #e6ebf0; }
+.planned-empty .planned-tools { margin: 10px 0; }
+.planned-dlg .cal-past { margin-top: 10px; font-size: .9rem; }
+.planned-dlg .cal-rules { margin-top: 10px; }
+.session-panel { display: grid; gap: 8px; }
+.session-panel.ok { border-color: #bfe0cc; background: #f4fbf6; }
+.ses-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ses-icon { font-size: 1.1rem; }
+.ses-issues li { display: flex; gap: 6px; align-items: flex-start; }
+.ses-issues li > span:last-child { display: grid; gap: 6px; }
+.ses-approve { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.ses-more summary { cursor: pointer; font-size: .88rem; color: #1d3557; font-weight: 600; }
+.ses-more .ses-groups { margin-top: 8px; }
+.ses-more h4 { margin: 0 0 4px; font-size: .85rem; }
+.ses-more .ses-groups > div { padding: 6px 8px; border-radius: 8px; background: #fff; border: 1px solid #e1e7ee; }
+.ses-more .ses-groups > div > div { display: flex; flex-wrap: wrap; gap: 4px; }
+.ses-infos { margin: 6px 0 0; padding-left: 18px; font-size: .84rem; color: #4a5565; }
+.room-tile.blocked .link-btn { font-size: .78rem; }
+.planned-dlg, .cal-dlg { max-height: 92vh; overflow: auto; }
+.ses-line > span:nth-child(2) { flex: 1 1 320px; min-width: 0; }
+@media (max-width: 900px) { .ses-line .spacer { display: none; } }

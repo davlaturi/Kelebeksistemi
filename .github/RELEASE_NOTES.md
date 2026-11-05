@@ -10,7 +10,18 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.24.0)
+## Bu sürümde (v1.25.0)
+
+- **📅 Planlanmış sınavlar.** 2. adımda (ve sarı **Sınav bilgileri** penceresinde) bir düğme var. Takvimle eklenen bütün sınavlar tek tabloda: tarih, ders saati, sınava giren şube sayısı, dersler, durum (Bugün / Seçili / ✓ Kayıtlı). **Seç** ile tarih, ders saati, şubeler ve salonlar hazır gelir. Geçmiş sınavlar ve bilgi notları katlanmış duruyor; kontrol edilmesi gerekenler en üstte tek kutuda.
+- **Elle giriş eskisi gibi.** Planlanmış sınav seçmeden bilgileri elle girebilirsiniz. Seçiliyken tarihi ya da ders saatini elle değiştirirseniz bağlantı kendiliğinden kalkar ve size bildirilir. "Seçimi kaldır, elle gir" düğmesi de var.
+- **Sade arayüz.**
+  - 2. adımdaki büyük takvim kartı kaldırıldı; yerinde tek satır var: "Seçili: 5 Kasım 2026 Perşembe · 2. ders · 14 şube sınavda".
+  - Dağıtım sayfasındaki takvim paneli tek satırlık özete indi; yalnız kontrol gerektiren uyarılar görünüyor. Şube grupları "Şubeleri göster" ile açılıyor.
+  - "Kaynak: …" gibi bilgi notları artık uyarı olarak çıkmıyor; yalnız "teyit edin" gibi dikkat isteyen notlar ilgili günde gösteriliyor.
+  - Şube seçiminde ders adları kaldırıldı; sınavı olmayan şubeler soluk ve "sınavsız" yazıyor.
+  - Uyarı cümleleri kısaltıldı.
+
+## Önceki sürümde (v1.24.0)
 
 - **Şablon değişse de okunur.** Takvim okuyucu artık şunları da tanıyor:
   - birden çok sayfa (örneğin her düzey ayrı sayfada; aynı tarih ve ders saatindeki şubeler birleşiyor), takvim içermeyen sayfalar atlanıyor;
@@ -24,7 +35,7 @@ Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkm
 - **Boş şablon indir.** Uygulamanın okuduğu biçimde, yüklü şubelerinizle hazırlanmış bir Excel şablonu indirilebiliyor. İçinde "Kurallar" sayfası da var. Takvim kartında **Şablon kuralları** bölümü de bulunuyor.
 - Geçmiş oturumlar takvim kartında katlanmış duruyor; şube adı eşleştirmesi farklı yazılmış eğik çizgi ve tire karakterlerine karşı güçlendirildi.
 
-## Önceki sürümde (v1.23.0)
+## Daha önce (v1.23.0)
 
 - **Sınav takvimi (Excel).** 2. adımda **Sınav takvimini yükle** düğmesiyle şube bazındaki ortak sınav takvimi (.xlsx) yükleniyor. Dosya internetsiz, bilgisayarın içinde okunuyor. Tarihler, ders saatleri, her şubenin dersi ve tablonun altındaki notlar alınıyor. "—" ya da boş hücre "sınav yok" sayılıyor; boş hücreler ayrıca uyarı olarak gösteriliyor.
 - **Oturum seçimi.** Takvim kartında gün gün oturumlar var (örn. "5 Kasım Perşembe · 2. ders · 14 şube sınavda"). Bir oturum seçilince tarih ve ders saati dolduruluyor. Sınavı olan şubeler dağıtıma ve salon olarak seçiliyor. Okul adı ve dönem/sınav adı boşsa takvim başlığından alınıyor. Oturum, sarı **Sınav bilgileri** penceresinden de seçilebiliyor.

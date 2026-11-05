@@ -375,8 +375,8 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
     st.classes.forEach((x) => { x.useAsRoom = true; });
     same(c.roomClasses().map((x) => x.name), ['9/A', '10/A']);
     const issues = c.calendarIssues().map((x) => x.text).join(' | ');
-    assert.match(issues, /11-A şubesinin listesi yüklü değil/);
-    assert.match(issues, /12-A için takvimdeki hücre boş/);
+    assert.match(issues, /11-A şubesinin bu sınavı var ama listesi yüklü değil/);
+    assert.match(issues, /12-A: takvimde bu hücre boş/);
     assert.match(issues, /Takvim notu/);
     c.runDistribution();
     same(c.state.result.rooms.map((r) => r.roomId).sort(), ['k0', 'k2']);
@@ -389,7 +389,7 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
     assert.ok(c.capTotals().seats < c.capTotals().students);
     const bad = c.calendarIssues().find((x) => x.level === 'bad');
     assert.ok(bad && bad.approve.some((x) => x.name === '12/A'));
-    assert.ok(c.calendarIssues().some((x) => /9\/B: bu oturumda sınavı yok ama dağıtıma seçildi/.test(x.text)));
+    assert.ok(c.calendarIssues().some((x) => /9\/B şubesinin bu sınavı yok ama seçildi/.test(x.text)));
     assert.ok(c.setRoomApproval('k3', true), 'Onaylanınca salon açılmalı');
     same(c.state.calendar.approvals, { S1: ['k3'] });
     assert.ok(c.roomClasses().some((x) => x.name === '12/A'));
@@ -400,7 +400,7 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
     assert.ok(c.applySession('S2'));
     same(c.state.classes.filter((x) => x.selected).map((x) => x.name), ['12/A']);
     assert.equal(c.state.stale, true);
-    assert.ok(c.calendarIssues().some((x) => /yalnızca 12\. sınıf/.test(x.text) || /sıra sayısından/.test(x.text)));
+    assert.ok(c.calendarIssues().some((x) => /yalnızca 12\. sınıf/.test(x.text) || /yan yana oturur/.test(x.text)));
     c.state.settings.sessionId = 'S3';
     assert.equal(c.calendarIssues()[0].level, 'bad');
     // Kayıt/yedek doğrulaması takvimi korur, bozuk takvimi reddeder
@@ -443,6 +443,18 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
       // Değiştir seçeneği eski oturumları bırakır
       c.previewCalendar(parsed); assert.ok(c.confirmCalendar('replace'));
       same(c.state.calendar.sessions.map((x) => x.id), ['2026-11-12_ulkegeneli', '2027-01-05_2ders']);
+    }
+    // Planlanmış sınav seçiliyken tarih elle değişirse bağlantı kalkar; elle giriş önceki gibi çalışır
+    {
+      c.state = c.validateState({ classes, settings: {}, result: null, archive: [], calendar });
+      assert.ok(c.applySession('S1'));
+      const set = (date, lesson) => { for (const [id, v] of Object.entries({ 's-school': 'Okul', 's-exam': '1. Dönem 1. Sınav', 's-date': date, 's-time': '', 's-lesson': lesson, 's-header-note': '', 's-cols': '3', 's-spd': '2', 's-sides': 'lr', 's-theme': 'kurumsal' })) hc.node('#' + id).value = v; };
+      set('2026-11-04', '2'); c.readSettings({ type: 'change' });
+      assert.equal(c.state.settings.sessionId, 'S1', 'Aynı tarih/ders bağlantıyı korumalı');
+      set('2026-11-20', '2'); c.readSettings({ type: 'change' });
+      assert.equal(c.state.settings.sessionId, '', 'Elle değişen tarih bağlantıyı kaldırmalı');
+      assert.equal(c.state.settings.date, '2026-11-20');
+      same(c.roomClasses().map((x) => x.name), ['9/A', '10/A'], 'Elle girişte salon seçimi kullanıcıda kalır');
     }
     // Kilitliyken oturum değiştirilemez
     c.state = c.validateState({ classes, settings: {}, result: null, archive: [], calendar });
