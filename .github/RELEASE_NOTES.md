@@ -10,7 +10,21 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.23.0)
+## Bu sürümde (v1.24.0)
+
+- **Şablon değişse de okunur.** Takvim okuyucu artık şunları da tanıyor:
+  - birden çok sayfa (örneğin her düzey ayrı sayfada; aynı tarih ve ders saatindeki şubeler birleşiyor), takvim içermeyen sayfalar atlanıyor;
+  - "Şube", "Sınıf/Şube" gibi farklı başlıklar; başlık hiç yoksa şube adlarının olduğu sütun;
+  - gerçek Excel tarih hücreleri, "3 Kasım 2026", yılsız "3 Kasım Salı" (yıl başlıktaki eğitim yılından alınıyor);
+  - "2. Ders", "Ders 2", "2. Ders (10:40)" ya da yalnız saat; ders saati tarih hücresinin içinde de olabilir;
+  - şube adları "9-A", "9/A", "9 A", "9A", "9. Sınıf / A Şubesi"; bir düzeyin tümü için tek satır ("9. Sınıflar").
+  Tarih olmayan sütunlar ("Açıklama" gibi) ve şube olarak tanınamayan satırlar atlanıyor ve bildiriliyor.
+- **Yükleme önizlemesi.** Dosya seçilince uygulama önce dosyadan ne anladığını gösteriyor: oturumlar, şube sayıları, dersler, listesi uygulamada olmayan şubeler, boş hücreler ve notlar. Siz **Onayla** demeden hiçbir şey kaydedilmiyor.
+- **Takvime ekleme.** Yeni dosya eskisinin yerine geçmiyor, üzerine ekleniyor: aynı tarih ve ders saatindeki oturumlar güncelleniyor, diğerleri korunuyor. İsterseniz "Eski takvimi tamamen değiştir" de seçebilirsiniz. Salon onayları ve kayıtlı sınav bağlantıları korunuyor.
+- **Boş şablon indir.** Uygulamanın okuduğu biçimde, yüklü şubelerinizle hazırlanmış bir Excel şablonu indirilebiliyor. İçinde "Kurallar" sayfası da var. Takvim kartında **Şablon kuralları** bölümü de bulunuyor.
+- Geçmiş oturumlar takvim kartında katlanmış duruyor; şube adı eşleştirmesi farklı yazılmış eğik çizgi ve tire karakterlerine karşı güçlendirildi.
+
+## Önceki sürümde (v1.23.0)
 
 - **Sınav takvimi (Excel).** 2. adımda **Sınav takvimini yükle** düğmesiyle şube bazındaki ortak sınav takvimi (.xlsx) yükleniyor. Dosya internetsiz, bilgisayarın içinde okunuyor. Tarihler, ders saatleri, her şubenin dersi ve tablonun altındaki notlar alınıyor. "—" ya da boş hücre "sınav yok" sayılıyor; boş hücreler ayrıca uyarı olarak gösteriliyor.
 - **Oturum seçimi.** Takvim kartında gün gün oturumlar var (örn. "5 Kasım Perşembe · 2. ders · 14 şube sınavda"). Bir oturum seçilince tarih ve ders saati dolduruluyor. Sınavı olan şubeler dağıtıma ve salon olarak seçiliyor. Okul adı ve dönem/sınav adı boşsa takvim başlığından alınıyor. Oturum, sarı **Sınav bilgileri** penceresinden de seçilebiliyor.
@@ -20,7 +34,7 @@ Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkm
 - **Çıktılarda ders adı.** Kâğıt hazırlama kartları, zarf etiketleri, öğretmenler odası listesi, sınav yerleri, WhatsApp özeti ve Excel (CSV) dosyasında her şubenin sınav dersi yazıyor. Tek ders varsa belge başlığında "Sınav dersi" görünüyor.
 - **Kayıtla bağlantı.** Kaydedilen dağıtımlar takvimde "✓ kayıtlı" olarak işaretleniyor. Takvim yedek dosyasına da dahil.
 
-## Önceki sürümde (v1.22.0)
+## Daha önce (v1.22.0)
 
 - **Elle öğrenci ekleme.** Sınıf listeleri sayfasındaki **Öğrenci ekle / sil** kutusunda öğrencinin adını yazıp şubesini seçin, **Öğrenciyi ekle**'ye basın (ya da Enter). Öğrenci şube listesine alfabetik sırayla eklenir. Aynı şubede aynı adla biri varsa önce uyarı çıkar; gerçekten ikinci kişiyse "Yine de ekle" deyin.
 - **Silmeyi geri al.** Bir öğrenci silinince kutuda "Silindi: … · Geri al" satırı çıkar. Geri al, öğrenciyi aynı şubeye ve aynı yere geri koyar. Bu düğme sayfa açık kaldığı sürece görünür.

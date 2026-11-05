@@ -32,7 +32,7 @@ function harness(initial) {
       renderSharePanel, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
       readSettings, headerMeta, renderTeacherList, renderRoll, showPage, pageFromHash, toggleClassList, expandPrintSections,
-      distributionAudit, auditHtml, renderThemePreview, applySession, setRoomApproval, calendarIssues, sessionGroups, roomClasses, capTotals, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
+      distributionAudit, auditHtml, renderThemePreview, applySession, setRoomApproval, calendarIssues, sessionGroups, roomClasses, capTotals, previewCalendar, confirmCalendar, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
       packChoice, deleteArchive, deleteClassFromEditor, resultValid, exportCsv, printAll, onSeatClick,
       get state() { return state; }, set state(s) { state = s; } };
   `), context);
@@ -410,6 +410,40 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
     assert.throws(() => c.validateState(broken), /Takvim oturumu/);
     const noCal = c.validateState({ classes, settings: {}, result: null, archive: [] });
     assert.equal(noCal.calendar, null);
+    // Yeni şablon dosyası: önizleme → onay → mevcut takvime ekleme; eski kimlikli kayıt yeni kimliğe bağlanır
+    {
+      c.state = c.validateState({ classes, settings: {}, result: null, archive: [], calendar: { ...calendar,
+        sessions: calendar.sessions.map((x) => (x.id === 'S3' ? { ...x, id: '2026-11-12_c13' } : x)), approvals: { '2026-11-12_c13': ['k3'] } } });
+      c.state.settings.sessionId = '2026-11-12_c13';
+      c.state.archive.push({ id: 'arc1', exam: 'Eski', date: '2026-11-12', settings: { ...c.state.settings, sessionId: '2026-11-12_c13' }, classes: [], result: null });
+      const parsed = { title: '2026-2027 1. Dönem 2. Ortak Sınav Takvimi', fileName: 'ikinci.xlsx', sheets: ['Takvim'], notes: [], problems: [],
+        classes: ['9-*', '10-A', '12-A'],
+        sessions: [
+          { id: '2026-11-12_ulkegeneli', date: '2026-11-12', lesson: '', time: '', label: 'Ülke geneli', exams: {}, blanks: [] },
+          { id: '2027-01-05_2ders', date: '2027-01-05', lesson: '2', time: '', label: '2. ders', exams: { '9-*': 'Fizik', '10-A': 'Fizik' }, blanks: [] },
+        ] };
+      const before = JSON.stringify(c.state.calendar);
+      c.previewCalendar(parsed);
+      assert.match(hc.node('#cal-dlg-body').innerHTML, /Takvim önizlemesi/);
+      assert.match(hc.node('#cal-dlg-body').innerHTML, /Takvime ekle/);
+      assert.equal(JSON.stringify(c.state.calendar), before, 'Önizleme onaysız kaydetmemeli');
+      assert.ok(c.confirmCalendar('merge'));
+      const ids = c.state.calendar.sessions.map((x) => x.id);
+      same(ids, ['S1', 'S2', '2026-11-12_ulkegeneli', '2027-01-05_2ders']);
+      assert.equal(c.state.settings.sessionId, '2026-11-12_ulkegeneli', 'Seçili oturum yeni kimliğe taşınmalı');
+      same(c.state.calendar.approvals['2026-11-12_ulkegeneli'], ['k3']);
+      assert.equal(c.state.archive[0].settings.sessionId, '2026-11-12_ulkegeneli', 'Kayıtlı sınav yeni kimliğe bağlanmalı');
+      assert.equal(c.state.calendar.sources.length, 1);
+      // "9. Sınıflar" satırı bütün 9. sınıf şubelerine uygulanır
+      assert.ok(c.applySession('2027-01-05_2ders'));
+      same(c.state.classes.filter((x) => x.selected).map((x) => x.name), ['9/A', '9/B', '10/A']);
+      assert.equal(c.sessionGroups().missing.length, 0);
+      const reload = c.validateState({ ...JSON.parse(JSON.stringify(c.state)), archive: [] });
+      assert.equal(reload.calendar.sources.length, 1);
+      // Değiştir seçeneği eski oturumları bırakır
+      c.previewCalendar(parsed); assert.ok(c.confirmCalendar('replace'));
+      same(c.state.calendar.sessions.map((x) => x.id), ['2026-11-12_ulkegeneli', '2027-01-05_2ders']);
+    }
     // Kilitliyken oturum değiştirilemez
     c.state = c.validateState({ classes, settings: {}, result: null, archive: [], calendar });
     c.applySession('S1'); c.runDistribution(); c.toggleDistributionLock();

@@ -1213,3 +1213,18 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .room-tile.blocked { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; max-width: 190px; }
 .room-tile.blocked small { font-size: .72rem; }
 .room-tile.blocked .btn { padding: 3px 8px; font-size: .78rem; }
+/* v1.24: takvim önizlemesi, kurallar */
+.cal-dlg { width: min(860px, 96vw); padding: 18px 22px; box-sizing: border-box; }
+.cal-dlg h3 { margin: 0 0 4px; }
+.cal-dlg-sum { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.cal-dlg-table { max-height: 46vh; overflow: auto; margin: 8px 0; }
+.cal-dlg-table td.cal-subj { font-size: .82rem; color: #4a5565; }
+.cal-dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.cal-mode { border: 1px solid #d5dfe9; border-radius: 10px; padding: 8px 12px; display: grid; gap: 6px; }
+.cal-mode legend { font-weight: 700; font-size: .9rem; padding: 0 4px; }
+.cal-notes li.ok { background: #dff3e7; color: #1f5a3a; }
+.cal-rules { font-size: .86rem; }
+.cal-rules summary, .cal-past summary { cursor: pointer; font-weight: 600; color: #1d3557; }
+.cal-rules ol { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 3px; }
+.cal-past .cal-days { margin-top: 8px; }
+.cal-sources { margin: 0; font-size: .8rem; }
