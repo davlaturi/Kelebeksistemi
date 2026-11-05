@@ -15,7 +15,7 @@ function harness(initial) {
       removeAttribute() {}, showModal() {} });
     return nodes.get(id);
   };
-  const context = { window: { KelebekAssign: A, KelebekShare: require('../assets/share.js'), addEventListener() {} },
+  const context = { window: { KelebekAssign: A, KelebekShare: require('../assets/share.js'), KelebekCalendar: require('../assets/calendar.js'), addEventListener() {}, confirm: () => true },
     document: { querySelector: node, querySelectorAll: (selector) => groups.get(selector) || [] },
     location: { hash: '' }, history: { replaceState: (_, __, hash) => { context.location.hash = hash; } },
     localStorage: { getItem: () => raw, setItem: (_, value) => { if (fail) throw Error('QuotaExceededError'); raw = value; } },
@@ -32,7 +32,7 @@ function harness(initial) {
       renderSharePanel, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
       readSettings, headerMeta, renderTeacherList, renderRoll, showPage, pageFromHash, toggleClassList, expandPrintSections,
-      distributionAudit, auditHtml, renderThemePreview, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
+      distributionAudit, auditHtml, renderThemePreview, applySession, setRoomApproval, calendarIssues, sessionGroups, roomClasses, capTotals, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
       packChoice, deleteArchive, deleteClassFromEditor, resultValid, exportCsv, printAll, onSeatClick,
       get state() { return state; }, set state(s) { state = s; } };
   `), context);
@@ -350,6 +350,73 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   assert.doesNotMatch(previewHtml, /Örnek Öğrenci/, 'önizleme gerçek öğrenci adı göstermemeli');
   assert.match(previewHtml, /Örnek Okul/, 'girilen okul adı önizlemede görünür');
   h.node('#s-theme').value = '';
+  // Sınav takvimi: oturum seçimi, sınavı olmayan sınıfın salon olmaması, onay
+  {
+    const hc = harness(), c = hc.api;
+    const same = (x, y, m) => assert.equal(JSON.stringify(x), JSON.stringify(y), m);
+    const classes = ['9/A', '9/B', '10/A', '12/A'].map((name, k) => ({ id: 'k' + k, name,
+      students: Array.from({ length: 4 }, (_, i) => ({ id: `t${k}-${i}`, name: `Takvim Öğrenci ${k}-${i}` })) }));
+    const calendar = { title: '2026-2027 1. Dönem 1. Ortak Sınav Takvimi — Örnek Anadolu Lisesi', classes: ['9-A', '9-B', '10-A', '11-A', '12-A'],
+      notes: ['⚠ 4.11.2026 tarihli sınavın saati teyit edilecek.'], problems: [], approvals: {},
+      sessions: [
+        { id: 'S1', date: '2026-11-04', lesson: '2', label: '2. ders', exams: { '9-A': 'Biyoloji', '10-A': 'Biyoloji', '11-A': 'Biyoloji' }, blanks: ['12-A'] },
+        { id: 'S2', date: '2026-11-05', lesson: '4', label: '4. ders', exams: { '12-A': 'Tarih' }, blanks: [] },
+        { id: 'S3', date: '2026-11-12', lesson: '', label: 'Ülke geneli', exams: {}, blanks: [] },
+      ] };
+    c.state = c.validateState({ classes, settings: {}, result: null, archive: [], calendar });
+    assert.ok(c.applySession('S1'));
+    const st = c.state;
+    assert.equal(st.settings.date, '2026-11-04'); assert.equal(st.settings.lesson, '2');
+    assert.equal(st.settings.exam, '1. Dönem 1. Sınav'); assert.equal(st.settings.school, 'Örnek Anadolu Lisesi');
+    same(st.classes.filter((x) => x.selected).map((x) => x.name), ['9/A', '10/A'], 'Yalnız sınavı olanlar seçilmeli');
+    const g = c.sessionGroups();
+    same([g.exam.length, g.free.length, g.missing], [2, 2, ['11-A']]);
+    // Elle salon yapılmaya çalışılsa da sınavı olmayan sınıf salon olmaz
+    st.classes.forEach((x) => { x.useAsRoom = true; });
+    same(c.roomClasses().map((x) => x.name), ['9/A', '10/A']);
+    const issues = c.calendarIssues().map((x) => x.text).join(' | ');
+    assert.match(issues, /11-A şubesinin listesi yüklü değil/);
+    assert.match(issues, /12-A için takvimdeki hücre boş/);
+    assert.match(issues, /Takvim notu/);
+    c.runDistribution();
+    same(c.state.result.rooms.map((r) => r.roomId).sort(), ['k0', 'k2']);
+    same(c.state.result.subjects, { k0: 'Biyoloji', k2: 'Biyoloji' });
+    assert.equal(c.state.result.sessionId, 'S1');
+    assert.ok(c.state.result.warnings.some((w) => /^Takvim/.test(w)));
+    assert.match(c.headerMeta(), /Sınav dersi.*Biyoloji/s);
+    // Kapasite yetmezse sınavı olmayan sınıflar önerilir; onay olmadan salon açılmaz
+    c.state.classes[1].selected = true; // 9/B sınavsız ama elle seçildi
+    assert.ok(c.capTotals().seats < c.capTotals().students);
+    const bad = c.calendarIssues().find((x) => x.level === 'bad');
+    assert.ok(bad && bad.approve.some((x) => x.name === '12/A'));
+    assert.ok(c.calendarIssues().some((x) => /9\/B: bu oturumda sınavı yok ama dağıtıma seçildi/.test(x.text)));
+    assert.ok(c.setRoomApproval('k3', true), 'Onaylanınca salon açılmalı');
+    same(c.state.calendar.approvals, { S1: ['k3'] });
+    assert.ok(c.roomClasses().some((x) => x.name === '12/A'));
+    assert.ok(c.calendarIssues().some((x) => /onayınızla salon/.test(x.text)));
+    assert.ok(c.setRoomApproval('k3', false));
+    assert.ok(!c.roomClasses().some((x) => x.name === '12/A'));
+    // Oturum değişince seçim takvime göre yenilenir, eski dağıtım güncel değil olur
+    assert.ok(c.applySession('S2'));
+    same(c.state.classes.filter((x) => x.selected).map((x) => x.name), ['12/A']);
+    assert.equal(c.state.stale, true);
+    assert.ok(c.calendarIssues().some((x) => /yalnızca 12\. sınıf/.test(x.text) || /sıra sayısından/.test(x.text)));
+    c.state.settings.sessionId = 'S3';
+    assert.equal(c.calendarIssues()[0].level, 'bad');
+    // Kayıt/yedek doğrulaması takvimi korur, bozuk takvimi reddeder
+    const round = c.validateState(JSON.parse(JSON.stringify(c.state)));
+    assert.equal(round.calendar.sessions.length, 3); assert.equal(round.settings.sessionId, 'S3');
+    const broken = JSON.parse(JSON.stringify(c.state)); broken.calendar.sessions[0].date = '2026-02-31';
+    assert.throws(() => c.validateState(broken), /Takvim oturumu/);
+    const noCal = c.validateState({ classes, settings: {}, result: null, archive: [] });
+    assert.equal(noCal.calendar, null);
+    // Kilitliyken oturum değiştirilemez
+    c.state = c.validateState({ classes, settings: {}, result: null, archive: [], calendar });
+    c.applySession('S1'); c.runDistribution(); c.toggleDistributionLock();
+    const lockedCal = JSON.stringify(c.state);
+    c.applySession('S2'); c.setRoomApproval('k3', true);
+    assert.equal(JSON.stringify(c.state), lockedCal, 'Kilitli dağıtımda takvim seçimi değişmemeli');
+  }
   console.log('Dağıtım özeti, kilit kalıcılığı, kilitli değişiklikler, sürüm, paylaşım ve arşiv regresyonları geçti.');
   console.log('Paylaşım sayıları/gizlilik, kaldırılan görünümler ve öğrenci silme regresyonları geçti.');
   console.log('Kayıt, arşiv, yedek, kota, göç, takas, tarih ve CSV regresyon testleri geçti.');

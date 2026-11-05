@@ -14,9 +14,9 @@
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
-    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'lr', duplex: true, docTheme: 'kurumsal',
+    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'lr', duplex: true, docTheme: 'kurumsal', sessionId: '',
   };
-  let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false, archive: [] };
+  let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false, archive: [], calendar: null };
   let view = 'plan';
   let selectedSeat = null; // {roomIdx, seatIdx}
   let storageBlocked = false;
@@ -41,6 +41,7 @@
       require(['class', 'custom'].includes(out.capacityMode) && ['lr', 'doorL', 'doorR'].includes(out.sideNames), 'Salon ayarları geçersiz.');
       for (const k of ['duplex', 'avoidOwnRoom']) require(typeof out[k] === 'boolean', 'Sınav seçeneği geçersiz.');
       if (!['kurumsal', 'resmi', 'modern'].includes(out.docTheme)) out.docTheme = 'kurumsal';
+      if (typeof out.sessionId !== 'string' || out.sessionId.length > 120) out.sessionId = '';
       return out;
     }
     function classes(list) {
@@ -89,12 +90,35 @@
       require(r.warnings == null || (Array.isArray(r.warnings) && r.warnings.every((w) => typeof w === 'string')), 'Dağıtım uyarıları geçersiz.');
       require(r.paperChecks == null || object(r.paperChecks), 'Kâğıt hazırlama işaretleri geçersiz.');
       require(r.locked == null || typeof r.locked === 'boolean', 'Dağıtım kilidi geçersiz.');
+      require(r.subjects == null || (object(r.subjects) && Object.keys(r.subjects).every((k) => typeof r.subjects[k] === 'string')), 'Dağıtımın ders bilgisi geçersiz.');
+      require(r.sessionId == null || (typeof r.sessionId === 'string' && r.sessionId.length <= 120), 'Dağıtımın takvim oturumu geçersiz.');
       require(r.distributionId == null || (text(r.distributionId) && r.distributionId.length <= 100), 'Dağıtım numarası geçersiz.');
       require(r.revision == null || (Number.isSafeInteger(r.revision) && r.revision > 0), 'Dağıtım sürümü geçersiz.');
       require(r.updatedAt == null || (typeof r.updatedAt === 'string' && Number.isFinite(Date.parse(r.updatedAt))), 'Dağıtım güncelleme zamanı geçersiz.');
 
       r.stats = A.evaluate(r.rooms, list, { cols: st.deskCols, spd: st.seatsPerDesk });
       return r;
+    }
+    function calendar(cal) {
+      if (cal == null) return null;
+      require(object(cal) && Array.isArray(cal.sessions) && Array.isArray(cal.classes), 'Sınav takvimi geçersiz.');
+      const strList = (x) => Array.isArray(x) && x.every((v) => typeof v === 'string');
+      require(strList(cal.classes) && (cal.notes == null || strList(cal.notes)) && (cal.problems == null || strList(cal.problems)), 'Sınav takvimi geçersiz.');
+      const ids = new Set();
+      for (const ses of cal.sessions) {
+        require(object(ses) && text(ses.id) && ses.id.length <= 120 && !ids.has(ses.id) && dateOK(ses.date), 'Takvim oturumu geçersiz.');
+        ids.add(ses.id);
+        require(/^[1-8]?$/.test(ses.lesson || '') && typeof (ses.label || '') === 'string' && object(ses.exams), 'Takvim oturumu geçersiz.');
+        require(Object.keys(ses.exams).every((k) => typeof ses.exams[k] === 'string'), 'Takvim dersleri geçersiz.');
+        ses.lesson = ses.lesson || ''; ses.time = typeof ses.time === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(ses.time) ? ses.time : '';
+        ses.blanks = strList(ses.blanks) ? ses.blanks : [];
+      }
+      require(cal.approvals == null || object(cal.approvals), 'Takvim onayları geçersiz.');
+      const approvals = {};
+      for (const k of Object.keys(cal.approvals || {})) if (ids.has(k) && strList(cal.approvals[k])) approvals[k] = cal.approvals[k];
+      return { title: typeof cal.title === 'string' ? cal.title : '', fileName: typeof cal.fileName === 'string' ? cal.fileName : '',
+        importedAt: typeof cal.importedAt === 'string' ? cal.importedAt : '', sessions: cal.sessions, classes: cal.classes,
+        notes: cal.notes || [], problems: cal.problems || [], approvals };
     }
     // Çağıranın nesnesine de kısmi değişiklik bırakma.
     const copy = JSON.parse(JSON.stringify(data));
@@ -120,7 +144,7 @@
     if (version < RULES_VERSION) copy.settings.avoidOwnRoom = false;
     return { classes: copy.classes, settings: copy.settings,
       result: version < RULES_VERSION ? null : result(copy.result, copy.classes, copy.settings, !!copy.stale),
-      stale: version < RULES_VERSION ? false : !!copy.stale, archive };
+      stale: version < RULES_VERSION ? false : !!copy.stale, archive, calendar: calendar(copy.calendar) };
   }
 
   function load() {
@@ -183,6 +207,247 @@
     return m;
   }
   function included() { return state.classes.filter((c) => c.students.length > 0 && c.selected !== false); }
+
+  // ---------- sınav takvimi ----------
+  const CAL = window.KelebekCalendar;
+  const ckey = (c) => (CAL ? CAL.classKey(c.name) : '');
+  /** Seçili takvim oturumu (yoksa null). */
+  function activeSession(st = state.settings) {
+    const cal = state.calendar;
+    if (!cal || !st || !st.sessionId) return null;
+    return cal.sessions.find((x) => x.id === st.sessionId) || null;
+  }
+  const sessionTitle = (ses) => (CAL ? CAL.dayLabel(ses.date) : ses.date) + ' · ' + ses.label;
+  function examOf(c, ses = activeSession()) { return ses ? (ses.exams[ckey(c)] || '') : ''; }
+  function approvedRoom(c, ses = activeSession()) {
+    return !!ses && !!state.calendar && (state.calendar.approvals[ses.id] || []).includes(c.id);
+  }
+  /** Takvime göre bu oturumda salon olamayan sınıf: sınavı yok ve onay verilmemiş. */
+  function roomBlocked(c, ses = activeSession()) { return !!ses && !examOf(c, ses) && !approvedRoom(c, ses); }
+  /** Oturumdaki şubeleri sınıflandırır. */
+  function sessionGroups(ses = activeSession()) {
+    const out = { exam: [], free: [], unknown: [], missing: [] };
+    if (!ses) return out;
+    const known = new Set(state.calendar.classes);
+    const loaded = new Set();
+    for (const c of state.classes) {
+      if (!c.students.length) continue;
+      const k = ckey(c); loaded.add(k);
+      if (!known.has(k)) out.unknown.push(c);
+      else if (ses.exams[k]) out.exam.push(c);
+      else out.free.push(c);
+    }
+    out.missing = Object.keys(ses.exams).filter((k) => !loaded.has(k));
+    return out;
+  }
+  const keyLabel = (k) => k.replace(/^HAZIRLIK/, 'Hazırlık');
+  /**
+   * Takvim denetimi: dağıtımdan önce bilinmesi gerekenler.
+   * level: 'bad' dağıtımı engeller, 'warn' dikkat ister, 'info' bilgi verir.
+   */
+  function calendarIssues(ses = activeSession()) {
+    const out = [];
+    if (!ses) return out;
+    const st = state.settings, g = sessionGroups(ses);
+    if (!Object.keys(ses.exams).length) { out.push({ level: 'bad', text: 'Bu oturumda takvime göre okulda sınav yok.' }); return out; }
+    if (st.date !== ses.date || (st.lesson || '') !== (ses.lesson || '')) out.push({ level: 'warn', text: 'Sınav bilgilerindeki tarih ya da ders saati takvimdeki oturumla uyuşmuyor. Oturumu yeniden seçin ya da bilgileri düzeltin.' });
+    if (g.missing.length) out.push({ level: 'warn', text: 'Takvimde sınavı olan ' + g.missing.map(keyLabel).join(', ') + ' şubesinin listesi yüklü değil; bu öğrenciler dağıtıma girmiyor. Listeyi 1. adımda yükleyin.' });
+    const notSel = g.exam.filter((c) => c.selected === false);
+    if (notSel.length) out.push({ level: 'warn', text: notSel.map((c) => c.name + ' (' + examOf(c, ses) + ')').join(', ') + ': takvimde sınavı var ama dağıtıma seçilmedi.' });
+    const extra = g.free.concat(g.unknown).filter((c) => c.selected !== false);
+    if (extra.length) out.push({ level: 'warn', text: extra.map((c) => c.name).join(', ') + ': bu oturumda sınavı yok ama dağıtıma seçildi; öğrencileri sınav salonlarına yerleştirilecek.' });
+    if (g.unknown.length) out.push({ level: 'info', text: g.unknown.map((c) => c.name).join(', ') + ' takvimde yok; sınavı yok sayıldı ve salon olarak kullanılmıyor.' });
+    for (const k of ses.blanks || []) if (state.classes.some((c) => ckey(c) === k && c.students.length)) out.push({ level: 'warn', text: keyLabel(k) + ' için takvimdeki hücre boş; sınavı yok sayıldı. Takvimi kontrol edin.' });
+    const approved = state.classes.filter((c) => approvedRoom(c, ses));
+    if (approved.length) out.push({ level: 'info', text: approved.map((c) => c.name).join(', ') + ': sınavı olmadığı hâlde onayınızla salon olarak kullanılıyor.' });
+    const t = capTotals();
+    if (t.students && t.seats < t.students) {
+      const cands = g.free.concat(g.unknown).filter((c) => !approvedRoom(c, ses)).sort((a, b) => capOf(b) - capOf(a));
+      out.push({ level: 'bad', text: 'Salonlar yetmiyor: ' + t.students + ' öğrenci için ' + t.seats + ' koltuk var (' + (t.students - t.seats) + ' eksik).' + (cands.length ? ' Sınavı olmayan bir sınıfı onayınızla salon olarak açabilirsiniz.' : ''), approve: cands.slice(0, 6) });
+    } else if (t.students && st.seatsPerDesk !== 1) {
+      const desks = roomClasses().reduce((a, c) => a + Math.ceil(capOf(c) / 2), 0);
+      const lv = new Map();
+      for (const c of included()) lv.set(A.levelOf(c.name), (lv.get(A.levelOf(c.name)) || 0) + c.students.length);
+      for (const [l, n] of lv) if (n > desks) out.push({ level: 'warn', text: levelLabelOf(l) + ' öğrencileri (' + n + ') sıra sayısından (' + desks + ') fazla; en az ' + (n - desks) + ' sırada aynı düzeyden iki öğrenci oturacak. Önlemek için yaklaşık ' + (n - desks) * 2 + ' koltuk daha gerekir; sınavı olmayan sınıfları onayınızla salon olarak açabilirsiniz.', approve: g.free.filter((c) => !approvedRoom(c, ses)).sort((a, b) => capOf(b) - capOf(a)).slice(0, 4) });
+      if (lv.size === 1 && !out.some((x) => /sıra sayısından/.test(x.text))) out.push({ level: 'info', text: 'Bu oturumda yalnızca ' + levelLabelOf([...lv.keys()][0]) + ' öğrencileri sınavda; aynı düzeyi ayırmak için boş koltuklar kullanılır.' });
+    }
+    const [y, m, d] = ses.date.split('-').map(Number);
+    const dateText = d + '.' + m + '.' + y;
+    for (const n of state.calendar.notes || []) if (n.includes(dateText) || n.includes(d + '.' + String(m).padStart(2, '0') + '.' + y)) out.push({ level: 'warn', text: 'Takvim notu: ' + n });
+    return out;
+  }
+  const levelLabelOf = (lv) => (/^\d+$/.test(lv) ? lv + '. sınıf' : lv);
+  /** Takvim başlığından dönem/sınav adı ("1. Dönem 1. Sınav") ve okul adı. */
+  function calendarMeta(title) {
+    const t = String(title || '');
+    const m = t.match(/(\d)\.\s*Dönem\s*(\d)\./i);
+    const sm = t.match(/[—–]\s*([^—–(]+?(?:Lisesi|Okulu|Koleji|Ortaokulu)[^—–(]*)/i);
+    return { exam: m ? m[1] + '. Dönem ' + m[2] + '. Sınav' : '', school: sm ? sm[1].trim() : '' };
+  }
+  /** Oturumu seçer: tarih ve ders saatini doldurur, sınavı olan şubeleri dağıtıma ve salona alır. */
+  function applySession(id) {
+    if (!editAllowed()) { renderAll(); return false; }
+    const ses = id && state.calendar ? state.calendar.sessions.find((x) => x.id === id) : null;
+    const next = JSON.parse(JSON.stringify(state));
+    next.settings.sessionId = ses ? ses.id : '';
+    if (ses) {
+      next.settings.date = ses.date;
+      next.settings.lesson = ses.lesson || '';
+      if (ses.time) next.settings.time = ses.time;
+      const meta = calendarMeta(state.calendar.title);
+      if (!next.settings.exam && meta.exam) next.settings.exam = meta.exam;
+      if (!next.settings.school && meta.school) next.settings.school = meta.school;
+      const ok = new Set((state.calendar.approvals[ses.id] || []));
+      for (const c of next.classes) {
+        const has = !!ses.exams[ckey(c)];
+        c.selected = has;
+        c.useAsRoom = has || ok.has(c.id);
+      }
+    }
+    if (next.result) next.stale = true;
+    if (!save(next)) return false;
+    state = next; selectedSeat = null;
+    renderAll();
+    if (ses) {
+      const g = sessionGroups(ses);
+      toast(sessionTitle(ses) + ' seçildi: ' + g.exam.length + ' şube sınavda, ' + g.free.length + ' şube sınavsız.' + (g.missing.length ? ' ' + g.missing.length + ' şubenin listesi eksik.' : ''));
+    }
+    return true;
+  }
+  function setRoomApproval(id, on) {
+    const ses = activeSession();
+    const c = state.classes.find((x) => x.id === id);
+    if (!ses || !c || !editAllowed()) return false;
+    if (on && typeof window.confirm === 'function' && !window.confirm(c.name + ' bu oturumda (' + sessionTitle(ses) + ') sınava girmiyor; öğrencileri o saatte kendi sınıfında olabilir.\n\nBu sınıfı sınav salonu olarak açmayı onaylıyor musunuz?')) return false;
+    const next = JSON.parse(JSON.stringify(state));
+    const list = (next.calendar.approvals[ses.id] || []).filter((x) => x !== id);
+    if (on) list.push(id);
+    if (list.length) next.calendar.approvals[ses.id] = list; else delete next.calendar.approvals[ses.id];
+    next.classes.find((x) => x.id === id).useAsRoom = on;
+    if (next.result) next.stale = true;
+    if (!save(next)) return false;
+    state = next; renderAll();
+    toast(on ? c.name + ' onayınızla sınav salonu olarak açıldı.' : c.name + ' salon onayı kaldırıldı.');
+    return true;
+  }
+  async function importCalendar(file) {
+    if (!file || !CAL) return;
+    if (!editAllowed()) return;
+    try {
+      const buf = new Uint8Array(await file.arrayBuffer());
+      const parsed = CAL.read(buf);
+      const old = state.calendar;
+      const approvals = {};
+      if (old) for (const k of Object.keys(old.approvals || {})) if (parsed.sessions.some((x) => x.id === k)) approvals[k] = old.approvals[k];
+      const cal = { title: parsed.title, fileName: file.name || '', importedAt: new Date().toISOString(), sessions: parsed.sessions,
+        classes: parsed.classes, notes: parsed.notes, problems: parsed.problems, approvals };
+      const next = { ...state, calendar: cal, settings: { ...state.settings } };
+      if (!cal.sessions.some((x) => x.id === next.settings.sessionId)) next.settings.sessionId = '';
+      const meta = calendarMeta(cal.title);
+      if (!next.settings.school && meta.school) next.settings.school = meta.school;
+      if (!next.settings.exam && meta.exam) next.settings.exam = meta.exam;
+      if (!save(next)) return;
+      state = next;
+      renderAll();
+      const withExam = cal.sessions.filter((x) => Object.keys(x.exams).length).length;
+      toast('Sınav takvimi yüklendi: ' + withExam + ' sınav oturumu, ' + cal.classes.length + ' şube. Dağıtım için bir oturum seçin.');
+    } catch (e) {
+      toast('Takvim okunamadı: ' + e.message);
+    }
+  }
+  function removeCalendar() {
+    if (!editAllowed()) return;
+    const next = { ...state, calendar: null, settings: { ...state.settings, sessionId: '' } };
+    if (!save(next)) return;
+    state = next; renderAll();
+    toast('Sınav takvimi kaldırıldı. Şube ve salon seçimleri olduğu gibi kaldı.');
+  }
+  /** Bugünkü ya da sıradaki oturumlar (sınavı olanlar). */
+  function upcomingSessions(limit = 3) {
+    if (!state.calendar) return [];
+    const today = localDateKey(new Date());
+    return state.calendar.sessions.filter((x) => x.date >= today && Object.keys(x.exams).length).slice(0, limit);
+  }
+  const sessionSaved = (ses) => state.archive.some((a) => a.settings && a.settings.sessionId === ses.id);
+  function sessionOptions(selected) {
+    if (!state.calendar) return '';
+    return '<option value="">Takvimden oturum seçin</option>' + state.calendar.sessions.map((x) => {
+      const n = Object.keys(x.exams).length;
+      return `<option value="${esc(x.id)}"${x.id === selected ? ' selected' : ''}${n ? '' : ' disabled'}>${esc(sessionTitle(x))} — ${n ? n + ' şube sınavda' : 'okulda sınav yok'}${sessionSaved(x) ? ' ✓' : ''}</option>`;
+    }).join('');
+  }
+  function subjectsSummary(ses) {
+    const m = new Map();
+    for (const k of Object.keys(ses.exams)) m.set(ses.exams[k], (m.get(ses.exams[k]) || 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).map(([sub, n]) => sub + (n > 1 ? ' (' + n + ')' : ''));
+  }
+  /** 2. adım: takvim kartı */
+  function renderCalendar() {
+    const box = $('#calendar-card');
+    if (!box) return;
+    const cal = state.calendar;
+    if (!cal) {
+      box.innerHTML = `<div class="cal-empty"><div><h3>Sınav takvimi</h3>
+        <p class="hint">Şube bazındaki ortak sınav takvimini (Excel) yükleyin. Her oturumda sınavı olan şubeler dağıtıma, sınıfları salon olarak otomatik seçilir; sınavı olmayan sınıflar salon yapılmaz.</p></div>
+        <label class="btn primary" for="cal-file">Sınav takvimini yükle (Excel)</label></div>`;
+      return;
+    }
+    const active = activeSession();
+    const byDate = new Map();
+    for (const x of cal.sessions) { if (!byDate.has(x.date)) byDate.set(x.date, []); byDate.get(x.date).push(x); }
+    const loaded = new Set(state.classes.filter((c) => c.students.length).map(ckey));
+    const missing = cal.classes.filter((k) => !loaded.has(k));
+    const notIn = state.classes.filter((c) => c.students.length && !cal.classes.includes(ckey(c)));
+    const today = localDateKey(new Date());
+    const first = cal.sessions[0], last = cal.sessions[cal.sessions.length - 1];
+    box.innerHTML = `<div class="cal-head"><div><span class="eyebrow">SINAV TAKVİMİ</span><h3>${esc(cal.title || 'Sınav takvimi')}</h3>
+        <p class="hint">${cal.sessions.filter((x) => Object.keys(x.exams).length).length} sınav oturumu · ${cal.classes.length} şube · ${esc(CAL.dayLabel(first.date))} – ${esc(CAL.dayLabel(last.date))}${cal.fileName ? ' · ' + esc(cal.fileName) : ''}</p></div>
+        <div class="cal-actions"><label class="btn small" for="cal-file">Yeni takvim yükle</label><button type="button" class="btn ghost small danger" data-cal-remove="1">Takvimi kaldır</button></div></div>
+      ${missing.length || notIn.length || cal.problems.length || cal.notes.length ? `<ul class="cal-notes">
+        ${missing.length ? `<li class="warn">Listesi yüklenmemiş şubeler: <b>${esc(missing.map(keyLabel).join(', '))}</b>. Bu şubelerin öğrencileri dağıtıma giremez.</li>` : ''}
+        ${notIn.length ? `<li class="info">Takvimde olmayan şubeler: <b>${esc(notIn.map((c) => c.name).join(', '))}</b> (sınavı yok sayılır).</li>` : ''}
+        ${cal.problems.map((x) => `<li class="warn">${esc(x)}</li>`).join('')}
+        ${cal.notes.map((x) => `<li class="${/⚠|teyit|kontrol/i.test(x) ? 'warn' : 'info'}">${esc(x)}</li>`).join('')}
+      </ul>` : ''}
+      <div class="cal-days">${[...byDate.entries()].map(([date, list]) => `<div class="cal-day${date === today ? ' today' : ''}${date < today ? ' past' : ''}">
+        <div class="cal-date">${esc(CAL.dayLabel(date))}${date === today ? ' <span class="pill">Bugün</span>' : ''}</div>
+        ${list.map((x) => { const n = Object.keys(x.exams).length; const on = active && active.id === x.id; return `<button type="button" class="cal-ses${on ? ' on' : ''}${n ? '' : ' none'}" data-session-apply="${esc(x.id)}" ${n ? '' : 'disabled'} aria-pressed="${on}">
+          <span class="cal-ses-l">${esc(x.label)}${sessionSaved(x) ? ' <span class="cal-saved" title="Bu oturumun dağıtımı kayıtlı">✓ kayıtlı</span>' : ''}</span>
+          <span class="cal-ses-n">${n ? n + ' şube sınavda' : 'Sınav yok'}</span>
+          ${n ? `<span class="cal-ses-s">${esc(subjectsSummary(x).slice(0, 3).join(', '))}${subjectsSummary(x).length > 3 ? '…' : ''}</span>` : ''}
+        </button>`; }).join('')}
+      </div>`).join('')}</div>`;
+  }
+  /** 3. adım: oturum paneli — sınavı olan / olmayan şubeler ve denetim. */
+  function renderSessionPanel() {
+    const box = $('#session-panel');
+    if (!box) return;
+    if (!state.calendar) { box.innerHTML = ''; box.className = 'picker no-print'; return; }
+    const ses = activeSession();
+    if (!ses) {
+      const up = upcomingSessions();
+      box.className = 'picker session-panel pending no-print';
+      box.innerHTML = `<div class="pick-head"><span aria-hidden="true">📅</span><strong>Hangi oturum için dağıtım yapıyorsunuz?</strong></div>
+        ${up.length ? `<div class="ses-quick">${up.map((x) => `<button type="button" class="btn small" data-session-apply="${esc(x.id)}">${esc(sessionTitle(x))} · ${Object.keys(x.exams).length} şube</button>`).join('')}</div>` : ''}
+        <label class="ses-select">Tüm oturumlar <select data-session-select="1">${sessionOptions('')}</select></label>`;
+      return;
+    }
+    const g = sessionGroups(ses);
+    const issues = calendarIssues(ses);
+    const chip = (c, sub) => `<span class="ses-chip" style="--h:${levelHue(c.name)}"><b>${esc(c.name)}</b>${sub ? ' <small>' + esc(sub) + '</small>' : ''}</span>`;
+    box.className = 'picker session-panel no-print' + (issues.some((x) => x.level === 'bad') ? ' bad' : issues.some((x) => x.level === 'warn') ? ' warn' : '');
+    box.innerHTML = `<div class="pick-head"><span aria-hidden="true">📅</span><strong>${esc(sessionTitle(ses))}</strong>
+        <span class="spacer"></span><label class="ses-select">Oturum <select data-session-select="1">${sessionOptions(ses.id)}</select></label></div>
+      <div class="ses-groups">
+        <div class="ses-group exam"><h4>Sınavı olan şubeler <span>${g.exam.length}</span></h4><div>${g.exam.map((c) => chip(c, examOf(c, ses))).join('') || '<span class="hint">Yok</span>'}</div></div>
+        <div class="ses-group free"><h4>Sınavı olmayan şubeler <span>${g.free.length}</span></h4><p class="hint">Kendi sınıflarında ders yapar; salon olarak kullanılmaz.</p><div>${g.free.map((c) => chip(c, approvedRoom(c, ses) ? 'onaylı salon' : '')).join('') || '<span class="hint">Yok</span>'}</div></div>
+        ${g.unknown.length ? `<div class="ses-group unknown"><h4>Takvimde olmayan <span>${g.unknown.length}</span></h4><div>${g.unknown.map((c) => chip(c, '')).join('')}</div></div>` : ''}
+        ${g.missing.length ? `<div class="ses-group missing"><h4>Listesi yüklenmemiş <span>${g.missing.length}</span></h4><div>${g.missing.map((k) => `<span class="ses-chip"><b>${esc(keyLabel(k))}</b> <small>${esc(ses.exams[k])}</small></span>`).join('')}</div></div>` : ''}
+      </div>
+      ${issues.length ? `<ul class="ses-issues">${issues.map((x) => `<li class="${x.level}">${x.level === 'bad' ? '⛔' : x.level === 'warn' ? '⚠' : 'ℹ'} ${esc(x.text)}${x.approve && x.approve.length ? `<div class="ses-approve">${x.approve.map((c) => `<button type="button" class="btn small" data-approve-room="${esc(c.id)}">${esc(c.name)} salon olsun (${capOf(c)} koltuk)</button>`).join('')}</div>` : ''}</li>`).join('')}</ul>` : '<p class="ses-ok">✓ Takvim denetimi: sorun yok. Sınavı olan şubeler seçildi, salonlar yalnızca sınavı olan sınıflardan oluşuyor.</p>'}`;
+  }
+  /** Dağıtımın ders bilgisi: şube kimliği → ders adı */
+  function subjectOf(classId, r = state.result) { return (r && r.subjects && r.subjects[classId]) || ''; }
 
   /** Sınıfları düzeylere göre gruplar: [{level, label, classes}] */
   function byLevel(classes) {
@@ -464,7 +729,8 @@
   function renderPicker() {
     const box = $('#picker');
     const groups = byLevel(state.classes.filter((c) => c.students.length > 0));
-    if (!groups.length) { box.innerHTML = ''; return; }
+    if (!groups.length) { box.innerHTML = ''; renderSessionPanel(); return; }
+    const ses = activeSession();
     const inc = included();
     const total = inc.reduce((a, c) => a + c.students.length, 0);
     box.innerHTML = `
@@ -480,11 +746,12 @@
         return `<div class="pick-row">
           <label class="pick-level"><input type="checkbox" data-pick-level="${esc(g.level)}" ${on === g.classes.length ? 'checked' : ''} ${on > 0 && on < g.classes.length ? 'data-mixed="1"' : ''}> ${esc(g.label)}</label>
           <div class="pick-classes">${g.classes.map((c) => `
-            <label class="pick-chip" style="--h:${levelHue(c.name)}"><input type="checkbox" data-pick-class="${esc(c.id)}" ${c.selected !== false ? 'checked' : ''}> ${esc(c.name)}</label>`).join('')}
+            <label class="pick-chip${ses && !examOf(c, ses) ? ' no-exam' : ''}" style="--h:${levelHue(c.name)}"${ses ? ` title="${esc(examOf(c, ses) || 'Bu oturumda sınavı yok')}"` : ''}><input type="checkbox" data-pick-class="${esc(c.id)}" ${c.selected !== false ? 'checked' : ''}> ${esc(c.name)}${ses ? ` <small>${esc(examOf(c, ses) || 'sınav yok')}</small>` : ''}</label>`).join('')}
           </div>
         </div>`;
       }).join('')}`;
     box.querySelectorAll('[data-mixed]').forEach((el) => { el.indeterminate = true; });
+    renderSessionPanel();
     renderRoomPicker();
     renderCapacity();
   }
@@ -496,7 +763,7 @@
     return Math.max(0, Math.floor(Number(c.roomCap)) || 0);
   }
   /** Sınav salonu olarak kullanılacak sınıflar (öğrencilerinin sınava girmesinden bağımsız). */
-  function roomClasses() { return state.classes.filter((c) => c.students.length > 0 && c.useAsRoom !== false); }
+  function roomClasses() { return state.classes.filter((c) => c.students.length > 0 && c.useAsRoom !== false && !roomBlocked(c)); }
   function capTotals() {
     const inc = included();
     const rooms = roomClasses();
@@ -512,9 +779,11 @@
     const inc = included();
     const onIds = new Set(on.map((c) => c.id));
     const same = on.length === inc.length && inc.every((c) => onIds.has(c.id));
-    const summary = same
+    const blockedN = all.filter((c) => roomBlocked(c)).length;
+    const lockNote = blockedN ? ` · <span class="rooms-locked">🔒 sınavı olmayan ${blockedN} sınıf salon değil</span>` : '';
+    const summary = (same
       ? `Salonlar: <b>sınava girenlerle aynı</b> (${on.length} salon)`
-      : `Salonlar: <b>${on.length} salon seçildi</b>${inc.filter((c) => !onIds.has(c.id)).length ? ' · salon olmayan: ' + esc(inc.filter((c) => !onIds.has(c.id)).map((c) => c.name).join(', ')) : ''}${on.filter((c) => !inc.includes(c)).length ? ' · ek salon: ' + esc(on.filter((c) => !inc.includes(c)).map((c) => c.name).join(', ')) : ''}`;
+      : `Salonlar: <b>${on.length} salon seçildi</b>${inc.filter((c) => !onIds.has(c.id)).length ? ' · salon olmayan: ' + esc(inc.filter((c) => !onIds.has(c.id)).map((c) => c.name).join(', ')) : ''}${on.filter((c) => !inc.includes(c)).length ? ' · ek salon: ' + esc(on.filter((c) => !inc.includes(c)).map((c) => c.name).join(', ')) : ''}`) + lockNote;
     if (!roomsOpen) {
       box.className = 'picker rooms-picker closed no-print';
       box.innerHTML = `<div class="rooms-summary"><span class="rooms-icon" aria-hidden="true">🚪</span><strong>Sınav salonları</strong><span class="rooms-text">${summary}</span><span class="spacer"></span><button type="button" class="btn small" data-rooms-toggle="1">Değiştir</button></div>`;
@@ -532,7 +801,9 @@
       </div>
       <div class="room-tiles">${byLevel(all).map((g) => `
         <div class="room-group"><span class="room-group-h">${esc(g.label)}</span>
-          ${g.classes.map((c) => `<label class="room-tile${c.useAsRoom !== false ? ' on' : ''}"><input type="checkbox" data-room-class="${esc(c.id)}" ${c.useAsRoom !== false ? 'checked' : ''}><span class="room-name">${esc(c.name)}</span><small>${c.students.length} koltuk</small></label>`).join('')}
+          ${g.classes.map((c) => roomBlocked(c)
+            ? `<div class="room-tile blocked"><span class="room-name">🔒 ${esc(c.name)}</span><small>Bu oturumda sınavı yok</small><button type="button" class="btn small" data-approve-room="${esc(c.id)}">Onay ver, salon yap</button></div>`
+            : `<label class="room-tile${c.useAsRoom !== false ? ' on' : ''}${approvedRoom(c) ? ' approved' : ''}"><input type="checkbox" data-room-class="${esc(c.id)}" ${c.useAsRoom !== false ? 'checked' : ''}><span class="room-name">${esc(c.name)}</span><small>${c.students.length} koltuk${approvedRoom(c) ? ' · onaylı' : ''}</small>${approvedRoom(c) ? `<button type="button" class="btn ghost small" data-unapprove-room="${esc(c.id)}">Onayı kaldır</button>` : ''}</label>`).join('')}
         </div>`).join('')}
       </div>
       <p class="hint rooms-foot">${summary}</p>`;
@@ -674,10 +945,17 @@
     $('#s-duplex').checked = s.duplex !== false;
     $('#s-theme').value = s.docTheme || 'kurumsal';
     $('#s-own').checked = !!s.avoidOwnRoom;
+    const sf = $('#session-field');
+    if (sf) { sf.hidden = !state.calendar; $('#s-session').innerHTML = sessionOptions(s.sessionId); $('#s-session').value = s.sessionId || ''; }
     renderThemePreview();
+    renderCalendar();
   }
   function readSettings(ev) {
     if (!editAllowed()) { renderSettings(); return; }
+    if ($('#s-session') && state.calendar && ($('#s-session').value || '') !== (state.settings.sessionId || '')) {
+      if (ev && ev.type === 'change') applySession($('#s-session').value);
+      return;
+    }
     const previousSettings = JSON.stringify(state.settings);
     const previousState = JSON.parse(JSON.stringify(state));
     const s = state.settings;
@@ -706,10 +984,15 @@
   function runDistribution() {
     if (!editAllowed()) return;
     const inc = included();
-    if (!inc.length) { toast(state.classes.length ? 'Dağıtıma girecek en az bir şube seçin.' : 'Önce sınıf listelerini yükleyin.'); return; }
+    const ses = activeSession();
+    if (!inc.length) { toast(!state.classes.length ? 'Önce sınıf listelerini yükleyin.' : ses ? 'Bu oturumda sınavı olan şube seçili değil.' : 'Dağıtıma girecek en az bir şube seçin.'); return; }
     try {
       const t = capTotals();
-      if (t.seats < t.students) { toast(`Salonlar yetmiyor: ${t.students} öğrenci için ${t.seats} koltuk var. Daha fazla salon seçin ya da salon mevcudunu artırın.`); return; }
+      if (t.seats < t.students) {
+        toast(`Salonlar yetmiyor: ${t.students} öğrenci için ${t.seats} koltuk var.` + (ses ? ' Sınavı olmayan sınıflar onayınız olmadan salon yapılmaz; Dağıtım sayfasındaki takvim panelinden onay verebilirsiniz.' : ' Daha fazla salon seçin ya da salon mevcudunu artırın.'));
+        renderSessionPanel();
+        return;
+      }
       const rooms = roomClasses().map((c) => ({ id: c.id, name: c.name, deskCols: c.deskCols, capacity: capOf(c) }));
       if (!rooms.some((x) => x.capacity > 0)) { toast('Sınav salonu olarak en az bir sınıf seçin.'); return; }
       const r = A.distribute(inc, {
@@ -719,6 +1002,12 @@
         seatsPerDesk: state.settings.seatsPerDesk,
         avoidOwnRoom: state.settings.avoidOwnRoom,
       });
+      if (ses) {
+        r.sessionId = ses.id;
+        r.subjects = {};
+        for (const c of inc) if (examOf(c, ses)) r.subjects[c.id] = examOf(c, ses);
+        for (const x of calendarIssues(ses)) if (x.level !== 'info') r.warnings.push(/^Takvim/.test(x.text) ? x.text : 'Takvim: ' + x.text);
+      }
       stampResult(r, true); r.locked = false;
       const next = { ...state, result: r, stale: false };
       if (!save(next)) return;
@@ -726,7 +1015,8 @@
       selectedSeat = null;
       renderResult();
       showPage('plan');
-      toast(inc.reduce((a, c) => a + c.students.length, 0) + ' öğrenci ' + r.rooms.length + ' salona yerleştirildi.');
+      const calWarn = ses ? calendarIssues(ses).filter((x) => x.level === 'warn').length : 0;
+      toast(inc.reduce((a, c) => a + c.students.length, 0) + ' öğrenci ' + r.rooms.length + ' salona yerleştirildi.' + (calWarn ? ' Takvim denetiminde ' + calWarn + ' uyarı var; durum çubuğunda görebilirsiniz.' : ''));
     } catch (e) {
       console.error(e);
       toast('Dağıtım yapılamadı: ' + e.message);
@@ -798,9 +1088,9 @@
 
   /** Belgenin sınav bilgileri (boş olanlar yazılmaz). */
   function headerMeta(s = state.settings, result = state.result) {
-    void result;
     const date = s.date ? fmtDay(parseDay(s.date), { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' }) : '';
-    const fields = [['Sınav', s.exam], ['Tarih', date], ['Saat', s.time], ['Ders', s.lesson && s.lesson + '. ders']].filter(([, v]) => v);
+    const subs = result && result.subjects ? [...new Set(Object.keys(result.subjects).map((k) => result.subjects[k]))] : [];
+    const fields = [['Sınav', s.exam], ['Tarih', date], ['Saat', s.time], ['Ders', s.lesson && s.lesson + '. ders'], ['Sınav dersi', subs.length === 1 ? subs[0] : '']].filter(([, v]) => v);
     if (!fields.length && !s.headerNote) return '<div class="exam-identity empty-identity"></div>';
     return `<div class="exam-identity">
       ${fields.length ? `<dl class="doc-facts">${fields.map(([label, value]) => `<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>` : ''}
@@ -1028,7 +1318,7 @@
     const labels = rooms.map((x) => `<div class="env">
       <div class="env-head"><span>SALON ZARFI</span><b>${esc(x.title)}</b><strong>${x.rc.total}<small> kâğıt</small></strong></div>
       <div class="env-meta">${esc(envMeta)}</div>
-      <div class="env-lines">${x.rc.levels.map((L) => `<div class="env-level"><b>${esc(levelLabel(L.level))} · ${L.total}</b><span>${L.classes.map((c) => `${esc(c.name)}: <strong>${c.n}</strong>`).join(' &nbsp; / &nbsp; ')}</span></div>`).join('')}</div>
+      <div class="env-lines">${x.rc.levels.map((L) => `<div class="env-level"><b>${esc(levelLabel(L.level))} · ${L.total}</b><span>${L.classes.map((c) => `${esc(c.name)}${subjectOf(c.id) ? ' (' + esc(subjectOf(c.id)) + ')' : ''}: <strong>${c.n}</strong>`).join(' &nbsp; / &nbsp; ')}</span></div>`).join('')}</div>
       <div class="env-check">□ Kâğıt sayısı kontrol edildi &nbsp; □ Teslim alındı</div>
     </div>`).join('');
 
@@ -1062,7 +1352,7 @@
       return `<div class="qcard${done === lines.length ? ' done' : ''}">
         <div class="qhead"><span class="qtitle">${esc(x.title)} salonu</span><span class="qtotal">${x.rc.total} kâğıt</span></div>
         <div class="room-level-totals" aria-label="Bu salondaki düzey toplamları">${x.rc.levels.map((L) => `<span><small>${esc(levelLabel(L.level))}</small><b>${L.total}</b></span>`).join('')}</div>
-        ${lines.map((c) => `<label class="qline"><input type="checkbox" data-pc="${esc(x.ri + '|' + c.id)}" ${checks[x.ri + '|' + c.id] ? 'checked' : ''}><span class="qname">${esc(c.name)}</span><span class="qn">${c.n}</span></label>`).join('')}
+        ${lines.map((c) => `<label class="qline"><input type="checkbox" data-pc="${esc(x.ri + '|' + c.id)}" ${checks[x.ri + '|' + c.id] ? 'checked' : ''}><span class="qname">${esc(c.name)}${subjectOf(c.id) ? ' <small class="qsub">' + esc(subjectOf(c.id)) + '</small>' : ''}</span><span class="qn">${c.n}</span></label>`).join('')}
         <div class="qfoot">${done === lines.length ? 'Zarf hazır ✓' : done + ' / ' + lines.length + ' şube konuldu'}</div>
       </div>`;
     }).join('');
@@ -1087,7 +1377,7 @@
       const levels = roomCounts(room).levels.filter((L) => !level || L.level === level);
       return { room: roomTitle(room, ci), total: levels.reduce((n, L) => n + L.total, 0),
         levels: levels.map((L) => ({ level: L.level, label: levelLabel(L.level), total: L.total })),
-        detail: levels.flatMap((L) => L.classes.map((c) => c.name + ': ' + c.n)).join(' · ') };
+        detail: levels.flatMap((L) => L.classes.map((c) => c.name + (subjectOf(c.id) ? ' ' + subjectOf(c.id) : '') + ': ' + c.n)).join(' · ') };
     }).filter((r) => r.total > 0);
     return { school: state.settings.school, title: state.settings.exam || 'Sınav kâğıdı hazırlama',
       exam: state.settings.exam, date: state.settings.date, time: state.settings.time,
@@ -1491,7 +1781,7 @@
     const rooms = r.rooms.map((room) => ({ title: roomTitle(room, ci), rc: roomCounts(room) }));
     return rooms.map((x) => {
       const lines = [];
-      for (const L of x.rc.levels) for (const c of L.classes) lines.push({ label: c.name, n: c.n, hue: levelHue(c.name) });
+      for (const L of x.rc.levels) for (const c of L.classes) lines.push({ label: c.name + (subjectOf(c.id) ? ' · ' + subjectOf(c.id) : ''), n: c.n, hue: levelHue(c.name) });
       return { title: x.title + ' salonu', total: x.rc.total, lines, levels: x.rc.levels.map((L) => ({ label: levelLabel(L.level), n: L.total })) };
     });
   }
@@ -1691,7 +1981,7 @@
           <button type="button" class="btn small" data-print-class="${esc(c.id)}">Yazdır</button>
         </div>
         <div data-class-body id="${bodyId}" hidden>
-        ${sheetHead('Şube · ' + c.name, 'Öğrencilerin sınav yerleri', c.id, 'class')}
+        ${sheetHead('Şube · ' + c.name + (subjectOf(c.id) ? ' · ' + subjectOf(c.id) : ''), 'Öğrencilerin sınav yerleri', c.id, 'class')}
         <div class="table-scroll"><table class="list">
           <thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th>Sınav salonu</th><th>Sıra no</th><th>Sıra grubu</th><th>Sıra</th>${twin ? '<th>Koltuk</th>' : ''}</tr></thead>
           <tbody>${rows}</tbody>
@@ -1803,11 +2093,11 @@
     const ci = classIndex();
     const si = studentIndex();
     const pl = seatPlaces();
-    const lines = [['Sınıfı', 'Adı soyadı', 'Sınav salonu', 'Sıra no', 'Sıra grubu', 'Sıra (önden)', 'Koltuk', 'Sınav', 'Tarih', 'Saat', 'Ders', 'Ek bilgi', 'Dağıtım sürümü']];
+    const lines = [['Sınıfı', 'Adı soyadı', 'Sınav salonu', 'Sıra no', 'Sıra grubu', 'Sıra (önden)', 'Koltuk', 'Sınav', 'Tarih', 'Saat', 'Ders', 'Ek bilgi', 'Dağıtım sürümü', 'Sınav dersi']];
     for (const c of included()) {
       for (const s of c.students.slice().sort((a, b) => collator.compare(a.name, b.name))) {
         const p = pl.get(s.id);
-        if (p) lines.push([c.name, s.name, p.room, p.no, p.group, p.rowNo, p.seat, state.settings.exam, state.settings.date, state.settings.time, state.settings.lesson ? state.settings.lesson + '. ders' : '', state.settings.headerNote, distributionLabel()]);
+        if (p) lines.push([c.name, s.name, p.room, p.no, p.group, p.rowNo, p.seat, state.settings.exam, state.settings.date, state.settings.time, state.settings.lesson ? state.settings.lesson + '. ders' : '', state.settings.headerNote, distributionLabel(), subjectOf(c.id)]);
       }
     }
     const csv = '﻿' + lines.map((l) => l.map(csvCell).join(';')).join('\r\n');
@@ -2015,6 +2305,11 @@
       if (!editAllowed()) return;
       const settings = { ...state.settings };
       for (const control of form.querySelectorAll('[name]')) settings[control.name] = control.value.trim();
+      if ((settings.sessionId || '') !== (state.settings.sessionId || '')) {
+        dialog.close();
+        if (applySession(settings.sessionId) && event.submitter && event.submitter.value === 'run') runDistribution();
+        return;
+      }
       if (JSON.stringify(settings) !== JSON.stringify(state.settings)) {
         const result = state.result && { ...state.result };
         if (result) stampResult(result);
@@ -2210,6 +2505,10 @@
     });
     $('#rooms-picker').addEventListener('click', (e) => {
       if (e.target.closest('[data-rooms-toggle]')) { roomsOpen = !roomsOpen; renderRoomPicker(); return; }
+      const ap = e.target.closest('[data-approve-room]');
+      if (ap) { e.preventDefault(); setRoomApproval(ap.dataset.approveRoom, true); return; }
+      const un = e.target.closest('[data-unapprove-room]');
+      if (un) { e.preventDefault(); setRoomApproval(un.dataset.unapproveRoom, false); return; }
       if (!editAllowed()) { renderRoomPicker(); return; }
       if (e.target.closest('[data-rooms-toggle]')) { roomsOpen = !roomsOpen; renderRoomPicker(); return; }
       const b = e.target.closest('[data-room-pick]');
@@ -2263,6 +2562,26 @@
     }
     $('#archive-view').addEventListener('change', onPaperCheck);
     $('#sd-q').addEventListener('input', renderStudentDelete);
+    $('#cal-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; importCalendar(f); });
+    let calRemoveArmed = 0;
+    $('#calendar-card').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-session-apply]');
+      if (b) { applySession(b.dataset.sessionApply); return; }
+      const rm = e.target.closest('[data-cal-remove]');
+      if (rm) {
+        if (Date.now() - calRemoveArmed > 4000) { calRemoveArmed = Date.now(); rm.textContent = 'Kaldırmak için tekrar basın'; return; }
+        calRemoveArmed = 0; removeCalendar();
+      }
+    });
+    $('#session-panel').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-session-apply]');
+      if (b) { applySession(b.dataset.sessionApply); return; }
+      const ap = e.target.closest('[data-approve-room]');
+      if (ap) setRoomApproval(ap.dataset.approveRoom, true);
+    });
+    $('#session-panel').addEventListener('change', (e) => {
+      if (e.target.dataset.sessionSelect) applySession(e.target.value);
+    });
     $('#sa-add').addEventListener('click', onAddStudent);
     $('#sa-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); onAddStudent(); } });
     $('#sd-undo').addEventListener('click', (e) => { if (e.target.closest('[data-undo-delete]')) undoDelete(); });

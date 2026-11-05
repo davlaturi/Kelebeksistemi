@@ -95,10 +95,15 @@
           <p class="hint">Bu bilgiler çıktıların başlığında yer alır.</p>
         </div>
       </div>
+      <section class="calendar-card" id="calendar-card" aria-label="Sınav takvimi"></section>
+      <input type="file" id="cal-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
       <form id="settings" class="settings" autocomplete="off">
         <fieldset class="settings-card">
           <legend><span class="settings-kicker">01</span> Sınav bilgileri</legend>
           <p class="settings-description">Sınavı tanımlayın. Bilgiler raporlara ve paylaşım başlıklarına aktarılır.</p>
+          <div class="field" id="session-field" hidden><label for="s-session">Takvimdeki oturum</label>
+            <select id="s-session" name="sessionId"></select>
+            <small class="hint">Oturum seçilince tarih ve ders saati takvimden gelir; sınavı olan şubeler dağıtıma ve salona alınır.</small></div>
           <div class="settings-grid settings-grid-two"><div class="field"><label for="s-school">Okul adı</label><input id="s-school" name="school" type="text" placeholder="Örn. Atatürk Anadolu Lisesi"></div><div class="field"><label for="s-exam">Dönem / sınav</label><select id="s-exam" name="exam">
           <option value="">Sınav seçin</option>
           <option>1. Dönem 1. Sınav</option><option>1. Dönem 2. Sınav</option>
@@ -169,6 +174,7 @@
           <p class="hint" id="distribution-help">Sınava girecek şubeleri ve kullanılacak salonları seçin; ardından dağıtımı başlatın.</p>
         </div>
       </div>
+      <div id="session-panel" class="picker no-print" data-distribution-setup></div>
       <div id="picker" class="picker no-print" data-distribution-setup></div>
       <div id="rooms-picker" class="picker no-print" data-distribution-setup></div>
       <div id="capacity" class="picker no-print" data-distribution-setup></div>
@@ -303,6 +309,7 @@
   <script src="assets/parser.js"></script>
   <script src="assets/assign.js"></script>
   <script src="assets/share.js"></script>
+  <script src="assets/calendar.js"></script>
   <script src="assets/app.js"></script>
 </body>
 </html>

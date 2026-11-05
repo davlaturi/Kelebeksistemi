@@ -1156,3 +1156,60 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .sa-row .sa-class { flex: 0 1 180px; }
 #sd-undo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: #fff4d6; color: #5c3b00; max-width: 640px; }
 .student-delete .sd-field { margin-top: 4px; }
+
+/* ---------- v1.23: sınav takvimi ---------- */
+.calendar-card { display: grid; gap: 12px; margin: 0 0 16px; padding: 14px 16px; border: 1px solid #d5dfe9; border-radius: 14px; background: #f7fafd; }
+.calendar-card h3 { margin: 2px 0; font-size: 1.05rem; }
+.calendar-card .eyebrow { font-size: .72rem; letter-spacing: .08em; color: #3b5b7a; font-weight: 700; }
+.cal-empty { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.cal-empty .hint { margin: 4px 0 0; max-width: 680px; }
+.cal-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; justify-content: space-between; }
+.cal-head .hint { margin: 2px 0 0; }
+.cal-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.cal-notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .88rem; }
+.cal-notes li { padding: 5px 9px; border-radius: 8px; background: #eef3f8; }
+.cal-notes li.warn { background: #fff4d6; color: #5c3b00; }
+.cal-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.cal-day { display: grid; gap: 5px; align-content: start; padding: 8px; border-radius: 10px; background: #fff; border: 1px solid #e1e7ee; }
+.cal-day.today { border-color: #1d3557; box-shadow: 0 0 0 2px rgba(29,53,87,.12); }
+.cal-day.past { opacity: .72; }
+.cal-date { font-weight: 700; font-size: .9rem; }
+.cal-ses { display: grid; gap: 1px; text-align: left; padding: 6px 8px; border-radius: 8px; border: 1px solid #d5dfe9; background: #f9fbfd; cursor: pointer; font: inherit; color: inherit; }
+.cal-ses:hover { background: #eef4fa; }
+.cal-ses.on { background: #1d3557; color: #fff; border-color: #1d3557; }
+.cal-ses.none { cursor: default; opacity: .6; }
+.cal-ses-l { font-weight: 700; font-size: .88rem; }
+.cal-ses-n { font-size: .8rem; }
+.cal-ses-s { font-size: .74rem; opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-saved { font-size: .7rem; font-weight: 600; padding: 0 5px; border-radius: 99px; background: #dff3e7; color: #1f5a3a; }
+.session-panel { border-color: #c9d8e8; background: #f7fafd; }
+.session-panel.warn { border-color: #e7c66a; background: #fffaf0; }
+.session-panel.bad { border-color: #e29a9a; background: #fff6f6; }
+.ses-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.ses-select { display: inline-flex; gap: 6px; align-items: center; font-size: .88rem; }
+.ses-select select { max-width: 100%; }
+.ses-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.ses-group { padding: 8px 10px; border-radius: 10px; background: #fff; border: 1px solid #e1e7ee; }
+.ses-group h4 { margin: 0 0 6px; font-size: .9rem; display: flex; gap: 6px; align-items: center; }
+.ses-group h4 span { font-size: .78rem; padding: 0 7px; border-radius: 99px; background: #eef3f8; }
+.ses-group.exam h4 span { background: #dff3e7; color: #1f5a3a; }
+.ses-group.missing { border-color: #e7c66a; }
+.ses-group .hint { margin: -2px 0 6px; font-size: .78rem; }
+.ses-group > div { display: flex; flex-wrap: wrap; gap: 4px; }
+.ses-chip { font-size: .8rem; padding: 2px 8px; border-radius: 99px; background: hsl(var(--h, 210) 50% 95%); border: 1px solid hsl(var(--h, 210) 40% 85%); }
+.ses-chip small { opacity: .75; }
+.ses-issues { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: .88rem; }
+.ses-issues li { padding: 6px 10px; border-radius: 8px; background: #eef3f8; }
+.ses-issues li.warn { background: #fff4d6; color: #5c3b00; }
+.ses-issues li.bad { background: #fde4e4; color: #7a1c1c; font-weight: 600; }
+.ses-approve { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-weight: 400; }
+.ses-ok { margin: 0; color: #1f5a3a; font-size: .88rem; }
+.pick-chip small { opacity: .7; font-size: .75em; }
+.pick-chip.no-exam { opacity: .6; }
+.room-tile.blocked { background: #f2f2f2; border-style: dashed; color: #666; display: grid; gap: 3px; }
+.room-tile.approved { outline: 2px solid #e0a800; }
+.rooms-locked { color: #7a4b00; }
+.qsub { display: block; font-size: .72em; opacity: .75; font-weight: 400; }
+.room-tile.blocked { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; max-width: 190px; }
+.room-tile.blocked small { font-size: .72rem; }
+.room-tile.blocked .btn { padding: 3px 8px; font-size: .78rem; }

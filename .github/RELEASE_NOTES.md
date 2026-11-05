@@ -10,13 +10,23 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.22.0)
+## Bu sürümde (v1.23.0)
+
+- **Sınav takvimi (Excel).** 2. adımda **Sınav takvimini yükle** düğmesiyle şube bazındaki ortak sınav takvimi (.xlsx) yükleniyor. Dosya internetsiz, bilgisayarın içinde okunuyor. Tarihler, ders saatleri, her şubenin dersi ve tablonun altındaki notlar alınıyor. "—" ya da boş hücre "sınav yok" sayılıyor; boş hücreler ayrıca uyarı olarak gösteriliyor.
+- **Oturum seçimi.** Takvim kartında gün gün oturumlar var (örn. "5 Kasım Perşembe · 2. ders · 14 şube sınavda"). Bir oturum seçilince tarih ve ders saati dolduruluyor. Sınavı olan şubeler dağıtıma ve salon olarak seçiliyor. Okul adı ve dönem/sınav adı boşsa takvim başlığından alınıyor. Oturum, sarı **Sınav bilgileri** penceresinden de seçilebiliyor.
+- **Sınavı olan / olmayan şubeler.** Dağıtım sayfasında seçili oturum için şubeler gruplanıyor: sınavı olanlar (dersiyle), sınavı olmayanlar, takvimde olmayanlar, listesi yüklenmemiş olanlar.
+- **Sınavı olmayan sınıf salon olmaz.** O saatte sınavı olmayan sınıfın öğrencileri kendi sınıfında olduğu için o sınıf salon listesinde kilitli (🔒) görünüyor. Salon olarak açmak sizin onayınıza bağlı: "Onay ver, salon yap" düğmesi onay soruyor. Onay o oturuma özel saklanıyor ve geri alınabiliyor.
+- **Takvim denetimi.** Dağıtımdan önce şu durumlar bildiriliyor: listesi yüklenmemiş şube; sınavı olduğu hâlde seçilmeyen ya da sınavı olmadığı hâlde seçilen şube; takvimde boş hücre; o günle ilgili takvim notları; tarih/ders saati uyuşmazlığı; salonların yetmemesi; bir düzeyin sıra sayısını aşması (aynı düzeyden sıra arkadaşı kaçınılmaz). Gerektiğinde hangi sınavsız sınıfın salon olarak açılabileceği düğmeyle öneriliyor. Uyarılar dağıtımın durum çubuğuna da yazılıyor.
+- **Çıktılarda ders adı.** Kâğıt hazırlama kartları, zarf etiketleri, öğretmenler odası listesi, sınav yerleri, WhatsApp özeti ve Excel (CSV) dosyasında her şubenin sınav dersi yazıyor. Tek ders varsa belge başlığında "Sınav dersi" görünüyor.
+- **Kayıtla bağlantı.** Kaydedilen dağıtımlar takvimde "✓ kayıtlı" olarak işaretleniyor. Takvim yedek dosyasına da dahil.
+
+## Önceki sürümde (v1.22.0)
 
 - **Elle öğrenci ekleme.** Sınıf listeleri sayfasındaki **Öğrenci ekle / sil** kutusunda öğrencinin adını yazıp şubesini seçin, **Öğrenciyi ekle**'ye basın (ya da Enter). Öğrenci şube listesine alfabetik sırayla eklenir. Aynı şubede aynı adla biri varsa önce uyarı çıkar; gerçekten ikinci kişiyse "Yine de ekle" deyin.
 - **Silmeyi geri al.** Bir öğrenci silinince kutuda "Silindi: … · Geri al" satırı çıkar. Geri al, öğrenciyi aynı şubeye ve aynı yere geri koyar. Bu düğme sayfa açık kaldığı sürece görünür.
 - Ekleme ya da geri alma sonrası hazır dağıtım "güncel değil" olarak işaretlenir; yeniden dağıtım yapmanız istenir.
 
-## Önceki sürümde (v1.21.0)
+## Daha önce (v1.21.0)
 
 - **Öğrenci silme Sınıf listelerinde.** 1. adımda, şube kartlarının üstünde **Öğrenci sil** kutusu var. Öğrencinin adını yazınca eşleşen öğrenciler şubeleriyle birlikte listeleniyor. Aynı adlı iki öğrenci varsa ayrı satırlarda görünüyor. Yanlışlıkla silmeye karşı "Öğrenciyi sil" düğmesine iki kez basmak gerekiyor.
 - Silme düğmesi "Öğrenci ara" sayfasından kaldırıldı; o sayfa artık yalnızca öğrencinin sınav yerini gösteriyor.
