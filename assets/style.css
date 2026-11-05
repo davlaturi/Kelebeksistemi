@@ -1149,3 +1149,10 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .sd-class { font-size: .85rem; padding: 2px 8px; border-radius: 999px; background: hsl(var(--h, 150) 60% 93%); color: hsl(var(--h, 150) 45% 28%); white-space: nowrap; }
 @media (max-width: 520px) { .sd-list li { grid-template-columns: 1fr auto; } .sd-list li .btn { grid-column: 1 / -1; } }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.sa-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; }
+.sa-row .field { margin: 0; }
+.sa-row .sa-name { flex: 1 1 240px; max-width: 360px; }
+.sa-row .sa-name input, .sa-row .sa-class select { width: 100%; }
+.sa-row .sa-class { flex: 0 1 180px; }
+#sd-undo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: #fff4d6; color: #5c3b00; max-width: 640px; }
+.student-delete .sd-field { margin-top: 4px; }

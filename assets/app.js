@@ -1179,6 +1179,52 @@
     } catch (error) { status.textContent = error.name === 'AbortError' ? 'Paylaşım iptal edildi.' : 'Paylaşım tamamlanamadı. Mesajı kopyalama seçeneğini kullanabilirsiniz.'; }
   }
 
+  /** Sınıf listesine elle tek öğrenci ekler. */
+  function addStudent(name, classId, force) {
+    if (!editAllowed()) return false;
+    name = String(name || '').replace(/\s+/g, ' ').trim();
+    const c = state.classes.find((x) => x.id === classId);
+    if (!name) { toast('Öğrencinin adını ve soyadını yazın.'); return false; }
+    if (!c) { toast('Öğrencinin şubesini seçin.'); return false; }
+    if (!force && c.students.some((x) => collator.compare(x.name, name) === 0)) {
+      toast('“' + name + '” zaten ' + c.name + ' listesinde. Aynı adla ikinci bir öğrenci eklemek için düğmeye tekrar basın.');
+      return 'confirm';
+    }
+    const next = JSON.parse(JSON.stringify(state));
+    next.classes.find((x) => x.id === c.id).students.push({ id: uid('s'), no: '', name });
+    next.classes.find((x) => x.id === c.id).students.sort((a, b) => collator.compare(a.name, b.name));
+    if (next.result) next.stale = true;
+    if (!save(next)) return false;
+    state = next; renderAll();
+    toast(name + ' · ' + c.name + ' listesine eklendi.' + (state.result ? ' Güncel listeyle yeniden dağıtım yapın.' : ''));
+    return true;
+  }
+  function onAddStudent() {
+    const btn = $('#sa-add');
+    const r = addStudent($('#sa-name').value, $('#sa-class').value, btn.dataset.confirm === '1');
+    if (r === 'confirm') {
+      btn.dataset.confirm = '1'; btn.textContent = 'Yine de ekle';
+      setTimeout(() => { btn.dataset.confirm = ''; btn.textContent = 'Öğrenciyi ekle'; }, 4000);
+      return;
+    }
+    btn.dataset.confirm = ''; btn.textContent = 'Öğrenciyi ekle';
+    if (r) { $('#sa-name').value = ''; $('#sa-name').focus(); }
+  }
+  /** Bu oturumda son silinen öğrenciyi aynı şubeye geri koyar. */
+  function undoDelete() {
+    if (!lastDeleted || !editAllowed()) return;
+    const c = state.classes.find((x) => x.id === lastDeleted.classId);
+    if (!c) { lastDeleted = null; renderStudentDelete(); return; }
+    const next = JSON.parse(JSON.stringify(state));
+    const list = next.classes.find((x) => x.id === c.id).students;
+    if (!list.some((x) => x.id === lastDeleted.student.id)) list.splice(Math.min(lastDeleted.index, list.length), 0, lastDeleted.student);
+    if (next.result) next.stale = true;
+    if (!save(next)) return;
+    const name = lastDeleted.student.name;
+    lastDeleted = null; state = next; renderAll();
+    toast(name + ' · ' + c.name + ' listeye geri alındı.');
+  }
+
   function deleteStudent(button) {
     if (!editAllowed()) return;
     const id = button.dataset.deleteStudent;
@@ -1190,10 +1236,13 @@
       return;
     }
     const hadResult = !!state.result;
+    const delIdx = c.students.findIndex((x) => x.id === id);
+    const delStudent = { ...c.students[delIdx] };
     const next = JSON.parse(JSON.stringify(state));
     next.classes.find((cl) => cl.id === c.id).students = c.students.filter((s) => s.id !== id);
     next.result = null; next.stale = false;
     if (!save(next)) return;
+    lastDeleted = { classId: c.id, index: delIdx, student: delStudent };
     state = next; selectedSeat = null; renderAll();
     const who = c.students.find((x) => x.id === id);
     toast((who ? who.name + ' · ' + c.name : 'Öğrenci') + ' silindi.' + (state.classes.length && hadResult ? ' Güncel listeyle yeniden dağıtım yapın.' : ''));
@@ -1700,10 +1749,23 @@
         <button type="button" class="btn small danger" data-delete-student="${esc(s.id)}">Öğrenciyi sil</button>
       </li>`).join('')}</ul>${rows.length > 40 ? '<p class="hint">İlk 40 sonuç gösteriliyor; adı daha ayrıntılı yazın.</p>' : ''}`;
   }
+  let lastDeleted = null; // {classId, index, student} — yalnız bu oturumda geri alınabilir
   function renderStudentDelete() {
     const box = $('#student-delete');
     if (!box) return;
     box.hidden = state.classes.length === 0;
+    const sel = $('#sa-class');
+    if (sel) {
+      const prev = sel.value;
+      sel.innerHTML = state.classes.map((c) => `<option value="${esc(c.id)}">${esc(c.name)} (${c.students.length})</option>`).join('');
+      if (state.classes.some((c) => c.id === prev)) sel.value = prev;
+    }
+    const undo = $('#sd-undo');
+    if (undo) {
+      const c = lastDeleted && state.classes.find((x) => x.id === lastDeleted.classId);
+      undo.hidden = !c;
+      undo.innerHTML = c ? `<span>Silindi: <b>${esc(lastDeleted.student.name)}</b> · ${esc(c.name)}</span> <button type="button" class="btn small" data-undo-delete="1">Geri al</button>` : '';
+    }
     const q = $('#sd-q') ? $('#sd-q').value : '';
     $('#sd-out').innerHTML = studentDeleteRows(q);
   }
@@ -2201,6 +2263,9 @@
     }
     $('#archive-view').addEventListener('change', onPaperCheck);
     $('#sd-q').addEventListener('input', renderStudentDelete);
+    $('#sa-add').addEventListener('click', onAddStudent);
+    $('#sa-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); onAddStudent(); } });
+    $('#sd-undo').addEventListener('click', (e) => { if (e.target.closest('[data-undo-delete]')) undoDelete(); });
     $('#sd-out').addEventListener('click', (e) => {
       const del = e.target.closest('[data-delete-student]');
       if (del) deleteStudent(del);

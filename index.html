@@ -68,10 +68,17 @@
       <div id="class-summary" class="class-summary"></div>
       <section class="student-delete" id="student-delete" hidden aria-labelledby="sd-title">
         <div class="sd-head">
-          <h3 id="sd-title">Öğrenci sil</h3>
-          <p class="hint">Nakil giden ya da sınava girmeyecek öğrencinin adını yazın, sonra “Öğrenciyi sil” düğmesine iki kez basın. Hazır bir dağıtım varsa yeniden dağıtım yapmanız gerekir; kayıtlı sınavlar değişmez.</p>
+          <h3 id="sd-title">Öğrenci ekle / sil</h3>
+          <p class="hint">Listede olmayan öğrenciyi adını yazıp şubesini seçerek ekleyin. Silmek için adını aşağıya yazın ve “Öğrenciyi sil” düğmesine iki kez basın. Hazır bir dağıtım varsa yeniden dağıtım yapmanız gerekir; kayıtlı sınavlar değişmez.</p>
         </div>
-        <div class="field sd-field"><label for="sd-q" class="sr-only">Silinecek öğrencinin adı</label>
+        <div class="sa-row">
+          <div class="field sa-name"><label for="sa-name">Yeni öğrencinin adı soyadı</label>
+            <input id="sa-name" type="text" placeholder="Örn. Ayşe Yılmaz" autocomplete="off"></div>
+          <div class="field sa-class"><label for="sa-class">Şubesi</label><select id="sa-class"></select></div>
+          <button type="button" class="btn primary" id="sa-add">Öğrenciyi ekle</button>
+        </div>
+        <div id="sd-undo" hidden></div>
+        <div class="field sd-field"><label for="sd-q">Silinecek öğrenci</label>
           <input id="sd-q" type="search" placeholder="Öğrenci adı yazın (örn. Yılmaz)" autocomplete="off"></div>
         <div id="sd-out" aria-live="polite"></div>
       </section>

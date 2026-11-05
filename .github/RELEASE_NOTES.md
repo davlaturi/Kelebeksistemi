@@ -10,13 +10,19 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.21.0)
+## Bu sürümde (v1.22.0)
+
+- **Elle öğrenci ekleme.** Sınıf listeleri sayfasındaki **Öğrenci ekle / sil** kutusunda öğrencinin adını yazıp şubesini seçin, **Öğrenciyi ekle**'ye basın (ya da Enter). Öğrenci şube listesine alfabetik sırayla eklenir. Aynı şubede aynı adla biri varsa önce uyarı çıkar; gerçekten ikinci kişiyse "Yine de ekle" deyin.
+- **Silmeyi geri al.** Bir öğrenci silinince kutuda "Silindi: … · Geri al" satırı çıkar. Geri al, öğrenciyi aynı şubeye ve aynı yere geri koyar. Bu düğme sayfa açık kaldığı sürece görünür.
+- Ekleme ya da geri alma sonrası hazır dağıtım "güncel değil" olarak işaretlenir; yeniden dağıtım yapmanız istenir.
+
+## Önceki sürümde (v1.21.0)
 
 - **Öğrenci silme Sınıf listelerinde.** 1. adımda, şube kartlarının üstünde **Öğrenci sil** kutusu var. Öğrencinin adını yazınca eşleşen öğrenciler şubeleriyle birlikte listeleniyor. Aynı adlı iki öğrenci varsa ayrı satırlarda görünüyor. Yanlışlıkla silmeye karşı "Öğrenciyi sil" düğmesine iki kez basmak gerekiyor.
 - Silme düğmesi "Öğrenci ara" sayfasından kaldırıldı; o sayfa artık yalnızca öğrencinin sınav yerini gösteriyor.
 - Hazır bir dağıtım varken öğrenci silinirse dağıtım sıfırlanıyor ve yeniden dağıtım yapmanız isteniyor. Kayıtlı sınavlar değişmiyor.
 
-## Önceki sürümde (v1.20.0)
+## Daha önce (v1.20.0)
 
 - **"Dağıtımı kilitle" öne çıktı.** Düğme Diğer menüsünden alındı, **Kaydet**'in hemen sağında duruyor. Kilitliyken sarı görünüyor ve "Dağıtım kilidini aç" yazıyor.
 - **Çıktı tasarımı önizlemesi.** 2. adımdaki "Çıktı tasarımı" seçiminin altında, seçilen tasarımla basılmış örnek bir **oturma planı** ve **imza listesi** görünüyor. Tasarımı değiştirince önizleme hemen değişiyor. Önizlemede hayali öğrenciler var; okul adı ve sınav bilgileri sizin girdiğiniz gibi görünüyor.

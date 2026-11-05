@@ -29,7 +29,7 @@ function harness(initial) {
     globalThis.api = { validateState, importBackup, load, save, saveToArchive,
       onSeatClick, localDateKey, weekStart, csvCell, withEntry, openPack,
       paperShareData, paperShareText, paperSharePreview, renderByClass, renderPapers,
-      renderSharePanel, searchRows, studentDeleteRows, deleteStudent, buildPack,
+      renderSharePanel, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
       readSettings, headerMeta, renderTeacherList, renderRoll, showPage, pageFromHash, toggleClassList, expandPrintSections,
       distributionAudit, auditHtml, renderThemePreview, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
@@ -268,6 +268,22 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   assert.equal(JSON.stringify(a.state.archive), archiveBefore, 'Eski sınavlar korunmalı');
   const afterDelete = harness(h.raw()); afterDelete.api.load();
   assert.equal(afterDelete.api.state.classes[0].students.length, 3, 'Silme kalıcı olmalı');
+  // Yanlış silineni geri al ve elle öğrenci ekle
+  const deletedName = 'Örnek Öğrenci 0-0';
+  a.undoDelete();
+  assert.equal(a.state.classes[0].students.length, 4, 'Geri al öğrenciyi geri koymalı');
+  assert.ok(a.state.classes[0].students.some((x) => x.id === 's0-0' && x.name === deletedName));
+  assert.equal(a.addStudent('  Yeni   Öğrenci ', 'c1'), true);
+  assert.ok(a.state.classes[1].students.some((x) => x.name === 'Yeni Öğrenci'), 'Boşluklar düzeltilip eklenmeli');
+  assert.equal(a.addStudent('Yeni Öğrenci', 'c1'), 'confirm', 'Aynı ad onay istemeli');
+  assert.equal(a.addStudent('Yeni Öğrenci', 'c1', true), true);
+  assert.equal(a.addStudent('', 'c1'), false); assert.equal(a.addStudent('Biri', 'yok'), false);
+  h.fail(true); assert.equal(a.addStudent('Kayıtsız', 'c1'), false); h.fail(false);
+  assert.ok(!a.state.classes[1].students.some((x) => x.name === 'Kayıtsız'), 'Kayıt başarısızsa eklenmemeli');
+  for (let i = 0; i < 2; i++) { const yeni = a.state.classes[1].students.find((x) => x.name === 'Yeni Öğrenci');
+    const b2 = { dataset: { deleteStudent: yeni.id, confirm: '1' }, textContent: '' }; a.deleteStudent(b2); }
+  a.deleteStudent({ dataset: { deleteStudent: 's0-0', confirm: '1' }, textContent: '' });
+  assert.equal(a.state.classes[0].students.length, 3);
   a.state = a.validateState(data); a.openEditor('c0'); a.editing.rows.pop();
   h.fail(true); a.saveEditor();
   assert.equal(a.state.classes[0].students.length, 4, 'Düzenleyicide başarısız kayıt silmeyi uygulamamalı');
