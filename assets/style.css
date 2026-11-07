@@ -1317,3 +1317,10 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .pack-out .poster-list td.pl-no { font-size: 11pt; }
 .pack-out .poster-list td.pl-where { font-size: 8pt; }
 .pack-out .pd-seat { font-size: 13pt; }
+/* v1.27: planda kapı/pencere işaretleri */
+.plan-sides { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: stretch; }
+.plan-sides > .ps-l, .plan-sides > .ps-r { display: flex; } .plan-sides .pm-door, .plan-sides .pm-wall { flex: 1; box-sizing: border-box; }
+.plan-sides > .desks { min-width: 0; }
+.plan-sides .ps-l .pm-door, .plan-sides .ps-l .pm-wall { transform: rotate(180deg); }
+.plan-view-note { text-align: center; font-size: .72rem; color: #555; margin-top: 4px; }
+.pack-out .plan-view-note { font-size: 7pt; }

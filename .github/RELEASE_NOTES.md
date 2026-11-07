@@ -10,7 +10,12 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.26.0)
+## Bu sürümde (v1.27.0)
+
+- **Kapı ve pencere ayarı öğretmen bakışıyla.** 2. adımdaki ayar artık "Kapı ve pencereler nerede?" diye soruyor; seçenekler öğretmen masasından bakışa göre yazılı: "pencereler SAĞDA, kapı solda" ya da "pencereler SOLDA, kapı sağda". Yeni kurulumlarda varsayılan "pencereler sağda".
+- **Planda kapı ve pencere işareti.** Oturma planının iki yanında, yönlendirme afişindeki gibi KAPI ve PENCERE yazıyor. Altta "Plan, tahtaya bakan öğrencinin gözünden çizilmiştir" notu var. Afişin 2. adımında pencerelerin hangi tarafta olduğu da yazıyor.
+
+## Önceki sürümde (v1.26.0)
 
 - **Yalnızca ad soyad ve sınıf.** Bazı e-Okul listelerinde ad soyaddan sonra gelen "Erkek / Kız" ve "Yatılı / Gündüzlü / Paralı-Yatılı" sütunları ada ekleniyordu ("ZİKRETTİN YILMAZ Erkek Yatılı"). Artık alınmıyor. Daha önce yüklenmiş listelerdeki bu ekler uygulama açılınca kendiliğinden temizleniyor ve size bildiriliyor; kayıtlı sınavlar da düzeltiliyor.
 - **Öğrenci yönlendirme afişi.** Dağıtım çıktılarına "Yönlendirme afişleri" eklendi; sınav evrakı paketinde de seçilebiliyor. Her salon için bir sayfa, kapıya oturma planının yanına asılır:
@@ -20,7 +25,7 @@ Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkm
   - ada göre sıralı liste: yer numarası ve "Kapı tarafı grubu · önden 3. sıra · sol koltuk" biçiminde yeri.
   Afişteki numaralar oturma planındakilerle aynıdır.
 
-## Önceki sürümde (v1.25.0)
+## Daha önce (v1.25.0)
 
 - **📅 Planlanmış sınavlar.** 2. adımda (ve sarı **Sınav bilgileri** penceresinde) bir düğme var. Takvimle eklenen bütün sınavlar tek tabloda: tarih, ders saati, sınava giren şube sayısı, dersler, durum (Bugün / Seçili / ✓ Kayıtlı). **Seç** ile tarih, ders saati, şubeler ve salonlar hazır gelir. Geçmiş sınavlar ve bilgi notları katlanmış duruyor; kontrol edilmesi gerekenler en üstte tek kutuda.
 - **Elle giriş eskisi gibi.** Planlanmış sınav seçmeden bilgileri elle girebilirsiniz. Seçiliyken tarihi ya da ders saatini elle değiştirirseniz bağlantı kendiliğinden kalkar ve size bildirilir. "Seçimi kaldır, elle gir" düğmesi de var.

@@ -14,7 +14,7 @@
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
-    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'lr', duplex: true, docTheme: 'kurumsal', sessionId: '',
+    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'doorR', duplex: true, docTheme: 'kurumsal', sessionId: '',
   };
   let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false, archive: [], calendar: null };
   let view = 'plan';
@@ -1340,6 +1340,14 @@
     });
   }
 
+  /** Planın iki yanına kapı ve pencere işareti (öğrenci tahtaya bakarken). */
+  function planSides(inner) {
+    const mode = state.settings.sideNames || 'lr';
+    if (mode === 'lr') return inner;
+    const door = '<div class="pm-door">KAPI</div>', win = '<div class="pm-wall">PENCERE</div>';
+    const [left, right] = mode === 'doorL' ? [door, win] : [win, door];
+    return `<div class="plan-sides"><div class="ps-l">${left}</div>${inner}<div class="ps-r">${right}</div></div>`;
+  }
   /** Oturma planı: her koltukta yalnızca öğrencinin adı ve sınıfı. */
   function renderPlans() {
     const r = state.result;
@@ -1384,7 +1392,8 @@
         ${roomCountsLine(room)}
         <div class="plan-scroll">
           <div class="board">Yazı tahtası · öğretmen masası</div>
-          <div class="desks" style="grid-template-columns:auto repeat(${room.cols}, minmax(0,1fr))">${gridCells.join('')}</div>
+          ${planSides(`<div class="desks" style="grid-template-columns:auto repeat(${room.cols}, minmax(0,1fr))">${gridCells.join('')}</div>`)}
+          <div class="plan-view-note">Plan, tahtaya bakan öğrencinin gözünden çizilmiştir.</div>
         </div>
       </article>`;
     }).join('');
@@ -2073,7 +2082,7 @@
         <div class="poster-band"><span class="poster-room">${esc(title)}</span><span class="poster-sub">salonu · ${room.seats.filter((x) => !x.empty).length} öğrenci${when ? ' · ' + esc(when) : ''}</span></div>
         <ol class="poster-steps">
           <li><b>Adınızı bulun.</b> Aşağıdaki listede adınızın yanındaki <b>YER NO</b> sizin yerinizdir.</li>
-          <li><b>Yüzünüzü tahtaya dönün.</b> Kroki tahtaya bakarak çizildi: krokideki sol, sizin solunuz.${doorSide ? ` Kapı <b>${doorSide}</b> tarafınızda.` : ''}</li>
+          <li><b>Yüzünüzü tahtaya dönün.</b> Kroki tahtaya bakarak çizildi: krokideki sol, sizin solunuz.${doorSide ? ` Kapı <b>${doorSide}</b> tarafınızda, pencereler <b>${doorSide === 'sol' ? 'sağ' : 'sol'}</b> tarafınızda.` : ''}</li>
           <li><b>Numaraları sayın.</b> 1 numara tahtaya en yakın sıranın en solundadır. Numaralar soldan sağa artar, sıra bitince bir arkaya geçilir.${spd === 2 ? ' İki kişilik sırada küçük numara soldadır.' : ''}</li>
         </ol>
         <div class="poster-map">
