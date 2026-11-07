@@ -11,7 +11,7 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
   }
 
-  const APP_VERSION = '1.34.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
+  const APP_VERSION = '1.35.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
@@ -1434,7 +1434,7 @@
     const saved = state, savedSel = selectedSeat;
     try {
       state = previewState(saved); selectedSeat = null;
-      return renderPosters().replace('Yerinizi bulun</h3>', 'Yerinizi bulun · ÖRNEK</h3>')
+      return renderPosters().replace('Sınavda yerimi nasıl bulurum?</h3>', 'Sınavda yerimi nasıl bulurum? · ÖRNEK</h3>')
         .replace('<p class="poster-foot">', '<p class="poster-sample">Bu bir örnek afiştir; isimler hayalidir. Sınav günü yerinizi salon kapısındaki oturma planından aynı şekilde bulun.</p><p class="poster-foot">');
     } finally { state = saved; selectedSeat = savedSel; }
   }
@@ -2240,7 +2240,7 @@
       const st = state.settings;
       const when = [st.date ? fmtDay(parseDay(st.date), { day: 'numeric', month: 'long', weekday: 'long' }) : '', st.lesson ? st.lesson + '. ders' : '', st.time].filter(Boolean).join(' · ');
       return `<article class="sheet poster-sheet" data-fit-one="1" data-room="${ri}">
-        ${sheetHead('Sınav salonu · ' + title, 'Yerinizi bulun', ri, 'room')}
+        ${sheetHead('Sınav salonu · ' + title, 'Sınavda yerimi nasıl bulurum?', ri, 'room')}
         <div class="poster-band"><span class="poster-room">${esc(title)}</span><span class="poster-sub">salonu · ${room.seats.filter((x) => !x.empty).length} öğrenci${when ? ' · ' + esc(when) : ''}</span></div>
         <ol class="poster-steps">
           <li><b>Adınızı bulun.</b> Aşağıdaki listede adınızın yanındaki <b>YER NO</b> sizin yerinizdir.</li>

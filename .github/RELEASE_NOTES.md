@@ -10,12 +10,16 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.34.0)
+## Bu sürümde (v1.35.0)
+
+- **Örnek afişin başlığı soru oldu:** "Sınavda yerimi nasıl bulurum?". Altındaki üç adım (adınızı bulun → yüzünüzü tahtaya dönün → numaraları sayın) bu sorunun cevabı olarak okunuyor.
+
+## Önceki sürümde (v1.34.0)
 
 - **Yönlendirme afişleri kaldırıldı.** Sol paneldeki "Yönlendirme afişleri" sekmesi ve sınav evrakı paketindeki afiş seçeneği çıkarıldı.
 - **Örnek afiş 30 kişilik.** 2. adımdaki (Sınav bilgileri) önizleme ve "Örnek afişi yazdır" düğmesi kaldı. Örnek artık 30 kişilik bir salonu gösteriyor (3'lü dizi × 5 sıra × 2); isimler hayali. Öğrencilere oturma planının nasıl okunacağını sınavdan önce göstermek için kullanılabilir.
 
-## Önceki sürümde (v1.33.0)
+## Daha önce (v1.33.0)
 
 - **Varsayılan arayüz geri geldi.** Dağıtım sayfasında "Salon kapasitesi" bölümü önceki gibi açılıyor: her salona şube mevcudu kadar öğrenci oturur; istenirse "Salon mevcudunu ben belirleyeceğim".
 - **Sınıfa özel sıra düzeni artık ek ayar.** Bölümün altındaki "Ek ayar: Sınıfa özel sıra düzeni" satırı elle açılıyor; "Sınıfa özel dizi düzenini kullan" işaretlenmedikçe salonlara yazılan dizi ve sıra sayısı hiç kullanılmıyor. İşaretlenince her salon için dizi (3'lü / 4'lü…) ve sıra sayısı girilebiliyor; kapasite kuralı olarak "Sınıfın bütün sıraları" da seçilebiliyor.

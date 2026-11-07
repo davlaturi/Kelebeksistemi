@@ -347,7 +347,7 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   const previewHtml = h.node('#theme-preview').innerHTML;
   assert.match(previewHtml, /Yönlendirme afişi/); assert.match(previewHtml, /poster-sheet/);
   const sample = a.samplePosterHtml();
-  assert.match(sample, /Yerinizi bulun · ÖRNEK/); assert.match(sample, /isimler hayalidir/);
+  assert.match(sample, /Sınavda yerimi nasıl bulurum\? · ÖRNEK/); assert.match(sample, /isimler hayalidir/);
   assert.equal(JSON.stringify(a.state), beforePreview, 'Örnek afiş kayda dokunmamalı');
   assert.match(previewHtml, /class="pack-out tp-doc" data-doc-theme="resmi"/);
   assert.match(previewHtml, /Oturma planı/); assert.match(previewHtml, /Öğrenci imza listesi/);
