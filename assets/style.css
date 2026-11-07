@@ -1363,3 +1363,11 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 @media (max-width: 760px) { .cap-modes { grid-template-columns: 1fr; } .editor-fields { grid-template-columns: 1fr; } }
 .cap-all select { width: auto; min-width: 150px; flex: 0 0 auto; }
 .cap-all #lay-all-rows { width: 120px; flex: 0 0 auto; }
+/* v1.33: ek ayar (sınıfa özel sıra düzeni) */
+.extra-set { margin-top: 10px; border: 1.5px dashed #b9c6d3; border-radius: 10px; background: #fafcfe; }
+.extra-set.open { border-style: solid; }
+.extra-head { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 9px 12px; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.extra-head small { color: #5b6472; }
+.extra-status { margin-left: auto; font-size: .85rem; color: #4a5565; }
+.extra-arrow { width: 1em; }
+.extra-body { display: grid; gap: 8px; padding: 0 12px 12px; }

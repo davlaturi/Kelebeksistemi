@@ -126,7 +126,7 @@
             <option value="3" selected>3'lü dizi (2 koridor)</option>
             <option value="4">4'lü dizi (3 koridor)</option>
           </select>
-          <small class="hint">Farklı düzendeki sınıfları Dağıtım sayfasında “Salon düzeni ve kapasite” bölümünden tek tek ayarlayabilirsiniz.</small>
+          <small class="hint">Bazı sınıflar farklı diziliyse Dağıtım sayfasındaki “Ek ayar: Sınıfa özel sıra düzeni” bölümünden tek tek ayarlayabilirsiniz.</small>
         </div><div class="field"><label for="s-spd">Sıra tipi</label>
           <select id="s-spd" name="seatsPerDesk">
             <option value="2" selected>İkili sıra</option>
@@ -248,7 +248,8 @@
             </select>
           </div>
           <div class="field"><label for="e-rows">Önden arkaya sıra sayısı <small>(isteğe bağlı)</small></label>
-            <input id="e-rows" type="number" min="1" max="20" inputmode="numeric" placeholder="örn. 5"></div>
+            <input id="e-rows" type="number" min="1" max="20" inputmode="numeric" placeholder="örn. 5">
+            <small class="hint">Dizi ve sıra sayısı yalnız Dağıtım sayfasındaki “Ek ayar: Sınıfa özel sıra düzeni” açıkken kullanılır.</small></div>
         </div>
         <div class="table-scroll">
           <table class="edit-table">

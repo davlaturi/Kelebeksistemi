@@ -277,8 +277,9 @@ for (let t = 0; t < TRIALS; t++) {
   const classes = school(rnd);
   const ri = (lo, hi) => lo + Math.floor(rnd() * (hi - lo + 1));
   const settings = { sideNames: pick(rnd, ['lr', 'doorL', 'doorR']), deskCols: ri(1, 4), seatsPerDesk: rnd() < 0.25 ? 1 : 2, avoidOwnRoom: rnd() < 0.2 };
-  if (rnd() < 0.2) { settings.capacityMode = 'layout'; classes.forEach((c) => { if (rnd() < 0.8) { c.deskCols = ri(2, 4); c.deskRows = ri(3, 8); } }); }
-  else if (rnd() < 0.3) { settings.capacityMode = 'custom'; classes.forEach((c) => { c.roomCap = pick(rnd, [null, c.students.length, c.students.length + ri(0, 15), 0]); }); }
+  if (rnd() < 0.5) settings.roomLayout = true;
+  if (settings.roomLayout && rnd() < 0.4) { settings.capacityMode = 'layout'; classes.forEach((c) => { if (rnd() < 0.8) { c.deskCols = ri(3, 4); c.deskRows = ri(4, c.deskCols === 4 ? 6 : 7); } }); }
+  else if (rnd() < 0.3) { settings.capacityMode = 'custom'; classes.forEach((c) => { c.roomCap = pick(rnd, [null, c.students.length, Math.min(48, c.students.length + ri(0, 10)), 0]); }); }
   classes.forEach((c) => { if (rnd() < 0.12) c.selected = false; if (rnd() < 0.1) c.useAsRoom = false; if (rnd() < 0.15) c.deskCols = ri(1, 4); });
   const a = fresh(classes, settings);
   summary.runs++;
@@ -352,7 +353,7 @@ for (const [cols, spd] of [[1, 2], [4, 2], [3, 1], [2, 1], [4, 1]]) for (const m
   cl[3].deskRows = 7;                       // genel 3'lü: 42 koltuk
   /* 12/A sıra sayısı yok: mevcudu kadar (27) */
   for (const mode of ['doorR', 'doorL']) {
-    const a = fresh(JSON.parse(JSON.stringify(cl)), { sideNames: mode, deskCols: 3, capacityMode: 'layout' });
+    const a = fresh(JSON.parse(JSON.stringify(cl)), { sideNames: mode, deskCols: 3, capacityMode: 'layout', roomLayout: true });
     a.runDistribution(); verifyOutputs(a, 'sınıfa özel düzen');
     const r = a.state.result, want = { k0: [4, 40, 5], k1: [3, 36, 6], k2: [4, 48, 6], k3: [3, 42, 7], k4: [3, 27, 5] };
     const plans = parsePlans(a.renderPlans());
@@ -367,13 +368,67 @@ for (const [cols, spd] of [[1, 2], [4, 2], [3, 1], [2, 1], [4, 1]]) for (const m
     assert.equal(r.stats.deskmate, 0, 'boş koltuklarla aynı düzey yan yana olmamalı');
   }
   // Sıra tipi tekli olunca kapasite yarıya iner
-  const a = fresh(JSON.parse(JSON.stringify(cl)), { deskCols: 3, seatsPerDesk: 1, capacityMode: 'layout' });
+  const a = fresh(JSON.parse(JSON.stringify(cl)), { deskCols: 3, seatsPerDesk: 1, capacityMode: 'layout', roomLayout: true });
   a.runDistribution(); assert.equal(a.state.result, null, 'tekli sırada koltuk yetmez');
   assert.ok(h.toasts.some((m) => /Salonlar yetmiyor: 145 öğrenci için 110 koltuk/.test(m)), 'yetersiz kapasite doğru hesaplanıp söylenmeli: ' + h.toasts.join(' | '));
   // Geçersiz sıra sayısı kayıtta reddedilir
   const bad = JSON.parse(JSON.stringify(cl)); bad[0].deskRows = 99;
   assert.throws(() => a.validateState({ classes: bad, settings: {}, result: null, archive: [] }), /sıra sayısı/);
 }
+
+// 10) Ek ayar kapalıyken salona yazılmış dizi/sıra hiç kullanılmaz (varsayılan düzen)
+{
+  const cl = mk([['9/A', 30], ['10/A', 31], ['11/A', 28]]);
+  cl[0].deskCols = 4; cl[0].deskRows = 6; cl[1].deskCols = 2;
+  const a = fresh(cl, { deskCols: 3, capacityMode: 'layout', roomLayout: false });
+  assert.equal(a.state.settings.capacityMode, 'class', 'ek ayar kapalıyken bütün sıralar kuralı olamaz');
+  a.runDistribution(); verifyOutputs(a, 'ek ayar kapalı');
+  for (const room of a.state.result.rooms) { assert.equal(room.cols, 3, 'genel dizi kullanılmalı'); }
+  same(a.state.result.rooms.map((r) => r.seats.length), [30, 31, 28], 'kapasite = mevcut');
+  // Açılışta ek ayar kapalı başlar; etkin dağıtım bu ayarla yapıldıysa açık kalır
+  const b1 = harness(JSON.stringify({ app: 'kelebek-sinav', rulesVersion: 2, classes: cl, settings: { roomLayout: true, capacityMode: 'layout' }, result: null, archive: [] }));
+  b1.api.load(); assert.equal(b1.api.state.settings.roomLayout, false); assert.equal(b1.api.state.settings.capacityMode, 'class');
+  const a2 = fresh(JSON.parse(JSON.stringify(cl)), { deskCols: 3, capacityMode: 'layout', roomLayout: true }); a2.runDistribution();
+  const b2 = harness(h.raw()); b2.api.load();
+  assert.equal(b2.api.state.settings.roomLayout, true, 'bu ayarla yapılmış dağıtım varken açık kalmalı');
+  assert.equal(b2.api.distributionAudit().capacityErrors, 0);
+}
+
+// ===================== F) Değişken dizi düzenleri: gerçekçi okul =====================
+// 17 şube (24–34 öğrenci); salonlar rastgele 3'lü ya da 4'lü, sıra sayısı en fazla 48 koltuk
+// olacak şekilde; kural şube mevcudu ya da sınıfın bütün sıraları.
+const varied = { runs: 0, students: 0, missing: 0, deskmate: 0, frontBack: 0, roomsWithFB: 0, rooms: 0, maxCap: 0 };
+for (let t = 0; t < Number(process.env.ZORLU_DIZI || 25); t++) {
+  const spec = [['9/A'], ['9/B'], ['9/C'], ['9/D'], ['9/E'], ['9/F'], ['10/A'], ['10/B'], ['11/A'], ['11/B'], ['11/C'], ['11/D'], ['11/E'], ['12/A'], ['12/B'], ['12/C'], ['12/D']]
+    .map(([n]) => [n, 24 + Math.floor(rnd() * 11)]);
+  const cl = mk(spec);
+  const layout = rnd() < 0.6;
+  for (const c of cl) {
+    c.deskCols = rnd() < 0.5 ? 4 : 3;
+    const maxRows = c.deskCols === 4 ? 6 : 8;
+    c.deskRows = Math.max(Math.ceil(c.students.length / (c.deskCols * 2)), Math.min(maxRows, 4 + Math.floor(rnd() * 4)));
+  }
+  const a = fresh(cl, { sideNames: pick(rnd, ['doorR', 'doorL']), deskCols: 3, capacityMode: layout ? 'layout' : 'class', roomLayout: true });
+  a.runDistribution();
+  assert.ok(a.state.result, 'gerçekçi okulda dağıtım yapılmalı');
+  verifyOutputs(a, 'değişken dizi #' + t);
+  const r = a.state.result;
+  varied.runs++;
+  varied.students += r.rooms.reduce((x, room) => x + room.seats.filter((s) => !s.empty).length, 0);
+  varied.missing += a.distributionAudit().missing;
+  varied.deskmate += r.stats.deskmate; varied.frontBack += r.stats.frontBack;
+  for (const room of r.rooms) {
+    const c = cl.find((x) => x.id === room.roomId);
+    assert.equal(room.cols, c.deskCols, 'salonun dizisi');
+    if (layout) assert.equal(room.seats.length, c.deskCols * c.deskRows * 2, 'koltuk = dizi × sıra × 2');
+    varied.maxCap = Math.max(varied.maxCap, room.seats.length);
+    varied.rooms++;
+  }
+  varied.roomsWithFB += A.evaluate(r.rooms, a.state.classes, {}).frontBack ? 1 : 0;
+}
+assert.equal(varied.missing, 0, 'değişken dizide öğrenci dışarıda kalmamalı');
+assert.equal(varied.deskmate, 0, 'değişken dizide aynı düzey yan yana oturmamalı');
+assert.ok(varied.maxCap <= 48, 'gerçekçi salon boyutu');
 
 // ===================== C) Dağıtımdan sonra değişiklikler =====================
 {
@@ -439,5 +494,6 @@ for (const [cols, spd] of [[1, 2], [4, 2], [3, 1], [2, 1], [4, 1]]) for (const m
   summary.big = { students: s.students, rooms: s.rooms, distributeMs: t1 - t0, outputsMs: t2 - t1 };
 }
 
+console.log('Değişken dizi: ' + varied.runs + ' okul, ' + varied.rooms + ' salon (en büyüğü ' + varied.maxCap + ' koltuk), ' + varied.students + ' öğrenci; dışarıda kalan ' + varied.missing + ', yan yana aynı düzey ' + varied.deskmate + ', önlü-arkalı aynı düzey ' + varied.frontBack + '.');
 console.log('Zorlayıcı testler geçti: ' + summary.done + ' rastgele dağıtım (' + summary.students + ' öğrenci, ' + summary.rooms + ' salon), '
   + summary.refused + ' kapasite yetersiz; büyük okul ' + summary.big.students + ' öğrenci / ' + summary.big.rooms + ' salon, dağıtım ' + summary.big.distributeMs + ' ms.');
