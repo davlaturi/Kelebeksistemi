@@ -11,7 +11,7 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
   }
 
-  const APP_VERSION = '1.28.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
+  const APP_VERSION = '1.29.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
@@ -1366,6 +1366,35 @@
     });
   }
 
+  /**
+   * Koltukların numarası (planda, listelerde, afişte aynı). Numara en ön sıradan başlar;
+   * kapı yönü belirtilmişse her sırada kapı tarafından pencereye doğru artar, iki kişilik
+   * sırada küçük numara kapı tarafındadır. Yerleşimi değiştirmez, yalnız etikettir.
+   */
+  const seatNumCache = new WeakMap();
+  function seatNumbers(room) {
+    const mode = state.settings.sideNames || 'lr';
+    const hit = seatNumCache.get(room);
+    if (hit && hit.mode === mode && hit.n === room.seats.length) return hit.arr;
+    const spd = room.spd || 2, cols = room.cols || 3, n = room.seats.length;
+    const fromRight = mode === 'doorR'; // kapı, tahtaya bakan öğrencinin sağında
+    const rows = new Map();
+    for (let i = 0; i < n; i++) {
+      const desk = Math.floor(i / spd), row = Math.floor(desk / cols);
+      if (!rows.has(row)) rows.set(row, []);
+      rows.get(row).push({ i, col: desk % cols, side: i % spd });
+    }
+    const arr = new Array(n);
+    let num = 0;
+    for (const row of [...rows.keys()].sort((a, b) => a - b)) {
+      const list = rows.get(row);
+      if (fromRight) list.sort((a, b) => b.col - a.col || b.side - a.side);
+      for (const x of list) arr[x.i] = ++num;
+    }
+    seatNumCache.set(room, { mode, n, arr });
+    return arr;
+  }
+  const seatNum = (room, idx) => seatNumbers(room)[idx];
   /** Planın iki yanına kapı ve pencere işareti (öğrenci tahtaya bakarken). */
   function planSides(inner) {
     const mode = state.settings.sideNames || 'lr';
@@ -1391,7 +1420,7 @@
           if (!seat) { cells.push('<span class="seat empty-seat"></span>'); continue; }
           if (seat.empty) {
             const isSelE = selectedSeat && selectedSeat.roomIdx === ri && selectedSeat.seatIdx === idx;
-            cells.push(`<button type="button" class="seat vacant${isSelE ? ' sel' : ''}" data-room="${ri}" data-seat="${idx}"><span class="who">Boş</span><span class="sno">${seat.seatNo}</span></button>`);
+            cells.push(`<button type="button" class="seat vacant${isSelE ? ' sel' : ''}" data-room="${ri}" data-seat="${idx}"><span class="who">Boş</span><span class="sno">${seatNum(room, idx)}</span></button>`);
             continue;
           }
           const stu = si.get(seat.studentId);
@@ -1400,7 +1429,7 @@
           cells.push(`<button type="button" class="seat${isSel ? ' sel' : ''}" style="--h:${levelHue(c.c.name)}" data-room="${ri}" data-seat="${idx}">
             <span class="who">${esc(stu.s.name)}</span>
             <span class="cls">${esc(c.c.name)}</span>
-            <span class="sno" aria-label="Sıra no">${seat.seatNo}</span>
+            <span class="sno" aria-label="Sıra no">${seatNum(room, idx)}</span>
           </button>`);
         }
         desks.push(`<div class="desk${spd === 2 ? ' spd2' : ''}">${cells.join('')}</div>`);
@@ -2032,9 +2061,9 @@
     const ci = classIndex();
     const si = studentIndex();
     return r.rooms.map((room, ri) => {
-      const rows = room.seats.filter((seat) => !seat.empty).map((seat) => {
+      const rows = room.seats.map((seat, idx) => ({ seat, no: seatNum(room, idx) })).filter((x) => !x.seat.empty).sort((a, b) => a.no - b.no).map(({ seat, no }) => {
         const stu = si.get(seat.studentId);
-        return `<tr><td class="num seat-no">${seat.seatNo}</td><td>${esc(stu.s.name)}</td><td>${esc(ci.get(seat.classId).c.name)}</td><td class="sign"></td></tr>`;
+        return `<tr><td class="num seat-no">${no}</td><td>${esc(stu.s.name)}</td><td>${esc(ci.get(seat.classId).c.name)}</td><td class="sign"></td></tr>`;
       }).join('');
       return `<article class="sheet roll-sheet" data-fit-one="1" data-room="${ri}">
         ${sheetHead('Sınav salonu · ' + roomTitle(room, ci), 'Öğrenci imza listesi', ri, 'room')}
@@ -2085,7 +2114,8 @@
         for (let k = 0; k < spd; k++) {
           const seat = room.seats[d * spd + k];
           if (!seat) { cells.push('<span class="pd-seat pd-gap"></span>'); continue; }
-          cells.push(`<span class="pd-seat${seat.empty ? ' pd-empty' : ''}${seat.seatNo === 1 ? ' pd-first' : ''}">${seat.seatNo}</span>`);
+          const no = seatNum(room, d * spd + k);
+          cells.push(`<span class="pd-seat${seat.empty ? ' pd-empty' : ''}${no === 1 ? ' pd-first' : ''}">${no}</span>`);
         }
         return `<span class="pd-desk">${cells.join('')}</span>`;
       };
@@ -2109,7 +2139,9 @@
         <ol class="poster-steps">
           <li><b>Adınızı bulun.</b> Aşağıdaki listede adınızın yanındaki <b>YER NO</b> sizin yerinizdir.</li>
           <li><b>Yüzünüzü tahtaya dönün.</b> Kroki tahtaya bakarak çizildi: krokideki sol, sizin solunuz.${doorSide ? ` Kapı <b>${doorSide}</b> tarafınızda, pencereler <b>${doorSide === 'sol' ? 'sağ' : 'sol'}</b> tarafınızda.` : ''}</li>
-          <li><b>Numaraları sayın.</b> 1 numara tahtaya en yakın sıranın en solundadır. Numaralar soldan sağa artar, sıra bitince bir arkaya geçilir.${spd === 2 ? ' İki kişilik sırada küçük numara soldadır.' : ''}</li>
+          <li><b>Numaraları sayın.</b> ${doorSide
+            ? `1 numara en ön sırada, <b>kapı tarafındadır</b>. Numaralar kapıdan pencereye doğru artar; sıra bitince bir arkadaki sıraya geçilir, yine kapı tarafından başlanır.${spd === 2 ? ' İki kişilik sırada küçük numara kapı tarafındadır.' : ''}`
+            : `1 numara tahtaya en yakın sıranın en solundadır. Numaralar soldan sağa artar, sıra bitince bir arkaya geçilir.${spd === 2 ? ' İki kişilik sırada küçük numara soldadır.' : ''}`}</li>
         </ol>
         <div class="poster-map">
           <div class="pm-board">TAHTA · ÖĞRETMEN MASASI <small>(önünüz)</small></div>
@@ -2118,7 +2150,7 @@
             <div class="pm-grid" style="grid-template-columns:auto repeat(${cols}, minmax(0,1fr))">${grid}</div>
             ${doorSide === 'sağ' ? '<div class="pm-door pm-right">KAPI</div>' : doorSide === 'sol' ? '<div class="pm-wall pm-right">PENCERE</div>' : ''}
           </div>
-          <div class="pm-arrows"><span>Sayma yönü: 1 → ${Math.min(cols * spd, last)} (ilk sıra), sonra bir arkadaki sıra … son numara ${last}</span></div>
+          <div class="pm-arrows"><span>${doorSide === 'sağ' ? `Sayma yönü: ilk sıra ${Math.min(cols * spd, last)} ← 1 (kapıdan pencereye)` : doorSide === 'sol' ? `Sayma yönü: ilk sıra 1 → ${Math.min(cols * spd, last)} (kapıdan pencereye)` : `Sayma yönü: ilk sıra 1 → ${Math.min(cols * spd, last)}`}, sonra bir arkadaki sıra … son numara ${last}</span></div>
           <div class="pm-you">▲ Siz buradan, tahtaya bakarak duruyorsunuz ▲</div>
         </div>
         <h3 class="poster-h">Ada göre yerler</h3>
@@ -2180,7 +2212,7 @@
           col, row, side, cols, rows, spd,
           group: names[col],
           rowNo: row + 1,
-          no: s.seatNo || idx + 1,
+          no: seatNum(room, idx),
           seat: spd === 2 ? seatSideName(side) : '',
         });
       });

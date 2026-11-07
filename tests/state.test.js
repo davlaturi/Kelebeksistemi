@@ -29,7 +29,7 @@ function harness(initial) {
     globalThis.api = { validateState, importBackup, load, save, saveToArchive,
       onSeatClick, localDateKey, weekStart, csvCell, withEntry, openPack,
       paperShareData, paperShareText, paperSharePreview, renderByClass, renderPapers,
-      renderSharePanel, renderPosters, confirmSides, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
+      renderSharePanel, renderPosters, confirmSides, seatNumbers, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
       readSettings, headerMeta, renderTeacherList, renderRoll, showPage, pageFromHash, toggleClassList, expandPrintSections,
       distributionAudit, auditHtml, renderThemePreview, applySession, setRoomApproval, calendarIssues, sessionGroups, roomClasses, capTotals, previewCalendar, confirmCalendar, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
@@ -375,6 +375,23 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
     assert.match(hs.raw(), /"sidesConfirmed":true/);
     assert.match(q.renderRoll(), /Kelebek Sınav Dağıtım Sistemi · v\d+\.\d+\.\d+/);
     assert.equal(q.validateState({ ...JSON.parse(hs.raw()) }).settings.sidesConfirmed, true);
+  }
+  // Numaralar kapı tarafından başlar (kapı sağda: sağdan sola; kapı solda ya da belirtilmemiş: soldan sağa)
+  {
+    const hn = harness(), q = hn.api;
+    q.state = q.validateState(fixture());
+    const room = { cols: 3, spd: 2, seats: Array.from({ length: 14 }, () => ({ empty: true })) };
+    q.state.settings.sideNames = 'doorR';
+    assert.equal(JSON.stringify(q.seatNumbers(room)), JSON.stringify([6, 5, 4, 3, 2, 1, 12, 11, 10, 9, 8, 7, 14, 13]));
+    q.state.settings.sideNames = 'doorL';
+    assert.equal(JSON.stringify(q.seatNumbers(room)), JSON.stringify([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]));
+    q.state.settings.sideNames = 'doorR';
+    const roll = q.renderRoll();
+    for (const sheet of roll.split('<article').slice(1)) {
+      const nos = [...sheet.matchAll(/class="num seat-no">(\d+)</g)].map((m) => +m[1]);
+      assert.equal(JSON.stringify(nos), JSON.stringify(nos.slice().sort((a, b) => a - b)), 'imza listesi numara sırasıyla');
+    }
+    assert.match(q.renderPosters(), /kapı tarafındadır/);
   }
   // Eski sürümün ada eklediği "Erkek Yatılı" gibi ekler yüklemede temizlenir ve kaydedilir
   {

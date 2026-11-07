@@ -10,14 +10,21 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.28.0)
+## Bu sürümde (v1.29.0)
+
+- **Numaralar kapı tarafından başlar.** 1 numara en ön sırada, kapının yanındadır. Numaralar her sırada kapıdan pencereye doğru artar; bir arkadaki sırada yine kapı tarafından devam eder. İki kişilik sırada küçük numara kapı tarafındadır.
+  - Oturma planı, imza listesi (numara sırasıyla), yönlendirme afişi, sınav yerleri, öğrenci arama ve Excel dosyası aynı numarayı kullanır.
+  - Öğrencilerin yerleşimi değişmez; yalnız numaralar kapı tarafına göre yazılır. Hazır dağıtımlar için yeniden dağıtım gerekmez.
+  - Kapı yönü "belirtme" seçiliyse numaralar eskisi gibi soldan başlar.
+
+## Önceki sürümde (v1.28.0)
 
 - **Kapı/pencere yönü sorusu.** Yön bir kez onaylanmadan Dağıtım sayfasında sarı bir kutu soruyor: "Öğretmen masasından sınıfa bakınca pencereler hangi tarafta? [Pencereler sağda] [Pencereler solda] [Belirtme]". Seçim kaydediliyor ve soru bir daha çıkmıyor. Ayarı 2. adımdan değiştirmek de onay sayılıyor.
 - **Sürüm numarası görünür.** Yan menünün altında ve her çıktının alt bilgisinde "Kelebek Sınav Dağıtım Sistemi · v1.28.0" yazıyor; bir kâğıdın hangi sürümle basıldığı anlaşılıyor.
 
 > Uygulama bilgisayarınızdaki dosyalardan çalışır ve kendiliğinden güncellenmez. Yeni sürüm için ZIP'i (ya da tablet dosyasını) yeniden indirin. Verileriniz tarayıcıda kaldığı için kaybolmaz.
 
-## Önceki sürümde (v1.27.0)
+## Daha önce (v1.27.0)
 
 - **Kapı ve pencere ayarı öğretmen bakışıyla.** 2. adımdaki ayar artık "Kapı ve pencereler nerede?" diye soruyor; seçenekler öğretmen masasından bakışa göre yazılı: "pencereler SAĞDA, kapı solda" ya da "pencereler SOLDA, kapı sağda". Yeni kurulumlarda varsayılan "pencereler sağda".
 - **Planda kapı ve pencere işareti.** Oturma planının iki yanında, yönlendirme afişindeki gibi KAPI ve PENCERE yazıyor. Altta "Plan, tahtaya bakan öğrencinin gözünden çizilmiştir" notu var. Afişin 2. adımında pencerelerin hangi tarafta olduğu da yazıyor.
