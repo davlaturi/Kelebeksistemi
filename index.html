@@ -120,12 +120,13 @@
         <fieldset class="settings-card">
           <legend><span class="settings-kicker">02</span> Salon düzeni</legend>
           <p class="settings-description">Genel sıra düzenini belirleyin. Farklı salonları sınıf kartlarından ayrıca ayarlayabilirsiniz.</p>
-          <div class="settings-grid settings-grid-two"><div class="field"><label for="s-cols">Yan yana sıra sayısı</label>
+          <div class="settings-grid settings-grid-two"><div class="field"><label for="s-cols">Yan yana dizi (genel)</label>
           <select id="s-cols" name="deskCols">
-            <option value="2">2 sıra (1 koridor)</option>
-            <option value="3" selected>3 sıra (2 koridor)</option>
-            <option value="4">4 sıra (3 koridor)</option>
+            <option value="2">2'li dizi (1 koridor)</option>
+            <option value="3" selected>3'lü dizi (2 koridor)</option>
+            <option value="4">4'lü dizi (3 koridor)</option>
           </select>
+          <small class="hint">Farklı düzendeki sınıfları Dağıtım sayfasında “Salon düzeni ve kapasite” bölümünden tek tek ayarlayabilirsiniz.</small>
         </div><div class="field"><label for="s-spd">Sıra tipi</label>
           <select id="s-spd" name="seatsPerDesk">
             <option value="2" selected>İkili sıra</option>
@@ -237,14 +238,17 @@
       <div class="editor-body">
         <div class="editor-fields">
           <div class="field"><label for="e-name">Sınıf / salon adı</label><input id="e-name" type="text" required></div>
-          <div class="field"><label for="e-cols">Bu salonda yan yana sıra</label>
+          <div class="field"><label for="e-cols">Bu salonda yan yana dizi</label>
             <select id="e-cols">
               <option value="">Genel ayar</option>
-              <option value="2">2 sıra</option>
-              <option value="3">3 sıra</option>
-              <option value="4">4 sıra</option>
+              <option value="1">1'li dizi</option>
+              <option value="2">2'li dizi</option>
+              <option value="3">3'lü dizi</option>
+              <option value="4">4'lü dizi</option>
             </select>
           </div>
+          <div class="field"><label for="e-rows">Önden arkaya sıra sayısı <small>(isteğe bağlı)</small></label>
+            <input id="e-rows" type="number" min="1" max="20" inputmode="numeric" placeholder="örn. 5"></div>
         </div>
         <div class="table-scroll">
           <table class="edit-table">

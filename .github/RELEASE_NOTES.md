@@ -10,14 +10,21 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.31.0)
+## Bu sürümde (v1.32.0)
+
+- **Sınıfa özel sıra düzeni.** Dağıtım sayfasındaki bölümün adı **Salon düzeni ve kapasite** oldu. Her salonun yanında yan yana dizi sayısı seçiliyor (Genel / 1'li / 2'li / 3'lü / 4'lü); düzenleme penceresine girmek gerekmiyor.
+- **Sınıfın bütün sıraları.** Yeni kapasite seçeneği: her salon için önden arkaya sıra sayısını yazın; kapasite **dizi × sıra × kişi** olarak hesaplanır (ör. 4'lü dizi, 5 sıra, ikili: 4 × 5 × 2 = 40 koltuk). Öğrenciler sınıfın tamamına yayılır; boş kalan koltuklar aynı düzeyden öğrencileri ayırmak için kullanılır. Plan, sınıftaki gerçek dizi ve sıra sayısıyla çizilir. "Tüm salonlara" satırıyla bütün salonlara aynı düzen tek seferde verilebilir. Sıra sayısı yazılmayan salona şimdilik mevcudu kadar öğrenci oturur ve bu açıkça yazılır.
+- Diğer iki seçenek aynen duruyor: **Şube mevcudu kadar** (varsayılan) ve **Kapasiteyi ben yazacağım**.
+- Sınıf düzenleme penceresinde "Önden arkaya sıra sayısı" alanı var; 2. adımdaki genel ayarın adı "Yan yana dizi (genel)".
+
+## Önceki sürümde (v1.31.0)
 
 - **Gerçek soyadları korunuyor (hata düzeltmesi).** v1.26'da eklenen ad temizliği, sonu "Bay", "Kız", "Erkek" gibi biten gerçek soyadlarını da silebiliyordu ("Ayşe Nur Bay" → "Ayşe Nur"). Artık kayıtlı adlara yalnızca ad "Yatılı / Gündüzlü / Paralı-Yatılı" gibi bir durum sözcüğüyle bitiyorsa dokunuluyor. PDF okurken de en fazla bir cinsiyet sözcüğü atılıyor; "Bay / Bayan" cinsiyet sayılmıyor.
 - **Uzun adlar koltuktan taşmıyor.** Dar koltuklarda (ör. 4 sıra grubu, ikili sıra) koltuğa sığmayan tek uzun kelime ("Uzunismailoğulları") ya da uzun şube adı ("Hazırlık/A") artık kenardan taşmıyor; yalnız o koltuktaki yazı biraz küçülüyor, kelime bölünmüyor.
 - **Afiş listesi düzenli.** Ada göre yer listesinde sütun genişlikleri sabit; çok uzun adlar iki satıra iniyor, "Nerede?" sütunu okunur kalıyor.
 - **Zorlayıcı testler.** Uygulamanın gerçek koduyla yüzlerce rastgele okulda dağıtım yapılıp basılacak bütün çıktılar karşılaştırılıyor: her öğrenci plan, imza listesi, afiş, sınav yerleri, arama ve Excel'de tam bir kez ve aynı numarayla; numaralar 1'den kapasiteye eksiksiz; 1 numara kapı tarafında; basılan plandan sayılan "aynı düzey yan yana / önlü-arkalı" uygulamanın bildirdiğiyle aynı; kâğıt sayıları tutarlı. Ayrıca aynı adlı öğrenciler, işaretli ve çok uzun adlar, tek öğrenci, tek düzey, 0 kapasiteli salon, tekli sıra, 1–4 sıra grubu, dağıtımdan sonra ekleme/silme/düzenleme/takas/yön değişimi/kilit, arşiv ve yedek, 2.000 öğrencilik okul denendi.
 
-## Önceki sürümde (v1.30.0)
+## Daha önce (v1.30.0)
 
 - **Örnek yönlendirme afişi.** 2. adımdaki çıktı tasarımı önizlemesinde oturma planı ve imza listesinin yanında yönlendirme afişi de görünüyor. Kapı/pencere yönünü değiştirince numaraların nereden başladığı önizlemede hemen görülüyor.
 - **Örnek afişi yazdır.** Önizlemenin altındaki düğme, hayali öğrencilerle "ÖRNEK" yazan tek sayfalık bir afiş basıyor. Öğrencilere oturma planının nasıl okunacağını sınavdan önce göstermek için kullanılabilir. Kayıtlı verilere dokunmaz.

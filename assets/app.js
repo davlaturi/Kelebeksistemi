@@ -11,7 +11,7 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
   }
 
-  const APP_VERSION = '1.31.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
+  const APP_VERSION = '1.32.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
@@ -39,7 +39,7 @@
       require(!out.time || /^([01]\d|2[0-3]):[0-5]\d$/.test(out.time), 'Sınav saati geçersiz.');
       require(/^[1-8]?$/.test(out.lesson), 'Ders seçimi geçersiz.');
       require([1, 2, 3, 4].includes(out.deskCols) && [1, 2].includes(out.seatsPerDesk), 'Sıra düzeni geçersiz.');
-      require(['class', 'custom'].includes(out.capacityMode) && ['lr', 'doorL', 'doorR'].includes(out.sideNames), 'Salon ayarları geçersiz.');
+      require(['class', 'custom', 'layout'].includes(out.capacityMode) && ['lr', 'doorL', 'doorR'].includes(out.sideNames), 'Salon ayarları geçersiz.');
       for (const k of ['duplex', 'avoidOwnRoom']) require(typeof out[k] === 'boolean', 'Sınav seçeneği geçersiz.');
       out.sidesConfirmed = out.sidesConfirmed === true;
       if (!['kurumsal', 'resmi', 'modern'].includes(out.docTheme)) out.docTheme = 'kurumsal';
@@ -53,6 +53,7 @@
         require(object(c) && text(c.id) && text(c.name) && Array.isArray(c.students), 'Sınıf kaydı eksik veya geçersiz.');
         require(!ids.has(c.id), 'Tekrarlanan sınıf kimliği.'); ids.add(c.id);
         require(c.deskCols == null || [1, 2, 3, 4].includes(c.deskCols), 'Sınıf sıra düzeni geçersiz.');
+        require(c.deskRows == null || c.deskRows === '' || (Number.isInteger(c.deskRows) && c.deskRows >= 1 && c.deskRows <= 20), 'Sınıfın sıra sayısı geçersiz.');
         require(c.roomCap == null || c.roomCap === '' || (Number.isInteger(c.roomCap) && c.roomCap >= 0), 'Salon kapasitesi geçersiz.');
         for (const s of c.students) {
           require(object(s) && text(s.id) && text(s.name), 'Öğrenci kaydı eksik veya geçersiz.');
@@ -893,7 +894,17 @@
 
   // ---------- salon kapasitesi ----------
   const isCustomCap = () => state.settings.capacityMode === 'custom';
+  const isLayoutCap = () => state.settings.capacityMode === 'layout';
+  /** Salonun yan yana dizi sayısı (salona özel ya da genel ayar). */
+  const colsOf = (c) => c.deskCols || state.settings.deskCols || 3;
+  /** Sınıfın bütün sıraları: dizi × önden arkaya sıra × sıradaki kişi. Sıra sayısı yoksa null. */
+  function layoutSeats(c) {
+    const rows = parseInt(c.deskRows, 10);
+    if (!(rows >= 1)) return null;
+    return colsOf(c) * rows * (state.settings.seatsPerDesk === 1 ? 1 : 2);
+  }
   function capOf(c) {
+    if (isLayoutCap()) { const n = layoutSeats(c); return n == null ? c.students.length : n; }
     if (!isCustomCap() || c.roomCap == null || c.roomCap === '') return c.students.length;
     return Math.max(0, Math.floor(Number(c.roomCap)) || 0);
   }
@@ -938,7 +949,7 @@
         <div class="room-group"><span class="room-group-h">${esc(g.label)}</span>
           ${g.classes.map((c) => roomBlocked(c)
             ? `<div class="room-tile blocked"><span class="room-name">🔒 ${esc(c.name)}</span><small>sınavı yok</small><button type="button" class="link-btn" data-approve-room="${esc(c.id)}">Salon yap…</button></div>`
-            : `<label class="room-tile${c.useAsRoom !== false ? ' on' : ''}${approvedRoom(c) ? ' approved' : ''}"><input type="checkbox" data-room-class="${esc(c.id)}" ${c.useAsRoom !== false ? 'checked' : ''}><span class="room-name">${esc(c.name)}</span><small>${c.students.length} koltuk${approvedRoom(c) ? ' · onaylı' : ''}</small>${approvedRoom(c) ? `<button type="button" class="btn ghost small" data-unapprove-room="${esc(c.id)}">Onayı kaldır</button>` : ''}</label>`).join('')}
+            : `<label class="room-tile${c.useAsRoom !== false ? ' on' : ''}${approvedRoom(c) ? ' approved' : ''}"><input type="checkbox" data-room-class="${esc(c.id)}" ${c.useAsRoom !== false ? 'checked' : ''}><span class="room-name">${esc(c.name)}</span><small>${capOf(c)} koltuk${approvedRoom(c) ? ' · onaylı' : ''}</small>${approvedRoom(c) ? `<button type="button" class="btn ghost small" data-unapprove-room="${esc(c.id)}">Onayı kaldır</button>` : ''}</label>`).join('')}
         </div>`).join('')}
       </div>
       <p class="hint rooms-foot">${summary}</p>`;
@@ -947,7 +958,7 @@
     const t = capTotals();
     const diff = t.seats - t.students;
     const kind = diff < 0 ? 'bad' : diff > 0 ? 'warn' : 'ok';
-    const msg = diff < 0 ? `${-diff} öğrenci için yer yok. Daha fazla salon seçin ya da “Salon mevcudunu ben belirleyeceğim” ile kapasiteyi artırın.`
+    const msg = diff < 0 ? `${-diff} öğrenci için yer yok. Daha fazla salon seçin ya da “Sınıfın bütün sıraları” / “Kapasiteyi ben yazacağım” ile kapasiteyi artırın.`
       : diff > 0 ? `${diff} koltuk boş kalacak. Boş koltuklar aynı düzeydeki öğrencileri ayırmak için kullanılır.`
       : 'Koltuk sayısı öğrenci sayısına eşit.';
     return `<span class="pill ${kind}">Toplam koltuk: <b>${t.seats}</b></span><span class="pill">Öğrenci: <b>${t.students}</b></span><span class="pill">Salon: <b>${t.rooms}</b></span><span class="cap-msg ${kind}">${msg}</span>`;
@@ -956,31 +967,49 @@
     const box = $('#capacity');
     const inc = included();
     if (!inc.length) { box.innerHTML = ''; return; }
-    const custom = isCustomCap();
-    let html = `
-      <div class="pick-head"><strong>Salon kapasitesi</strong>
-        <span class="hint">${custom ? 'Salonlara sizin yazdığınız sayıda öğrenci oturacak.' : 'Şu an: her salona sınıf mevcudu kadar öğrenci oturur (varsayılan kural).'}</span></div>
-      <label class="check cap-toggle"><input type="checkbox" id="cap-custom" ${custom ? 'checked' : ''}>
-        <span><b>Salon mevcudunu ben belirleyeceğim</b><br><span class="hint">İşaretlemezseniz önceki kural geçerlidir: her şube salonuna o şubenin mevcudu kadar öğrenci oturur. İşaretlerseniz her salona kaç öğrenci oturacağını siz yazarsınız; 0 yazdığınız sınıf salon olarak kullanılmaz.</span></span></label>`;
-    if (custom) {
-      html += `
-      <div class="cap-all">
+    const mode = isLayoutCap() ? 'layout' : isCustomCap() ? 'custom' : 'class';
+    const spd = state.settings.seatsPerDesk === 1 ? 1 : 2;
+    const gen = state.settings.deskCols || 3;
+    const opt = (v, label, hint) => `<label class="cap-mode${mode === v ? ' on' : ''}"><input type="radio" name="cap-mode" value="${v}" ${mode === v ? 'checked' : ''}><span><b>${label}</b><small>${hint}</small></span></label>`;
+    const colsSel = (c) => `<select data-cols="${esc(c.id)}" aria-label="${esc(c.name)} yan yana dizi"><option value="">Genel (${gen})</option>${[1, 2, 3, 4].map((n) => `<option value="${n}"${c.deskCols === n ? ' selected' : ''}>${n}'lü dizi</option>`).join('')}</select>`;
+    const seatText = (c) => {
+      if (mode === 'layout') {
+        const n = layoutSeats(c);
+        return n == null ? `<span class="cap-warn">Sıra sayısını yazın · şimdilik mevcut ${c.students.length}</span>` : `${colsOf(c)} × ${parseInt(c.deskRows, 10)} × ${spd} = <b>${n}</b> koltuk · mevcut ${c.students.length}`;
+      }
+      if (mode === 'custom') return `mevcut ${c.students.length}`;
+      return `<b>${c.students.length}</b> koltuk (mevcut)`;
+    };
+    const card = (c) => `<div class="cap-item lay-item" style="--h:${levelHue(c.name)}"><span class="lay-name">${esc(c.name)}</span>
+        <label class="lay-f"><small>Dizi</small>${colsSel(c)}</label>
+        ${mode === 'layout' ? `<label class="lay-f"><small>Sıra (önden arkaya)</small><input type="number" min="1" max="20" inputmode="numeric" data-rows="${esc(c.id)}" value="${c.deskRows || ''}" placeholder="örn. 5" aria-label="${esc(c.name)} önden arkaya sıra sayısı"></label>` : ''}
+        ${mode === 'custom' ? `<label class="lay-f"><small>Kapasite</small><input type="number" min="0" max="200" inputmode="numeric" data-cap="${esc(c.id)}" value="${capOf(c)}" aria-label="${esc(c.name)} salon kapasitesi"></label>` : ''}
+        <small class="lay-seats" data-seats-for="${esc(c.id)}">${seatText(c)}</small></div>`;
+    const missing = mode === 'layout' ? roomClasses().filter((c) => layoutSeats(c) == null).length : 0;
+    box.innerHTML = `
+      <div class="pick-head"><strong>Salon düzeni ve kapasite</strong>
+        <span class="hint">Her salonun yan yana dizi sayısını seçin; kaç öğrenci oturacağını aşağıdaki kurala göre belirleyin.</span></div>
+      <div class="cap-modes">
+        ${opt('class', 'Şube mevcudu kadar', 'Varsayılan: her salona o şubenin mevcudu kadar öğrenci oturur.')}
+        ${opt('layout', 'Sınıfın bütün sıraları', 'Dizi × önden arkaya sıra × ' + spd + ' kişi. Öğrenciler sınıfın tamamına yayılır; boş koltuklar aynı düzeyi ayırır.')}
+        ${opt('custom', 'Kapasiteyi ben yazacağım', 'Her salona kaç öğrenci oturacağını siz yazarsınız; 0 yazılan sınıf salon olmaz.')}
+      </div>
+      ${mode === 'layout' ? `<div class="cap-all"><span>Tüm salonlara:</span>
+        <select id="lay-all-cols" aria-label="Tüm salonlar için dizi"><option value="">Dizi değişmesin</option>${[1, 2, 3, 4].map((n) => `<option value="${n}">${n}'lü dizi</option>`).join('')}</select>
+        <input type="number" id="lay-all-rows" min="1" max="20" inputmode="numeric" placeholder="Sıra sayısı" aria-label="Tüm salonlar için sıra sayısı">
+        <button type="button" class="btn small" id="lay-all-btn">Uygula</button></div>
+        ${missing ? `<p class="cap-msg warn">${missing} salonun sıra sayısı yazılmadı; o salonlara şimdilik mevcudu kadar öğrenci oturur.</p>` : ''}` : ''}
+      ${mode === 'custom' ? `<div class="cap-all">
         <label for="cap-all-n">Tüm salonlara</label>
         <input type="number" id="cap-all-n" min="0" max="200" inputmode="numeric" placeholder="Örn. 30">
         <button type="button" class="btn small" id="cap-all-btn">Uygula</button>
         <button type="button" class="btn ghost small" id="cap-reset">Mevcutlara döndür</button>
-      </div>
+      </div>` : ''}
       ${byLevel(roomClasses()).map((g) => `<div class="cap-row">
         <span class="pick-level">${esc(g.label)}</span>
-        <div class="cap-items">${g.classes.map((c) => `
-          <label class="cap-item" style="--h:${levelHue(c.name)}"><span>${esc(c.name)}</span>
-            <input type="number" min="0" max="200" inputmode="numeric" data-cap="${esc(c.id)}" value="${capOf(c)}" aria-label="${esc(c.name)} salon kapasitesi">
-            <small>mevcut ${c.students.length}</small></label>`).join('')}
-        </div>
-      </div>`).join('')}`;
-    }
-    html += `<div class="cap-sum" id="cap-sum">${capSummaryHtml()}</div>`;
-    box.innerHTML = html;
+        <div class="cap-items">${g.classes.map(card).join('')}</div>
+      </div>`).join('')}
+      <div class="cap-sum" id="cap-sum">${capSummaryHtml()}</div>`;
   }
 
   // ---------- düzenleyici ----------
@@ -993,6 +1022,7 @@
     $('#editor-title').textContent = c ? 'Sınıfı düzenle' : 'Yeni sınıf';
     $('#e-name').value = c ? c.name : '';
     $('#e-cols').value = c && c.deskCols ? String(c.deskCols) : '';
+    $('#e-rows').value = c && c.deskRows ? String(c.deskRows) : '';
     $('#e-delete').hidden = !c;
     $('#e-paste').value = '';
     renderEditorRows();
@@ -1028,12 +1058,14 @@
     if (dup) { toast('“' + name + '” adında başka bir sınıf var.'); return; }
     const students = editing.rows.filter((r) => r.name).map((r) => ({ id: r.id || uid('s'), no: r.no || '', name: r.name }));
     const cols = $('#e-cols').value ? parseInt($('#e-cols').value, 10) : null;
+    const rowsN = parseInt($('#e-rows').value, 10);
+    const rows = rowsN >= 1 && rowsN <= 20 ? rowsN : null;
     const before = JSON.parse(JSON.stringify(state));
     if (editing.id) {
       const c = state.classes.find((x) => x.id === editing.id);
-      c.name = name; c.students = students; c.deskCols = cols;
+      c.name = name; c.students = students; c.deskCols = cols; c.deskRows = rows;
     } else {
-      state.classes.push({ id: uid('c'), name, students, deskCols: cols, source: 'elle' });
+      state.classes.push({ id: uid('c'), name, students, deskCols: cols, deskRows: rows, source: 'elle' });
     }
     sortClasses();
     markStale();
@@ -2462,7 +2494,7 @@
     const used = new Set();
     for (const r of state.result.rooms) { used.add(r.roomId); for (const x of r.seats) if (x.classId) used.add(x.classId); }
     const classes = state.classes.filter((c) => used.has(c.id)).map((c) => ({
-      id: c.id, name: c.name, selected: c.selected !== false, deskCols: c.deskCols || null,
+      id: c.id, name: c.name, selected: c.selected !== false, deskCols: c.deskCols || null, deskRows: c.deskRows || null,
       students: c.students.map((x) => ({ id: x.id, name: x.name })),
     }));
     const entry = {
@@ -2764,13 +2796,32 @@
     const capBox = $('#capacity');
     capBox.addEventListener('change', (e) => {
       if (!editAllowed()) { renderCapacity(); return; }
-      if (e.target.id === 'cap-custom') {
-        state.settings.capacityMode = e.target.checked ? 'custom' : 'class';
-        markStale(); save(); renderCapacity(); renderResult();
-      }
+      const t = e.target;
+      if (t.name === 'cap-mode') {
+        state.settings.capacityMode = ['class', 'custom', 'layout'].includes(t.value) ? t.value : 'class';
+      } else if (t.dataset.cols) {
+        const c = state.classes.find((x) => x.id === t.dataset.cols);
+        if (!c) return;
+        c.deskCols = t.value ? parseInt(t.value, 10) : null;
+      } else if (t.dataset.rows) {
+        renderCapacity(); return; // değer 'input' ile kaydedildi; burada yalnız yeniden çizilir
+      } else return;
+      markStale(); save(); renderCapacity(); renderRoomPicker(); renderResult();
     });
     capBox.addEventListener('input', (e) => {
       if (!editAllowed()) { renderCapacity(); return; }
+      if (e.target.dataset.rows) {
+        const c = state.classes.find((x) => x.id === e.target.dataset.rows);
+        if (!c) return;
+        const n = parseInt(e.target.value, 10);
+        c.deskRows = n >= 1 && n <= 20 ? n : null;
+        markStale(); save();
+        const seats = layoutSeats(c), cell = capBox.querySelector('[data-seats-for="' + c.id + '"]');
+        if (cell) cell.innerHTML = seats == null ? '<span class="cap-warn">Sıra sayısını yazın · şimdilik mevcut ' + c.students.length + '</span>'
+          : colsOf(c) + ' × ' + c.deskRows + ' × ' + (state.settings.seatsPerDesk === 1 ? 1 : 2) + ' = <b>' + seats + '</b> koltuk · mevcut ' + c.students.length;
+        $('#cap-sum').innerHTML = capSummaryHtml();
+        return;
+      }
       const id = e.target.dataset.cap;
       if (!id) return;
       const c = state.classes.find((x) => x.id === id);
@@ -2781,6 +2832,13 @@
     });
     capBox.addEventListener('click', (e) => {
       if (!editAllowed()) { renderCapacity(); return; }
+      if (e.target.id === 'lay-all-btn') {
+        const cols = parseInt($('#lay-all-cols').value, 10), rows = parseInt($('#lay-all-rows').value, 10);
+        if (!(cols >= 1) && !(rows >= 1)) { toast('Önce dizi ya da sıra sayısı seçin.'); return; }
+        if ($('#lay-all-rows').value && !(rows >= 1 && rows <= 20)) { toast('Sıra sayısı 1 ile 20 arasında olmalı.'); return; }
+        for (const c of roomClasses()) { if (cols >= 1) c.deskCols = cols; if (rows >= 1) c.deskRows = rows; }
+        markStale(); save(); renderCapacity(); renderRoomPicker(); return;
+      }
       if (e.target.id === 'cap-all-btn') {
         const n = parseInt($('#cap-all-n').value, 10);
         if (!(n >= 0)) { toast('Önce bir sayı yazın.'); return; }
