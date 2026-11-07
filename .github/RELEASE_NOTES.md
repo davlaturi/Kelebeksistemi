@@ -10,14 +10,20 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.29.0)
+## Bu sürümde (v1.30.0)
+
+- **Örnek yönlendirme afişi.** 2. adımdaki çıktı tasarımı önizlemesinde oturma planı ve imza listesinin yanında yönlendirme afişi de görünüyor. Kapı/pencere yönünü değiştirince numaraların nereden başladığı önizlemede hemen görülüyor.
+- **Örnek afişi yazdır.** Önizlemenin altındaki düğme, hayali öğrencilerle "ÖRNEK" yazan tek sayfalık bir afiş basıyor. Öğrencilere oturma planının nasıl okunacağını sınavdan önce göstermek için kullanılabilir. Kayıtlı verilere dokunmaz.
+- Afişteki "Sayma yönü" satırı ok işareti yerine cümleyle yazılıyor (bazı yazı tiplerinde ok çizgi gibi basılıyordu).
+
+## Önceki sürümde (v1.29.0)
 
 - **Numaralar kapı tarafından başlar.** 1 numara en ön sırada, kapının yanındadır. Numaralar her sırada kapıdan pencereye doğru artar; bir arkadaki sırada yine kapı tarafından devam eder. İki kişilik sırada küçük numara kapı tarafındadır.
   - Oturma planı, imza listesi (numara sırasıyla), yönlendirme afişi, sınav yerleri, öğrenci arama ve Excel dosyası aynı numarayı kullanır.
   - Öğrencilerin yerleşimi değişmez; yalnız numaralar kapı tarafına göre yazılır. Hazır dağıtımlar için yeniden dağıtım gerekmez.
   - Kapı yönü "belirtme" seçiliyse numaralar eskisi gibi soldan başlar.
 
-## Önceki sürümde (v1.28.0)
+## Daha önce (v1.28.0)
 
 - **Kapı/pencere yönü sorusu.** Yön bir kez onaylanmadan Dağıtım sayfasında sarı bir kutu soruyor: "Öğretmen masasından sınıfa bakınca pencereler hangi tarafta? [Pencereler sağda] [Pencereler solda] [Belirtme]". Seçim kaydediliyor ve soru bir daha çıkmıyor. Ayarı 2. adımdan değiştirmek de onay sayılıyor.
 - **Sürüm numarası görünür.** Yan menünün altında ve her çıktının alt bilgisinde "Kelebek Sınav Dağıtım Sistemi · v1.28.0" yazıyor; bir kâğıdın hangi sürümle basıldığı anlaşılıyor.

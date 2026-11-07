@@ -32,7 +32,7 @@ function harness(initial) {
       renderSharePanel, renderPosters, confirmSides, seatNumbers, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
       readSettings, headerMeta, renderTeacherList, renderRoll, showPage, pageFromHash, toggleClassList, expandPrintSections,
-      distributionAudit, auditHtml, renderThemePreview, applySession, setRoomApproval, calendarIssues, sessionGroups, roomClasses, capTotals, previewCalendar, confirmCalendar, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
+      distributionAudit, auditHtml, renderThemePreview, samplePosterHtml, applySession, setRoomApproval, calendarIssues, sessionGroups, roomClasses, capTotals, previewCalendar, confirmCalendar, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
       packChoice, deleteArchive, deleteClassFromEditor, resultValid, exportCsv, printAll, onSeatClick,
       get state() { return state; }, set state(s) { state = s; } };
   `), context);
@@ -345,6 +345,10 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   a.renderThemePreview();
   assert.equal(JSON.stringify(a.state), beforePreview);
   const previewHtml = h.node('#theme-preview').innerHTML;
+  assert.match(previewHtml, /Yönlendirme afişi/); assert.match(previewHtml, /poster-sheet/);
+  const sample = a.samplePosterHtml();
+  assert.match(sample, /Yerinizi bulun · ÖRNEK/); assert.match(sample, /isimler hayalidir/);
+  assert.equal(JSON.stringify(a.state), beforePreview, 'Örnek afiş kayda dokunmamalı');
   assert.match(previewHtml, /class="pack-out tp-doc" data-doc-theme="resmi"/);
   assert.match(previewHtml, /Oturma planı/); assert.match(previewHtml, /Öğrenci imza listesi/);
   assert.doesNotMatch(previewHtml, /Örnek Öğrenci/, 'önizleme gerçek öğrenci adı göstermemeli');

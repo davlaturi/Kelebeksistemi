@@ -11,7 +11,7 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
   }
 
-  const APP_VERSION = '1.29.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
+  const APP_VERSION = '1.30.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
@@ -1342,7 +1342,7 @@
     let pages;
     try {
       state = previewState(saved); selectedSeat = null;
-      pages = [['Oturma planı', renderPlans()], ['İmza listesi', renderRoll()]];
+      pages = [['Oturma planı', renderPlans()], ['Yönlendirme afişi', renderPosters()], ['İmza listesi', renderRoll()]];
     } catch (e) {
       pages = [];
     } finally { state = saved; selectedSeat = savedSel; }
@@ -1351,6 +1351,18 @@
         <figcaption>${esc(label)}</figcaption>
       </figure>`).join('');
     fitThemePreview();
+  }
+  /** Örnek yönlendirme afişi (hayali öğrencilerle): öğrencilere planın nasıl okunacağını göstermek için. */
+  function samplePosterHtml() {
+    const saved = state, savedSel = selectedSeat;
+    try {
+      state = previewState(saved); selectedSeat = null;
+      return renderPosters().replace('Yerinizi bulun</h3>', 'Yerinizi bulun · ÖRNEK</h3>')
+        .replace('<p class="poster-foot">', '<p class="poster-sample">Bu bir örnek afiştir; isimler hayalidir. Sınav günü her salonun kapısına kendi afişi asılır.</p><p class="poster-foot">');
+    } finally { state = saved; selectedSeat = savedSel; }
+  }
+  function printSamplePoster() {
+    printHtml(samplePosterHtml(), { single: true });
   }
   /** Önizleme kâğıtlarını kutunun genişliğine göre küçültür. */
   function fitThemePreview() {
@@ -2150,7 +2162,7 @@
             <div class="pm-grid" style="grid-template-columns:auto repeat(${cols}, minmax(0,1fr))">${grid}</div>
             ${doorSide === 'sağ' ? '<div class="pm-door pm-right">KAPI</div>' : doorSide === 'sol' ? '<div class="pm-wall pm-right">PENCERE</div>' : ''}
           </div>
-          <div class="pm-arrows"><span>${doorSide === 'sağ' ? `Sayma yönü: ilk sıra ${Math.min(cols * spd, last)} ← 1 (kapıdan pencereye)` : doorSide === 'sol' ? `Sayma yönü: ilk sıra 1 → ${Math.min(cols * spd, last)} (kapıdan pencereye)` : `Sayma yönü: ilk sıra 1 → ${Math.min(cols * spd, last)}`}, sonra bir arkadaki sıra … son numara ${last}</span></div>
+          <div class="pm-arrows"><span>Sayma yönü: ilk sırada 1 – ${Math.min(cols * spd, last)} numaralar, ${doorSide ? 'kapıdan pencereye doğru' : 'soldan sağa'}; sonra bir arkadaki sıra … son numara ${last}</span></div>
           <div class="pm-you">▲ Siz buradan, tahtaya bakarak duruyorsunuz ▲</div>
         </div>
         <h3 class="poster-h">Ada göre yerler</h3>
@@ -2684,6 +2696,7 @@
     $('#btn-save').addEventListener('click', saveToArchive);
     $('#btn-lock').addEventListener('click', toggleDistributionLock);
     window.addEventListener('resize', fitThemePreview);
+    $('#btn-sample-poster').addEventListener('click', printSamplePoster);
     // yan panel ve "Devam" düğmeleri
     document.addEventListener('click', (e) => {
       const g = e.target.closest('[data-go]');

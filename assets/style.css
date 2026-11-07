@@ -1125,7 +1125,7 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .btn.lock-btn.is-locked { background: #fff4d6; border-color: #b7791f; color: #7a4b00; }
 .btn.lock-btn.is-locked:hover { background: #ffecb8; }
 .theme-preview-wrap { display: grid; gap: 6px; margin: 2px 0 6px; }
-.theme-preview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; max-width: 720px; pointer-events: none; user-select: none; }
+.theme-preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 12px; max-width: 960px; pointer-events: none; user-select: none; }
 .theme-preview .tp-item { margin: 0; display: grid; gap: 4px; min-width: 0; }
 .theme-preview .tp-paper { position: relative; overflow: hidden; background: #fff; border: 1px solid #d5d9e0; border-radius: 3px;
   box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 6px 16px rgba(15,23,42,.08); aspect-ratio: 210 / 297; }
@@ -1330,3 +1330,8 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .sides-btns { display: flex; flex-wrap: wrap; gap: 6px; }
 .app-version { font-weight: 600; }
 .sides-q { margin: 0; }
+/* v1.30: örnek afiş */
+@media (max-width: 700px) { .theme-preview { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sample-poster-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sample-poster-row .hint { margin: 0; }
+.poster-sample { margin: 0; text-align: center; font-size: .85rem; font-weight: 700; padding: 4px; border: 2px dashed #222; border-radius: 6px; }
