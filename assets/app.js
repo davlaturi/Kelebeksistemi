@@ -149,11 +149,25 @@
       stale: version < RULES_VERSION ? false : !!copy.stale, archive, calendar: calendar(copy.calendar) };
   }
 
+  /**
+   * Eski sürümlerin PDF'ten ada eklediği "Erkek", "Kız", "Yatılı" gibi sütun
+   * değerlerini temizler. Dönüş: değişen öğrenci sayısı.
+   */
+  function cleanStudentNames(st) {
+    if (!P || typeof P.cleanName !== 'function') return 0;
+    let n = 0;
+    const fix = (list) => { for (const c of list || []) for (const x of c.students || []) { const t = P.cleanName(x.name); if (t && t !== x.name) { x.name = t; n++; } } };
+    fix(st.classes);
+    for (const e of st.archive || []) fix(e.classes);
+    return n;
+  }
   function load() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
       if (!raw) return;
       state = validateState(JSON.parse(raw));
+      const cleaned = cleanStudentNames(state);
+      if (cleaned) { save(); setTimeout(() => toast(cleaned + ' öğrencinin adından “Erkek”, “Kız”, “Yatılı” gibi ekler kaldırıldı. Yalnızca ad soyad ve sınıf kullanılıyor.'), 600); }
     } catch (e) {
       storageBlocked = true;
       toast('Tarayıcı kaydı okunamadı; mevcut kayıt korunuyor. Geçerli bir yedek yükleyin. ' + e.message);
@@ -773,6 +787,7 @@
       const data = JSON.parse(await file.text());
       if (!data || data.app !== 'kelebek-sinav') throw new Error('Bu dosya bir Kelebek yedeği değil.');
       const next = validateState(data);
+      cleanStudentNames(next);
       if (!editAllowed()) return;
       if (!save(next, true)) return;
       state = next;
@@ -1227,6 +1242,7 @@
     else if (view === 'yoklama') el.innerHTML = renderRoll();
     else if (view === 'sinif') el.innerHTML = renderByClass();
     else if (view === 'evrak') el.innerHTML = renderPapers();
+    else if (view === 'afis') el.innerHTML = renderPosters();
     else el.innerHTML = renderSearch();
     if (view === 'ara') {
       const inp = $('#q');
@@ -1689,6 +1705,7 @@
   const PACK_PARTS = [
     { key: 'plan', label: 'Oturma planları', hint: 'Her salon için 1 sayfa; salon kapısına asılır.' },
     { key: 'imza', label: 'Öğrenci imza listeleri', hint: 'Her salon için 1 sayfa; gözetmen öğrencilere imzalatır.' },
+    { key: 'afis', label: 'Öğrenci yönlendirme afişleri', hint: 'Her salon için 1 sayfa; kapıya, oturma planının yanına asılır. Öğrenci yerini nasıl bulacağını görür.' },
     { key: 'yer', label: 'Sınıflara göre sınav yerleri', hint: 'Her şube için 1 sayfa; öğrenciler yerini buradan öğrenir.' },
     { key: 'tablo', label: 'Kâğıt dağıtım tablosu', hint: 'Hangi salona hangi düzeyden ve şubeden kaç kâğıt gideceği.' },
     { key: 'zarf', label: 'Zarf etiketleri', hint: 'Her salonun kâğıt zarfına yapıştırılır.' },
@@ -1707,6 +1724,7 @@
     const parts = [];
     if (choice.plan) parts.push(renderPlans());
     if (choice.imza) parts.push(renderRoll());
+    if (choice.afis) parts.push(renderPosters());
     if (choice.yer) parts.push(renderByClass());
     if (choice.tablo) parts.push(renderPapers('table'));
     if (choice.zarf) parts.push(renderPapers('labels'));
@@ -1718,7 +1736,7 @@
     const rooms = r.rooms.length;
     const used = new Set();
     for (const rm of r.rooms) for (const x of rm.seats) if (x.classId) used.add(x.classId);
-    return { plan: rooms, imza: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)), odaSalon: teacherPages('room') };
+    return { plan: rooms, imza: rooms, afis: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)), odaSalon: teacherPages('room') };
   }
   function openPack(entry) {
     if (!entry && !outputReady()) return;
@@ -2005,6 +2023,72 @@
             <div><b>İMZA</b><span class="write-line"></span></div>
           </div>
         </footer>
+      </article>`;
+    }).join('');
+  }
+
+  /**
+   * Öğrenci yönlendirme afişi: salon kapısına asılır. Öğrencinin yerini doğru bulması için
+   * yönü (tahtaya bakarak), numaraların sayılma sırasını, kapıyı ve ada göre listeyi gösterir.
+   */
+  function renderPosters() {
+    const r = state.result;
+    const ci = classIndex();
+    const si = studentIndex();
+    const pl = seatPlaces();
+    const mode = state.settings.sideNames || 'lr';
+    const doorSide = mode === 'doorL' ? 'sol' : mode === 'doorR' ? 'sağ' : '';
+    return r.rooms.map((room, ri) => {
+      const title = roomTitle(room, ci);
+      const spd = room.spd || 2, cols = room.cols || 3;
+      const nDesks = Math.ceil(room.seats.length / spd), rows = Math.ceil(nDesks / cols);
+      const names = groupNames(cols);
+      const last = room.seats.length;
+      const deskHtml = (d) => {
+        if (d >= nDesks) return '<span class="pd-desk pd-none"></span>';
+        const cells = [];
+        for (let k = 0; k < spd; k++) {
+          const seat = room.seats[d * spd + k];
+          if (!seat) { cells.push('<span class="pd-seat pd-gap"></span>'); continue; }
+          cells.push(`<span class="pd-seat${seat.empty ? ' pd-empty' : ''}${seat.seatNo === 1 ? ' pd-first' : ''}">${seat.seatNo}</span>`);
+        }
+        return `<span class="pd-desk">${cells.join('')}</span>`;
+      };
+      let grid = '<span></span>' + names.map((n) => `<span class="pd-col">${esc(n)}</span>`).join('');
+      for (let rr = 0; rr < rows; rr++) {
+        grid += `<span class="pd-row">${rr + 1}. sıra${rr === 0 ? '<small>en ön</small>' : rr === rows - 1 ? '<small>en arka</small>' : ''}</span>`;
+        for (let cc = 0; cc < cols; cc++) grid += deskHtml(rr * cols + cc);
+      }
+      const students = room.seats.filter((x) => !x.empty).map((x) => ({ s: si.get(x.studentId).s, c: ci.get(x.classId).c, p: pl.get(x.studentId) }))
+        .sort((a, b) => collator.compare(a.s.name, b.s.name));
+      // Koltuk, adım 2'deki gibi tahtaya bakarken sol/sağ olarak yazılır (kapı/pencere tekrarı karışıklık yaratıyordu)
+      const where = (p) => `${p.group}${/grubu?$/i.test(p.group) ? '' : ' grubu'} · önden ${p.rowNo}. sıra${spd === 2 ? ' · ' + (p.side === 0 ? 'sol' : 'sağ') + ' koltuk' : ''}`;
+      const half = Math.ceil(students.length / 2);
+      const listTable = (part) => `<table class="list poster-list"><thead><tr><th>Adı soyadı</th><th>Sınıfı</th><th class="num">Yer no</th><th>Nerede?</th></tr></thead>
+        <tbody>${part.map((x) => `<tr><td>${esc(x.s.name)}</td><td>${esc(x.c.name)}</td><td class="num pl-no">${x.p.no}</td><td class="pl-where">${esc(where(x.p))}</td></tr>`).join('')}</tbody></table>`;
+      const st = state.settings;
+      const when = [st.date ? fmtDay(parseDay(st.date), { day: 'numeric', month: 'long', weekday: 'long' }) : '', st.lesson ? st.lesson + '. ders' : '', st.time].filter(Boolean).join(' · ');
+      return `<article class="sheet poster-sheet" data-fit-one="1" data-room="${ri}">
+        ${sheetHead('Sınav salonu · ' + title, 'Yerinizi bulun', ri, 'room')}
+        <div class="poster-band"><span class="poster-room">${esc(title)}</span><span class="poster-sub">salonu · ${room.seats.filter((x) => !x.empty).length} öğrenci${when ? ' · ' + esc(when) : ''}</span></div>
+        <ol class="poster-steps">
+          <li><b>Adınızı bulun.</b> Aşağıdaki listede adınızın yanındaki <b>YER NO</b> sizin yerinizdir.</li>
+          <li><b>Yüzünüzü tahtaya dönün.</b> Kroki tahtaya bakarak çizildi: krokideki sol, sizin solunuz.${doorSide ? ` Kapı <b>${doorSide}</b> tarafınızda.` : ''}</li>
+          <li><b>Numaraları sayın.</b> 1 numara tahtaya en yakın sıranın en solundadır. Numaralar soldan sağa artar, sıra bitince bir arkaya geçilir.${spd === 2 ? ' İki kişilik sırada küçük numara soldadır.' : ''}</li>
+        </ol>
+        <div class="poster-map">
+          <div class="pm-board">TAHTA · ÖĞRETMEN MASASI <small>(önünüz)</small></div>
+          <div class="pm-room">
+            ${doorSide === 'sol' ? '<div class="pm-door pm-left">KAPI</div>' : doorSide === 'sağ' ? '<div class="pm-wall pm-left">PENCERE</div>' : ''}
+            <div class="pm-grid" style="grid-template-columns:auto repeat(${cols}, minmax(0,1fr))">${grid}</div>
+            ${doorSide === 'sağ' ? '<div class="pm-door pm-right">KAPI</div>' : doorSide === 'sol' ? '<div class="pm-wall pm-right">PENCERE</div>' : ''}
+          </div>
+          <div class="pm-arrows"><span>Sayma yönü: 1 → ${Math.min(cols * spd, last)} (ilk sıra), sonra bir arkadaki sıra … son numara ${last}</span></div>
+          <div class="pm-you">▲ Siz buradan, tahtaya bakarak duruyorsunuz ▲</div>
+        </div>
+        <h3 class="poster-h">Ada göre yerler</h3>
+        <div class="poster-lists">${listTable(students.slice(0, half))}${students.length > half ? listTable(students.slice(half)) : ''}</div>
+        <p class="poster-foot">Yerinizi bulamazsanız gözetmen öğretmene sorun. Gözetmen izin vermeden yer değiştirmeyin.</p>
       </article>`;
     }).join('');
   }
@@ -2729,7 +2813,7 @@
 
   // ---------- sayfalar (yan panel) ----------
   const PAGES = ['listeler', 'bilgiler', 'dagitim', 'arsiv'];
-  const REPORT_PAGES = { plan: 'Oturma planları', yoklama: 'Öğrenci imza listeleri', sinif: 'Sınıflara göre sınav yerleri', evrak: 'Dağıtımı paylaş/dışarı aktar', ara: 'Öğrenci ara' };
+  const REPORT_PAGES = { plan: 'Oturma planları', yoklama: 'Öğrenci imza listeleri', sinif: 'Sınıflara göre sınav yerleri', afis: 'Öğrenci yönlendirme afişleri', evrak: 'Dağıtımı paylaş/dışarı aktar', ara: 'Öğrenci ara' };
   let page = 'listeler';
   // Object.hasOwn yalnız 2021 sonrası tarayıcılarda var; okuldaki eski tarayıcılarda menü çalışmıyordu.
   const isReportPage = (p) => Object.prototype.hasOwnProperty.call(REPORT_PAGES, p);

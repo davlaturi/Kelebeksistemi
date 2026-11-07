@@ -1273,3 +1273,47 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .planned-dlg, .cal-dlg { max-height: 92vh; overflow: auto; }
 .ses-line > span:nth-child(2) { flex: 1 1 320px; min-width: 0; }
 @media (max-width: 900px) { .ses-line .spacer { display: none; } }
+
+/* ---------- v1.26: öğrenci yönlendirme afişi ---------- */
+.poster-sheet { gap: 10px; }
+.poster-band { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 6px 0 2px; border-bottom: 3px solid var(--doc-ink, #141a26); }
+.poster-room { font-size: 2.6rem; font-weight: 800; letter-spacing: .02em; line-height: 1; }
+.poster-sub { font-size: 1.05rem; font-weight: 600; color: #333; }
+.poster-steps { margin: 0; padding: 0; list-style: none; counter-reset: st; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.poster-steps li { counter-increment: st; position: relative; padding: 8px 10px 8px 42px; border: 1.5px solid #222; border-radius: 8px; font-size: .92rem; line-height: 1.35; background: #fff; }
+.poster-steps li::before { content: counter(st); position: absolute; left: 9px; top: 7px; width: 25px; height: 25px; border-radius: 50%; background: #141a26; color: #fff; font-weight: 800; display: grid; place-items: center; font-size: .95rem; }
+.poster-map { display: grid; gap: 6px; padding: 10px; border: 2px solid #222; border-radius: 10px; }
+.pm-board { text-align: center; padding: 6px; border: 2px solid #222; background: #141a26; color: #fff; font-weight: 800; letter-spacing: .08em; font-size: .9rem; border-radius: 4px; margin: 0 12%; }
+.pm-board small { font-weight: 600; letter-spacing: 0; opacity: .85; }
+.pm-room { display: grid; grid-template-columns: auto 1fr auto; align-items: stretch; gap: 8px; }
+.pm-door, .pm-wall { writing-mode: vertical-rl; text-orientation: mixed; display: grid; place-items: center; font-weight: 800; letter-spacing: .2em; font-size: .85rem; padding: 6px 3px; border-radius: 4px; }
+.pm-door { border: 3px solid #222; background: #fff; }
+.pm-door.pm-left { transform: rotate(180deg); }
+.pm-wall { border: 1.5px dashed #777; color: #555; }
+.pm-wall.pm-left { transform: rotate(180deg); }
+.pm-room > .pm-grid:first-child { grid-column: 1 / -1; }
+.pm-grid { display: grid; gap: 6px 10px; align-items: center; }
+.pd-col { text-align: center; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; border-bottom: 1.5px solid #222; padding-bottom: 2px; }
+.pd-row { font-size: .78rem; font-weight: 700; white-space: nowrap; display: grid; line-height: 1.1; }
+.pd-row small { font-weight: 500; font-size: .7rem; color: #555; }
+.pd-desk { display: flex; border: 2px solid #222; border-radius: 5px; overflow: hidden; background: #fff; min-height: 34px; }
+.pd-desk.pd-none { border: 0; background: none; }
+.pd-seat { flex: 1; display: grid; place-items: center; font-size: 1.25rem; font-weight: 800; }
+.pd-seat + .pd-seat { border-left: 1.5px solid #222; }
+.pd-seat.pd-empty { color: #999; font-weight: 500; font-size: .95rem; }
+.pd-seat.pd-first { background: #141a26; color: #fff; }
+.pm-arrows { text-align: center; font-size: .82rem; font-weight: 600; }
+.pm-you { text-align: center; font-size: .9rem; font-weight: 800; padding: 5px; border: 2px dashed #222; border-radius: 6px; margin: 0 20%; }
+.poster-h { margin: 2px 0 0; font-size: 1rem; }
+.poster-lists { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; align-items: start; }
+.poster-list { width: 100%; font-size: .86rem; }
+.poster-list td.pl-no { font-size: 1.15rem; font-weight: 800; }
+.poster-list td.pl-where { font-size: .84rem; }
+.poster-foot { margin: 2px 0 0; font-weight: 700; text-align: center; font-size: .9rem; border-top: 1.5px solid #222; padding-top: 5px; }
+@media (max-width: 700px) { .poster-steps { grid-template-columns: 1fr; } .poster-lists { grid-template-columns: 1fr; } }
+.pack-out .poster-steps li { font-size: 9.5pt; }
+.pack-out .poster-room { font-size: 30pt; }
+.pack-out .poster-list { font-size: 8.5pt; }
+.pack-out .poster-list td.pl-no { font-size: 11pt; }
+.pack-out .poster-list td.pl-where { font-size: 8pt; }
+.pack-out .pd-seat { font-size: 13pt; }

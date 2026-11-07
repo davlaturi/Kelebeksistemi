@@ -10,7 +10,17 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.25.0)
+## Bu sürümde (v1.26.0)
+
+- **Yalnızca ad soyad ve sınıf.** Bazı e-Okul listelerinde ad soyaddan sonra gelen "Erkek / Kız" ve "Yatılı / Gündüzlü / Paralı-Yatılı" sütunları ada ekleniyordu ("ZİKRETTİN YILMAZ Erkek Yatılı"). Artık alınmıyor. Daha önce yüklenmiş listelerdeki bu ekler uygulama açılınca kendiliğinden temizleniyor ve size bildiriliyor; kayıtlı sınavlar da düzeltiliyor.
+- **Öğrenci yönlendirme afişi.** Dağıtım çıktılarına "Yönlendirme afişleri" eklendi; sınav evrakı paketinde de seçilebiliyor. Her salon için bir sayfa, kapıya oturma planının yanına asılır:
+  - salon adı büyük harflerle;
+  - "Yerinizi 3 adımda bulun": adınızı bulun → yüzünüzü tahtaya dönün (kapı hangi tarafınızda) → numaraları nasıl sayacağınız;
+  - salon krokisi: tahta, kapı ve pencere, sıra grupları, "1. sıra en ön" ve "siz buradan bakıyorsunuz" işareti, 1 numara koyu;
+  - ada göre sıralı liste: yer numarası ve "Kapı tarafı grubu · önden 3. sıra · sol koltuk" biçiminde yeri.
+  Afişteki numaralar oturma planındakilerle aynıdır.
+
+## Önceki sürümde (v1.25.0)
 
 - **📅 Planlanmış sınavlar.** 2. adımda (ve sarı **Sınav bilgileri** penceresinde) bir düğme var. Takvimle eklenen bütün sınavlar tek tabloda: tarih, ders saati, sınava giren şube sayısı, dersler, durum (Bugün / Seçili / ✓ Kayıtlı). **Seç** ile tarih, ders saati, şubeler ve salonlar hazır gelir. Geçmiş sınavlar ve bilgi notları katlanmış duruyor; kontrol edilmesi gerekenler en üstte tek kutuda.
 - **Elle giriş eskisi gibi.** Planlanmış sınav seçmeden bilgileri elle girebilirsiniz. Seçiliyken tarihi ya da ders saatini elle değiştirirseniz bağlantı kendiliğinden kalkar ve size bildirilir. "Seçimi kaldır, elle gir" düğmesi de var.
@@ -21,7 +31,7 @@ Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkm
   - Şube seçiminde ders adları kaldırıldı; sınavı olmayan şubeler soluk ve "sınavsız" yazıyor.
   - Uyarı cümleleri kısaltıldı.
 
-## Önceki sürümde (v1.24.0)
+## Daha önce (v1.24.0)
 
 - **Şablon değişse de okunur.** Takvim okuyucu artık şunları da tanıyor:
   - birden çok sayfa (örneğin her düzey ayrı sayfada; aynı tarih ve ders saatindeki şubeler birleşiyor), takvim içermeyen sayfalar atlanıyor;

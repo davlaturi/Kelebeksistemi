@@ -61,5 +61,15 @@ async function pagesOf(file) {
     { no: '1250', name: 'Ayşe Nur KAYA' },
     { no: '', name: 'Mehmet Demir' },
   ]);
+  // Cinsiyet ve yatılı/gündüzlü sütunları ada eklenmez; yalnız ad soyad alınır
+  {
+    const T = require('../assets/parser.js');
+    assert.deepStrictEqual(T.rowToStudents(['1', '512', 'ZİKRETTİN', 'YILMAZ', 'Erkek', 'Yatılı']), [{ no: '512', name: 'ZİKRETTİN YILMAZ' }]);
+    assert.deepStrictEqual(T.rowToStudents(['2', '513', 'AYŞE', 'NUR', 'KAYA', 'Kız', 'Gündüzlü']), [{ no: '513', name: 'AYŞE NUR KAYA' }]);
+    assert.deepStrictEqual(T.rowToStudents(['3', '514', 'ECE', 'DEMİR', 'K', 'Paralı-Yatılı']), [{ no: '514', name: 'ECE DEMİR' }]);
+    assert.strictEqual(T.cleanName('ZİKRETTİN YILMAZ Erkek Yatılı'), 'ZİKRETTİN YILMAZ');
+    assert.strictEqual(T.cleanName('Deniz Erkek'), 'Deniz Erkek', 'en az iki sözcük kalmalı');
+    assert.strictEqual(T.cleanName('Yatılı Kaya Demir'), 'Yatılı Kaya Demir', 'yalnız sondaki ekler atılır');
+  }
   console.log('Ayrıştırıcı testleri geçti.');
 })().catch((e) => { console.error(e); process.exit(1); });

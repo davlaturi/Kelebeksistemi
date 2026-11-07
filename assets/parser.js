@@ -16,6 +16,19 @@
   const NAME_TOKEN = new RegExp('^[' + LETTERS + "][" + LETTERS + ".'’`-]*$");
   const GENDER = new Set(['E', 'K', 'ERKEK', 'KIZ', 'KADIN', 'BAY', 'BAYAN', 'ERKEK.', 'KIZ.']);
   const NOISE = new Set(['EVET', 'HAYIR', 'VAR', 'YOK', 'TC', 'T.C.']);
+  // Ad soyaddan sonra gelen sütunlar (cinsiyet, yatılı/gündüzlü vb.): ada eklenmez.
+  const STATUS = new Set(['YATILI', 'GÜNDÜZLÜ', 'GUNDUZLU', 'PANSİYONLU', 'PANSİYON', 'PARALI', 'PARASIZ', 'BURSLU', 'KAYNAŞTIRMA', 'NAKİL']);
+  const isExtra = (tok) => {
+    const t = trUpper(String(tok).replace(/[.,;:]+$/, ''));
+    if (!t) return true;
+    return t.split(/[-/]/).every((x) => GENDER.has(x) || STATUS.has(x));
+  };
+  /** "AD SOYAD Erkek Yatılı" → "AD SOYAD": sondaki cinsiyet ve durum sözcüklerini atar (en az 2 sözcük kalır). */
+  function cleanName(name) {
+    const toks = String(name || '').replace(/\s+/g, ' ').trim().split(' ');
+    while (toks.length > 2 && isExtra(toks[toks.length - 1])) toks.pop();
+    return toks.join(' ');
+  }
   // Bu kelimeleri içeren satırlar öğrenci değil başlık/alt bilgidir.
   const NOT_A_NAME = /^(SINIF|SINIFI|ŞUBE|ŞUBES[İI]|L[İI]STE|L[İI]STES[İI]|SAYFA|TOPLAM|YILI|ÖĞRET[İI]M|EĞ[İI]T[İI]M|MÜDÜR|LİSES[İI]|OKULU|DÖNEM|SINAV|TAR[İI]H|SAAT)$/u;
 
@@ -95,7 +108,7 @@
     const out = [];
     for (const r of recs) {
       const names = r.names.filter((n) => !NOISE.has(trUpper(n)));
-      while (names.length && GENDER.has(trUpper(names[names.length - 1]))) names.pop();
+      while (names.length && isExtra(names[names.length - 1])) names.pop();
       if (!r.nums.length || names.length < 2) continue;
       if (names.some((n) => NOT_A_NAME.test(trUpper(n)))) continue;
       const letters = names.join('').replace(/[^\p{L}]/gu, '').length;
@@ -245,7 +258,7 @@
     return pages;
   }
 
-  const api = { parsePages, lineText, findClass, parseText, detectClassName, classFromFileName, groupRows, rowToStudents, tokenize, extractPdf };
+  const api = { cleanName, parsePages, lineText, findClass, parseText, detectClassName, classFromFileName, groupRows, rowToStudents, tokenize, extractPdf };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.KelebekParser = api;
 })(typeof self !== 'undefined' ? self : this);

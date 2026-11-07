@@ -15,7 +15,7 @@ function harness(initial) {
       removeAttribute() {}, showModal() {} });
     return nodes.get(id);
   };
-  const context = { window: { KelebekAssign: A, KelebekShare: require('../assets/share.js'), KelebekCalendar: require('../assets/calendar.js'), addEventListener() {}, confirm: () => true },
+  const context = { window: { KelebekAssign: A, KelebekShare: require('../assets/share.js'), KelebekCalendar: require('../assets/calendar.js'), KelebekParser: require('../assets/parser.js'), addEventListener() {}, confirm: () => true },
     document: { querySelector: node, querySelectorAll: (selector) => groups.get(selector) || [] },
     location: { hash: '' }, history: { replaceState: (_, __, hash) => { context.location.hash = hash; } },
     localStorage: { getItem: () => raw, setItem: (_, value) => { if (fail) throw Error('QuotaExceededError'); raw = value; } },
@@ -29,7 +29,7 @@ function harness(initial) {
     globalThis.api = { validateState, importBackup, load, save, saveToArchive,
       onSeatClick, localDateKey, weekStart, csvCell, withEntry, openPack,
       paperShareData, paperShareText, paperSharePreview, renderByClass, renderPapers,
-      renderSharePanel, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
+      renderSharePanel, renderPosters, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
       readSettings, headerMeta, renderTeacherList, renderRoll, showPage, pageFromHash, toggleClassList, expandPrintSections,
       distributionAudit, auditHtml, renderThemePreview, applySession, setRoomApproval, calendarIssues, sessionGroups, roomClasses, capTotals, previewCalendar, confirmCalendar, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
@@ -55,7 +55,7 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   h.groups.set('[data-page]', sections);
   h.groups.set('[data-distribution-setup]', setup);
   h.groups.set('[data-report-actions]', reportActions);
-  for (const route of ['plan', 'yoklama', 'sinif', 'evrak', 'ara']) {
+  for (const route of ['plan', 'yoklama', 'sinif', 'afis', 'evrak', 'ara']) {
     a.showPage(route);
     assert.equal(a.pageFromHash(), route);
     assert.equal(sections.find((s) => s.dataset.page === 'dagitim').hidden, false);
@@ -350,6 +350,28 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   assert.doesNotMatch(previewHtml, /Örnek Öğrenci/, 'önizleme gerçek öğrenci adı göstermemeli');
   assert.match(previewHtml, /Örnek Okul/, 'girilen okul adı önizlemede görünür');
   h.node('#s-theme').value = '';
+  // Yönlendirme afişi: her salonda bir sayfa; her öğrenci bir kez ve plandaki yer numarasıyla
+  {
+    const hp = harness(), q = hp.api;
+    q.state = q.validateState(fixture()); q.state.settings.sideNames = 'doorL';
+    const html = q.renderPosters();
+    assert.equal((html.match(/class="sheet poster-sheet"/g) || []).length, q.state.result.rooms.length);
+    for (const room of q.state.result.rooms) for (const seat of room.seats) if (!seat.empty) {
+      const stu = q.state.classes.flatMap((c) => c.students).find((x) => x.id === seat.studentId);
+      const n = (html.match(new RegExp('<td>' + stu.name + '</td>', 'g')) || []).length;
+      assert.equal(n, 1, stu.name + ' afişte bir kez olmalı');
+      assert.ok(new RegExp('<td>' + stu.name + '</td><td>[^<]+</td><td class="num pl-no">' + seat.seatNo + '</td>').test(html), 'yer no plandakiyle aynı');
+    }
+    assert.match(html, /Kapı <b>sol<\/b> tarafınızda/); assert.match(html, /pm-door pm-left/);
+    assert.match(html, /(sol|sağ) koltuk/); assert.doesNotMatch(html, /· kapı tarafı koltuk/);
+  }
+  // Eski sürümün ada eklediği "Erkek Yatılı" gibi ekler yüklemede temizlenir ve kaydedilir
+  {
+    const dirty = fixture(); dirty.classes[0].students[0].name = 'ZİKRETTİN YILMAZ Erkek Yatılı';
+    const hd = harness(JSON.stringify(dirty)); hd.api.load();
+    assert.equal(hd.api.state.classes[0].students[0].name, 'ZİKRETTİN YILMAZ');
+    assert.match(hd.raw(), /"ZİKRETTİN YILMAZ"/); assert.doesNotMatch(hd.raw(), /Yatılı/);
+  }
   // Sınav takvimi: oturum seçimi, sınavı olmayan sınıfın salon olmaması, onay
   {
     const hc = harness(), c = hc.api;
