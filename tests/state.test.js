@@ -29,7 +29,7 @@ function harness(initial) {
     globalThis.api = { validateState, importBackup, load, save, saveToArchive,
       onSeatClick, localDateKey, weekStart, csvCell, withEntry, openPack,
       paperShareData, paperShareText, paperSharePreview, renderByClass, renderPapers,
-      renderSharePanel, renderPosters, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
+      renderSharePanel, renderPosters, confirmSides, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
       readSettings, headerMeta, renderTeacherList, renderRoll, showPage, pageFromHash, toggleClassList, expandPrintSections,
       distributionAudit, auditHtml, renderThemePreview, applySession, setRoomApproval, calendarIssues, sessionGroups, roomClasses, capTotals, previewCalendar, confirmCalendar, toggleDistributionLock, distributionLabel, stampResult, runDistribution, loadSample,
@@ -364,6 +364,17 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
     }
     assert.match(html, /Kapı <b>sol<\/b> tarafınızda/); assert.match(html, /pm-door pm-left/);
     assert.match(html, /(sol|sağ) koltuk/); assert.doesNotMatch(html, /· kapı tarafı koltuk/);
+  }
+  // Kapı/pencere yönü: onaylanınca kaydedilir, çıktı altında sürüm görünür
+  {
+    const hs = harness(), q = hs.api;
+    q.state = q.validateState(fixture());
+    assert.equal(q.state.settings.sidesConfirmed, false);
+    q.confirmSides('doorR');
+    assert.equal(q.state.settings.sideNames, 'doorR'); assert.equal(q.state.settings.sidesConfirmed, true);
+    assert.match(hs.raw(), /"sidesConfirmed":true/);
+    assert.match(q.renderRoll(), /Kelebek Sınav Dağıtım Sistemi · v\d+\.\d+\.\d+/);
+    assert.equal(q.validateState({ ...JSON.parse(hs.raw()) }).settings.sidesConfirmed, true);
   }
   // Eski sürümün ada eklediği "Erkek Yatılı" gibi ekler yüklemede temizlenir ve kaydedilir
   {

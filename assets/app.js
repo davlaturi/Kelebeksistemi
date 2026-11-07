@@ -11,10 +11,11 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
   }
 
+  const APP_VERSION = '1.28.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
-    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'doorR', duplex: true, docTheme: 'kurumsal', sessionId: '',
+    deskCols: 3, seatsPerDesk: 2, avoidOwnRoom: false, capacityMode: 'class', sideNames: 'doorR', sidesConfirmed: false, duplex: true, docTheme: 'kurumsal', sessionId: '',
   };
   let state = { classes: [], settings: { ...DEFAULT_SETTINGS }, result: null, stale: false, archive: [], calendar: null };
   let view = 'plan';
@@ -40,6 +41,7 @@
       require([1, 2, 3, 4].includes(out.deskCols) && [1, 2].includes(out.seatsPerDesk), 'Sıra düzeni geçersiz.');
       require(['class', 'custom'].includes(out.capacityMode) && ['lr', 'doorL', 'doorR'].includes(out.sideNames), 'Salon ayarları geçersiz.');
       for (const k of ['duplex', 'avoidOwnRoom']) require(typeof out[k] === 'boolean', 'Sınav seçeneği geçersiz.');
+      out.sidesConfirmed = out.sidesConfirmed === true;
       if (!['kurumsal', 'resmi', 'modern'].includes(out.docTheme)) out.docTheme = 'kurumsal';
       if (typeof out.sessionId !== 'string' || out.sessionId.length > 120) out.sessionId = '';
       return out;
@@ -1102,6 +1104,7 @@
     s.time = $('#s-time').value;
     s.deskCols = parseInt($('#s-cols').value, 10) || 3;
     s.seatsPerDesk = parseInt($('#s-spd').value, 10) === 1 ? 1 : 2;
+    if ((($('#s-sides').value || 'lr') !== s.sideNames) && ev && ev.type === 'change') s.sidesConfirmed = true;
     s.sideNames = $('#s-sides').value || 'lr';
     s.duplex = $('#s-duplex').checked;
     s.docTheme = $('#s-theme').value || 'kurumsal';
@@ -1184,7 +1187,30 @@
     r.stats = A.evaluate(r.rooms, inc, { cols: state.settings.deskCols, spd: state.settings.seatsPerDesk });
   }
 
+  /** Kapı/pencere yönü bir kez öğretmen bakışıyla onaylanmadan çıktı basılmasın diye soru. */
+  function renderSidesCheck() {
+    const box = $('#sides-check');
+    if (!box) return;
+    const need = !state.settings.sidesConfirmed && state.classes.some((c) => c.students.length);
+    box.hidden = !need;
+    if (!need) return;
+    box.innerHTML = `<p class="sides-q"><b>Kapı ve pencere yönünü doğrulayın.</b> Okulunuzda <b>öğretmen masasından sınıfa bakınca</b> pencereler hangi tarafta?</p>
+      <span class="sides-btns"><button type="button" class="btn small" data-sides="doorR">Pencereler sağda</button><button type="button" class="btn small" data-sides="doorL">Pencereler solda</button><button type="button" class="btn ghost small" data-sides="lr">Belirtme</button></span>
+      <small>Planlar tahtaya bakan öğrencinin gözünden çizilir; seçiminize göre kapı ve pencere planda doğru tarafta görünür.</small>`;
+  }
+  function confirmSides(mode) {
+    if (!['doorR', 'doorL', 'lr'].includes(mode) || !editAllowed()) return;
+    const settings = { ...state.settings, sideNames: mode, sidesConfirmed: true };
+    const result = state.result && { ...state.result };
+    if (result && mode !== state.settings.sideNames) stampResult(result);
+    const next = { ...state, settings, result };
+    if (!save(next)) return;
+    state = next; renderAll();
+    toast(mode === 'doorR' ? 'Kaydedildi: öğretmen masasından bakınca pencereler sağda. Planda pencere solda, kapı sağda görünür.'
+      : mode === 'doorL' ? 'Kaydedildi: öğretmen masasından bakınca pencereler solda. Planda kapı solda, pencere sağda görünür.' : 'Kaydedildi: kapı ve pencere yazılmayacak.');
+  }
   function updateReminder() {
+    renderSidesCheck();
     const miss = [!state.settings.exam && 'sınav adı', !state.settings.date && 'tarih'].filter(Boolean);
     const rem = $('#exam-reminder');
     rem.hidden = !miss.length || isReportPage(page);
@@ -1272,7 +1298,7 @@
         ${headerMeta()}
       </div>
       <div class="sheet-tools"><button type="button" class="btn small" data-print-${kind}="${esc(ri)}">${esc(buttonLabel)}</button></div>
-    </header>${state.result ? `<footer class="sheet-code"><span>Belge No: ${esc(distributionLabel())}</span><span>Kelebek Sınav Dağıtım Sistemi</span></footer>` : ''}`;
+    </header>${state.result ? `<footer class="sheet-code"><span>Belge No: ${esc(distributionLabel())}</span><span>Kelebek Sınav Dağıtım Sistemi · v${APP_VERSION}</span></footer>` : ''}`;
   }
   /** Düzenleyen / onaylayan imza alanı. */
   function approvalBlock(left = 'Düzenleyen', right = 'Onaylayan') {
@@ -2772,6 +2798,8 @@
     }
     $('#archive-view').addEventListener('change', onPaperCheck);
     $('#sd-q').addEventListener('input', renderStudentDelete);
+    $('#sides-check').addEventListener('click', (e) => { const b = e.target.closest('[data-sides]'); if (b) confirmSides(b.dataset.sides); });
+    const ver = $('#app-version'); if (ver) ver.textContent = 'Sürüm v' + APP_VERSION;
     $('#cal-file').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ''; importCalendar(f); });
     let calRemoveArmed = 0;
     document.addEventListener('click', (e) => {

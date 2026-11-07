@@ -10,12 +10,19 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.27.0)
+## Bu sürümde (v1.28.0)
+
+- **Kapı/pencere yönü sorusu.** Yön bir kez onaylanmadan Dağıtım sayfasında sarı bir kutu soruyor: "Öğretmen masasından sınıfa bakınca pencereler hangi tarafta? [Pencereler sağda] [Pencereler solda] [Belirtme]". Seçim kaydediliyor ve soru bir daha çıkmıyor. Ayarı 2. adımdan değiştirmek de onay sayılıyor.
+- **Sürüm numarası görünür.** Yan menünün altında ve her çıktının alt bilgisinde "Kelebek Sınav Dağıtım Sistemi · v1.28.0" yazıyor; bir kâğıdın hangi sürümle basıldığı anlaşılıyor.
+
+> Uygulama bilgisayarınızdaki dosyalardan çalışır ve kendiliğinden güncellenmez. Yeni sürüm için ZIP'i (ya da tablet dosyasını) yeniden indirin. Verileriniz tarayıcıda kaldığı için kaybolmaz.
+
+## Önceki sürümde (v1.27.0)
 
 - **Kapı ve pencere ayarı öğretmen bakışıyla.** 2. adımdaki ayar artık "Kapı ve pencereler nerede?" diye soruyor; seçenekler öğretmen masasından bakışa göre yazılı: "pencereler SAĞDA, kapı solda" ya da "pencereler SOLDA, kapı sağda". Yeni kurulumlarda varsayılan "pencereler sağda".
 - **Planda kapı ve pencere işareti.** Oturma planının iki yanında, yönlendirme afişindeki gibi KAPI ve PENCERE yazıyor. Altta "Plan, tahtaya bakan öğrencinin gözünden çizilmiştir" notu var. Afişin 2. adımında pencerelerin hangi tarafta olduğu da yazıyor.
 
-## Önceki sürümde (v1.26.0)
+## Daha önce (v1.26.0)
 
 - **Yalnızca ad soyad ve sınıf.** Bazı e-Okul listelerinde ad soyaddan sonra gelen "Erkek / Kız" ve "Yatılı / Gündüzlü / Paralı-Yatılı" sütunları ada ekleniyordu ("ZİKRETTİN YILMAZ Erkek Yatılı"). Artık alınmıyor. Daha önce yüklenmiş listelerdeki bu ekler uygulama açılınca kendiliğinden temizleniyor ve size bildiriliyor; kayıtlı sınavlar da düzeltiliyor.
 - **Öğrenci yönlendirme afişi.** Dağıtım çıktılarına "Yönlendirme afişleri" eklendi; sınav evrakı paketinde de seçilebiliyor. Her salon için bir sayfa, kapıya oturma planının yanına asılır:

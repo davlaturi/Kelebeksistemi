@@ -1324,3 +1324,9 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .plan-sides .ps-l .pm-door, .plan-sides .ps-l .pm-wall { transform: rotate(180deg); }
 .plan-view-note { text-align: center; font-size: .72rem; color: #555; margin-top: 4px; }
 .pack-out .plan-view-note { font-size: 7pt; }
+/* v1.28: kapı/pencere yön sorusu, sürüm */
+.sides-check { display: grid; gap: 6px; margin: 8px 0; padding: 10px 12px; border: 2px solid #e0a800; border-radius: 10px; background: #fff8e1; color: #4a3300; font-size: .92rem; }
+.sides-check small { color: #6b5320; }
+.sides-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.app-version { font-weight: 600; }
+.sides-q { margin: 0; }
