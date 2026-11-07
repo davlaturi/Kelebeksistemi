@@ -14,20 +14,32 @@
   const UP = 'A-ZÇĞİÖŞÜÂÎÛ';
   const LETTERS = 'A-Za-zÇĞİÖŞÜÂÎÛçğıöşüâîûÄËÏÖÜäëïöü';
   const NAME_TOKEN = new RegExp('^[' + LETTERS + "][" + LETTERS + ".'’`-]*$");
-  const GENDER = new Set(['E', 'K', 'ERKEK', 'KIZ', 'KADIN', 'BAY', 'BAYAN', 'ERKEK.', 'KIZ.']);
+  // "Bay" ve "Bayan" soyadı da olabildiği için cinsiyet sayılmaz.
+  const GENDER = new Set(['E', 'K', 'ERKEK', 'KIZ', 'KADIN', 'ERKEK.', 'KIZ.']);
   const NOISE = new Set(['EVET', 'HAYIR', 'VAR', 'YOK', 'TC', 'T.C.']);
   // Ad soyaddan sonra gelen sütunlar (cinsiyet, yatılı/gündüzlü vb.): ada eklenmez.
   const STATUS = new Set(['YATILI', 'GÜNDÜZLÜ', 'GUNDUZLU', 'PANSİYONLU', 'PANSİYON', 'PARALI', 'PARASIZ', 'BURSLU', 'KAYNAŞTIRMA', 'NAKİL']);
-  const isExtra = (tok) => {
-    const t = trUpper(String(tok).replace(/[.,;:]+$/, ''));
-    if (!t) return true;
-    return t.split(/[-/]/).every((x) => GENDER.has(x) || STATUS.has(x));
-  };
-  /** "AD SOYAD Erkek Yatılı" → "AD SOYAD": sondaki cinsiyet ve durum sözcüklerini atar (en az 2 sözcük kalır). */
+  const norm = (tok) => trUpper(String(tok).replace(/[.,;:]+$/, ''));
+  const isStatus = (tok) => { const t = norm(tok); return !!t && t.split(/[-/]/).every((x) => STATUS.has(x)); };
+  const isGender = (tok) => GENDER.has(norm(tok));
+  /**
+   * Sondaki sütun değerlerini atar: önce durum sözcükleri (Yatılı, Gündüzlü...), sonra en
+   * fazla BİR cinsiyet sözcüğü. Böylece "ALİ KIZ Kız" → "ALİ KIZ" (soyadı korunur).
+   * En az `keep` sözcük kalır.
+   */
+  function stripTail(toks, keep) {
+    while (toks.length > keep && isStatus(toks[toks.length - 1])) toks.pop();
+    if (toks.length > keep && isGender(toks[toks.length - 1])) toks.pop();
+    return toks;
+  }
+  /**
+   * Kayıtlı adların temizliği: yalnız ad bir durum sözcüğüyle bitiyorsa ("… Erkek Yatılı")
+   * dokunulur; "Ayşe Nur Bay", "Ali Can Erkek" gibi adlar olduğu gibi kalır.
+   */
   function cleanName(name) {
     const toks = String(name || '').replace(/\s+/g, ' ').trim().split(' ');
-    while (toks.length > 2 && isExtra(toks[toks.length - 1])) toks.pop();
-    return toks.join(' ');
+    if (toks.length < 3 || !isStatus(toks[toks.length - 1])) return toks.join(' ');
+    return stripTail(toks, 2).join(' ');
   }
   // Bu kelimeleri içeren satırlar öğrenci değil başlık/alt bilgidir.
   const NOT_A_NAME = /^(SINIF|SINIFI|ŞUBE|ŞUBES[İI]|L[İI]STE|L[İI]STES[İI]|SAYFA|TOPLAM|YILI|ÖĞRET[İI]M|EĞ[İI]T[İI]M|MÜDÜR|LİSES[İI]|OKULU|DÖNEM|SINAV|TAR[İI]H|SAAT)$/u;
@@ -108,7 +120,7 @@
     const out = [];
     for (const r of recs) {
       const names = r.names.filter((n) => !NOISE.has(trUpper(n)));
-      while (names.length && isExtra(names[names.length - 1])) names.pop();
+      stripTail(names, 0);
       if (!r.nums.length || names.length < 2) continue;
       if (names.some((n) => NOT_A_NAME.test(trUpper(n)))) continue;
       const letters = names.join('').replace(/[^\p{L}]/gu, '').length;

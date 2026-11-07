@@ -11,7 +11,7 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
   }
 
-  const APP_VERSION = '1.30.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
+  const APP_VERSION = '1.31.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
@@ -1407,6 +1407,25 @@
     return arr;
   }
   const seatNum = (room, idx) => seatNumbers(room)[idx];
+  /**
+   * Basılı planda koltuğa sığmayan tek uzun kelime (ör. "Uzunismailoğulları") taşmasın diye
+   * yalnız o adın yazısı küçültülür; kelime bölünmez. Sığan adlarda bir şey değişmez.
+   */
+  function nameFit(name, room) {
+    const across = Math.max(1, (room.cols || 3) * (room.spd || 2));
+    const fits = Math.floor(88 / across); // bir koltuğa 8,5 pt ile sığan yaklaşık harf sayısı
+    const longest = Math.max(0, ...String(name).split(/\s+/).map((w) => w.length));
+    if (longest <= fits) return '';
+    return ` style="--fit:${Math.max(0.6, fits / longest).toFixed(2)}"`;
+  }
+  /** Şube adı, koltuk numarasıyla aynı satırda durduğu için ona yer bırakacak kadar küçültülür. */
+  function clsFit(name, room) {
+    const across = Math.max(1, (room.cols || 3) * (room.spd || 2));
+    const fits = Math.floor(88 / across) - 3;
+    const len = String(name).length;
+    if (len <= fits) return '';
+    return ` style="--fit:${Math.max(0.6, fits / len).toFixed(2)}"`;
+  }
   /** Planın iki yanına kapı ve pencere işareti (öğrenci tahtaya bakarken). */
   function planSides(inner) {
     const mode = state.settings.sideNames || 'lr';
@@ -1439,8 +1458,8 @@
           const c = ci.get(seat.classId);
           const isSel = selectedSeat && selectedSeat.roomIdx === ri && selectedSeat.seatIdx === idx;
           cells.push(`<button type="button" class="seat${isSel ? ' sel' : ''}" style="--h:${levelHue(c.c.name)}" data-room="${ri}" data-seat="${idx}">
-            <span class="who">${esc(stu.s.name)}</span>
-            <span class="cls">${esc(c.c.name)}</span>
+            <span class="who"${nameFit(stu.s.name, room)}>${esc(stu.s.name)}</span>
+            <span class="cls"${clsFit(c.c.name, room)}>${esc(c.c.name)}</span>
             <span class="sno" aria-label="Sıra no">${seatNum(room, idx)}</span>
           </button>`);
         }

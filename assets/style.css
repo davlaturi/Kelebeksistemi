@@ -1335,3 +1335,12 @@ input[type="checkbox"] { accent-color: #176854; width: 19px; height: 19px; }
 .sample-poster-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .sample-poster-row .hint { margin: 0; }
 .poster-sample { margin: 0; text-align: center; font-size: .85rem; font-weight: 700; padding: 4px; border: 2px dashed #222; border-radius: 6px; }
+/* v1.31: sığmayan tek kelime taşmasın (sığan adlar yine bölünmez); afiş listesi sabit sütunlu */
+.poster-list { table-layout: fixed; }
+.poster-list th:nth-child(1), .poster-list td:nth-child(1) { width: 36%; overflow-wrap: break-word; }
+.poster-list th:nth-child(2), .poster-list td:nth-child(2) { width: 12%; }
+.poster-list th:nth-child(3), .poster-list td:nth-child(3) { width: 10%; }
+.poster-list th:nth-child(4), .poster-list td:nth-child(4) { width: 42%; }
+.poster-list td { line-height: 1.2; }
+.pack-out .seat .who { font-size: calc(8.5pt * var(--fit, 1)); }
+.pack-out .seat .cls { font-size: calc(8pt * var(--fit, 1)); }

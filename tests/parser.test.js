@@ -70,6 +70,12 @@ async function pagesOf(file) {
     assert.strictEqual(T.cleanName('ZİKRETTİN YILMAZ Erkek Yatılı'), 'ZİKRETTİN YILMAZ');
     assert.strictEqual(T.cleanName('Deniz Erkek'), 'Deniz Erkek', 'en az iki sözcük kalmalı');
     assert.strictEqual(T.cleanName('Yatılı Kaya Demir'), 'Yatılı Kaya Demir', 'yalnız sondaki ekler atılır');
+    // Gerçek soyadları korunur
+    assert.deepStrictEqual(T.rowToStudents(['4', '515', 'AYŞE', 'NUR', 'BAY', 'Kız']), [{ no: '515', name: 'AYŞE NUR BAY' }]);
+    assert.deepStrictEqual(T.rowToStudents(['5', '516', 'ALİ', 'KIZ', 'Erkek']), [{ no: '516', name: 'ALİ KIZ' }]);
+    assert.strictEqual(T.cleanName('Ayşe Nur Bay'), 'Ayşe Nur Bay');
+    assert.strictEqual(T.cleanName('Ali Can Erkek'), 'Ali Can Erkek', 'durum sözcüğü yoksa kayıtlı ada dokunulmaz');
+    assert.strictEqual(T.cleanName('Ece Demir Kız Gündüzlü'), 'Ece Demir');
   }
   console.log('Ayrıştırıcı testleri geçti.');
 })().catch((e) => { console.error(e); process.exit(1); });
