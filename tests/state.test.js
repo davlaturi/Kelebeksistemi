@@ -55,7 +55,7 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   h.groups.set('[data-page]', sections);
   h.groups.set('[data-distribution-setup]', setup);
   h.groups.set('[data-report-actions]', reportActions);
-  for (const route of ['plan', 'yoklama', 'sinif', 'afis', 'evrak', 'ara']) {
+  for (const route of ['plan', 'yoklama', 'sinif', 'evrak', 'ara']) {
     a.showPage(route);
     assert.equal(a.pageFromHash(), route);
     assert.equal(sections.find((s) => s.dataset.page === 'dagitim').hidden, false);

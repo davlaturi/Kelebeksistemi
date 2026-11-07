@@ -10,14 +10,19 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.33.0)
+## Bu sürümde (v1.34.0)
+
+- **Yönlendirme afişleri kaldırıldı.** Sol paneldeki "Yönlendirme afişleri" sekmesi ve sınav evrakı paketindeki afiş seçeneği çıkarıldı.
+- **Örnek afiş 30 kişilik.** 2. adımdaki (Sınav bilgileri) önizleme ve "Örnek afişi yazdır" düğmesi kaldı. Örnek artık 30 kişilik bir salonu gösteriyor (3'lü dizi × 5 sıra × 2); isimler hayali. Öğrencilere oturma planının nasıl okunacağını sınavdan önce göstermek için kullanılabilir.
+
+## Önceki sürümde (v1.33.0)
 
 - **Varsayılan arayüz geri geldi.** Dağıtım sayfasında "Salon kapasitesi" bölümü önceki gibi açılıyor: her salona şube mevcudu kadar öğrenci oturur; istenirse "Salon mevcudunu ben belirleyeceğim".
 - **Sınıfa özel sıra düzeni artık ek ayar.** Bölümün altındaki "Ek ayar: Sınıfa özel sıra düzeni" satırı elle açılıyor; "Sınıfa özel dizi düzenini kullan" işaretlenmedikçe salonlara yazılan dizi ve sıra sayısı hiç kullanılmıyor. İşaretlenince her salon için dizi (3'lü / 4'lü…) ve sıra sayısı girilebiliyor; kapasite kuralı olarak "Sınıfın bütün sıraları" da seçilebiliyor.
 - **Açılışta varsayılan.** Uygulama her açılışta ek ayar kapalı başlıyor; yazılan değerler saklanıyor, yeniden açınca geri geliyor. Etkin dağıtım bu ayarla yapıldıysa, o dağıtım bozulmasın diye ayar açık kalıyor ve satırda "Açık" yazıyor.
 - **Değişken dizi testi.** 17 şubeli gerçekçi okullarda (24–34 öğrenci, salonlar rastgele 3'lü ya da 4'lü, en çok 48 koltuk) 150 deneme: 74.139 öğrencide dışarıda kalan, aynı düzeyden yan yana ya da önlü-arkalı oturan yok.
 
-## Önceki sürümde (v1.32.0)
+## Daha önce (v1.32.0)
 
 - **Sınıfa özel sıra düzeni.** Dağıtım sayfasındaki bölümün adı **Salon düzeni ve kapasite** oldu. Her salonun yanında yan yana dizi sayısı seçiliyor (Genel / 1'li / 2'li / 3'lü / 4'lü); düzenleme penceresine girmek gerekmiyor.
 - **Sınıfın bütün sıraları.** Yeni kapasite seçeneği: her salon için önden arkaya sıra sayısını yazın; kapasite **dizi × sıra × kişi** olarak hesaplanır (ör. 4'lü dizi, 5 sıra, ikili: 4 × 5 × 2 = 40 koltuk). Öğrenciler sınıfın tamamına yayılır; boş kalan koltuklar aynı düzeyden öğrencileri ayırmak için kullanılır. Plan, sınıftaki gerçek dizi ve sıra sayısıyla çizilir. "Tüm salonlara" satırıyla bütün salonlara aynı düzen tek seferde verilebilir. Sıra sayısı yazılmayan salona şimdilik mevcudu kadar öğrenci oturur ve bu açıkça yazılır.

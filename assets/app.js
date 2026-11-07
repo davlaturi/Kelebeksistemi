@@ -11,7 +11,7 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
   }
 
-  const APP_VERSION = '1.33.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
+  const APP_VERSION = '1.34.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
@@ -1344,7 +1344,6 @@
     else if (view === 'yoklama') el.innerHTML = renderRoll();
     else if (view === 'sinif') el.innerHTML = renderByClass();
     else if (view === 'evrak') el.innerHTML = renderPapers();
-    else if (view === 'afis') el.innerHTML = renderPosters();
     else el.innerHTML = renderSearch();
     if (view === 'ara') {
       const inp = $('#q');
@@ -1387,14 +1386,16 @@
    * oluşturulduğu işlevler (renderPlans, renderRoll) kullanılır; böylece önizleme
    * yazdırılacak kâğıtla birebir aynı düzendedir. Kayıtlı veriye dokunmaz.
    */
-  const PREVIEW_NAMES = ['Elif Yıldız', 'Kerem Aydın', 'Zeynep Kaya', 'Emre Doğan', 'Defne Çelik', 'Yusuf Arslan',
-    'Ece Şahin', 'Burak Koç', 'Nazlı Polat', 'Ömer Kurt', 'Duru Aksoy', 'Efe Güneş'];
+  // Hayali adlar (30 farklı ad soyad)
+  const PREVIEW_FIRST = ['Elif', 'Kerem', 'Zeynep', 'Emre', 'Defne', 'Yusuf', 'Ece', 'Burak', 'Nazlı', 'Ömer', 'Duru', 'Efe', 'Ayşe', 'Mert', 'İrem'];
+  const PREVIEW_LAST = ['Yıldız', 'Aydın', 'Kaya', 'Doğan', 'Çelik', 'Arslan', 'Şahin', 'Koç', 'Polat', 'Kurt', 'Aksoy', 'Güneş', 'Demir', 'Işık', 'Tekin', 'Bulut'];
   function previewState(base) {
     const names = ['9/A', '10/B', '11/C'];
     const classes = names.map((name, i) => ({ id: 'onizleme-' + i, name, students: [], selected: true }));
-    const order = [0, 1, 2, 0, 1, 2, 2, 0, 1, 2, 0, 1]; // sıra arkadaşları farklı düzeyde
+    // 30 kişilik örnek salon (3'lü dizi × 5 sıra × 2): sıra arkadaşları ve önlü-arkalı farklı düzeyde
+    const order = Array.from({ length: 30 }, (_, i) => ((i % 6) + Math.floor(i / 6)) % 3);
     const seats = order.map((k, i) => {
-      const stu = { id: 'onizleme-s' + i, name: PREVIEW_NAMES[i] };
+      const stu = { id: 'onizleme-s' + i, name: PREVIEW_FIRST[i % PREVIEW_FIRST.length] + ' ' + PREVIEW_LAST[(i * 7) % PREVIEW_LAST.length] };
       classes[k].students.push(stu);
       return { studentId: stu.id, classId: classes[k].id, seatNo: i + 1 };
     });
@@ -1434,7 +1435,7 @@
     try {
       state = previewState(saved); selectedSeat = null;
       return renderPosters().replace('Yerinizi bulun</h3>', 'Yerinizi bulun · ÖRNEK</h3>')
-        .replace('<p class="poster-foot">', '<p class="poster-sample">Bu bir örnek afiştir; isimler hayalidir. Sınav günü her salonun kapısına kendi afişi asılır.</p><p class="poster-foot">');
+        .replace('<p class="poster-foot">', '<p class="poster-sample">Bu bir örnek afiştir; isimler hayalidir. Sınav günü yerinizi salon kapısındaki oturma planından aynı şekilde bulun.</p><p class="poster-foot">');
     } finally { state = saved; selectedSeat = savedSel; }
   }
   function printSamplePoster() {
@@ -1876,7 +1877,6 @@
   const PACK_PARTS = [
     { key: 'plan', label: 'Oturma planları', hint: 'Her salon için 1 sayfa; salon kapısına asılır.' },
     { key: 'imza', label: 'Öğrenci imza listeleri', hint: 'Her salon için 1 sayfa; gözetmen öğrencilere imzalatır.' },
-    { key: 'afis', label: 'Öğrenci yönlendirme afişleri', hint: 'Her salon için 1 sayfa; kapıya, oturma planının yanına asılır. Öğrenci yerini nasıl bulacağını görür.' },
     { key: 'yer', label: 'Sınıflara göre sınav yerleri', hint: 'Her şube için 1 sayfa; öğrenciler yerini buradan öğrenir.' },
     { key: 'tablo', label: 'Kâğıt dağıtım tablosu', hint: 'Hangi salona hangi düzeyden ve şubeden kaç kâğıt gideceği.' },
     { key: 'zarf', label: 'Zarf etiketleri', hint: 'Her salonun kâğıt zarfına yapıştırılır.' },
@@ -1895,7 +1895,6 @@
     const parts = [];
     if (choice.plan) parts.push(renderPlans());
     if (choice.imza) parts.push(renderRoll());
-    if (choice.afis) parts.push(renderPosters());
     if (choice.yer) parts.push(renderByClass());
     if (choice.tablo) parts.push(renderPapers('table'));
     if (choice.zarf) parts.push(renderPapers('labels'));
@@ -1907,7 +1906,7 @@
     const rooms = r.rooms.length;
     const used = new Set();
     for (const rm of r.rooms) for (const x of rm.seats) if (x.classId) used.add(x.classId);
-    return { plan: rooms, imza: rooms, afis: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)), odaSalon: teacherPages('room') };
+    return { plan: rooms, imza: rooms, yer: used.size, tablo: 1, zarf: Math.max(1, Math.ceil(rooms / 9)), odaSalon: teacherPages('room') };
   }
   function openPack(entry) {
     if (!entry && !outputReady()) return;
@@ -3022,7 +3021,7 @@
 
   // ---------- sayfalar (yan panel) ----------
   const PAGES = ['listeler', 'bilgiler', 'dagitim', 'arsiv'];
-  const REPORT_PAGES = { plan: 'Oturma planları', yoklama: 'Öğrenci imza listeleri', sinif: 'Sınıflara göre sınav yerleri', afis: 'Öğrenci yönlendirme afişleri', evrak: 'Dağıtımı paylaş/dışarı aktar', ara: 'Öğrenci ara' };
+  const REPORT_PAGES = { plan: 'Oturma planları', yoklama: 'Öğrenci imza listeleri', sinif: 'Sınıflara göre sınav yerleri', evrak: 'Dağıtımı paylaş/dışarı aktar', ara: 'Öğrenci ara' };
   let page = 'listeler';
   // Object.hasOwn yalnız 2021 sonrası tarayıcılarda var; okuldaki eski tarayıcılarda menü çalışmıyordu.
   const isReportPage = (p) => Object.prototype.hasOwnProperty.call(REPORT_PAGES, p);
