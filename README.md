@@ -27,7 +27,7 @@ Sınav bilgileri bölümünden dört dönem/sınav seçeneğinden birini ve 1–
 aktarılır; eski sınav kayıtları değişmez. Önceki serbest sınav adları korunur.
 Salon kâğıt kartlarının üst şeridi her düzeyin toplamını, altındaki satırlar şube sayılarını gösterir.
 
-Menüler soldaki yan paneldedir: **1 Sınıf listeleri**, **2 Sınav bilgileri**, **3 Dağıtım** ve **4 Kayıtlı sınavlar**. Dağıtım yapıldıktan sonra oturma planları, yoklama listeleri, sınıflara göre sınav yerleri ve öğrenci arama, Dağıtım'ın altında listelenir. Yedek alma düğmeleri de yan panelin altındadır. Her bölümün sonundaki **Devam** düğmesi sizi sıradaki adıma götürür.
+Menüler soldaki yan paneldedir: **1 Sınıf listeleri**, **2 Sınav bilgileri**, **3 Dağıtım** ve **4 Kayıtlı sınavlar**. Dağıtım yapıldıktan sonra oturma planları, yoklama listeleri, sınıflara göre sınav yerleri ve öğrenci arama, Dağıtım'ın altında listelenir. Yan menüyü üstündeki düğmeyle daraltabilirsiniz. Etkin sınavın tarihi, saati ve ders sırası her sayfanın üstünde görünür. Yedek alma düğmeleri yan panelin altındadır. Her bölümün sonundaki **Devam** düğmesi sizi sıradaki adıma götürür.
 
 
 1. **`index.html`** dosyasını açın (yukarıya bakın).
@@ -37,7 +37,7 @@ Menüler soldaki yan paneldedir: **1 Sınıf listeleri**, **2 Sınav bilgileri**
    - PDF'iniz okunamazsa **Elle sınıf ekle** ile listeyi Excel'den kopyalayıp yapıştırabilirsiniz.
 3. **2. Sınav bilgileri:** Okul adını, sınav adını, tarihi ve saati yazın. Sınıflardaki sıra düzenini seçin (yan yana 2/3/4 sıra, ikili ya da tekli sıra).
    Farklı düzende olan bir sınıf varsa o sınıfın kartından ayrıca ayarlayabilirsiniz.
-4. **3. Dağıtım:** **Kelebek dağıtımını yap** düğmesine basın.
+4. **3. Dağıtım:** Şubeleri ve salonları kontrol edin, ardından **Dağıtımı oluştur** düğmesine basın.
    - Sonucu beğenmezseniz **Yeniden karıştır ve dağıt** ile yeni bir dağıtım yapın.
    - Oturma planında iki öğrenciye sırayla tıklarsanız yerleri değişir. Örneğin gözlüklü bir öğrenciyi öne almak için bunu kullanabilirsiniz.
 

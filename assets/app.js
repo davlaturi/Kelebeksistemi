@@ -11,7 +11,7 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs/pdf.worker.min.js';
   }
 
-  const APP_VERSION = '1.35.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
+  const APP_VERSION = '1.36.0'; // yayımlanan sürümle aynı tutulur (çıktılarda ve yan menüde görünür)
   // ---------- durum ----------
   const DEFAULT_SETTINGS = {
     school: '', exam: '', date: '', time: '', lesson: '', headerNote: '',
@@ -490,7 +490,7 @@
     if (!state.calendar) text = '<span class="hint">Takvim yüklenmedi. Sınav bilgilerini aşağıya elle girebilir ya da takvimi yükleyebilirsiniz.</span>';
     else if (!ses) text = '<span class="hint">Planlanmış sınav seçilmedi; aşağıdaki bilgiler elle giriliyor.</span>';
     else text = `<span class="planned-on">Seçili: <b>${esc(sessionTitle(ses))}</b> · ${Object.keys(ses.exams).length} şube sınavda</span>`;
-    box.innerHTML = `<button type="button" class="btn primary planned-btn" data-open-planned="1">📅 Planlanmış sınavlar${state.calendar ? ' <span class="planned-count">' + state.calendar.sessions.filter((x) => Object.keys(x.exams).length).length + '</span>' : ''}</button>${text}`;
+    box.innerHTML = `<button type="button" class="btn secondary planned-btn" data-open-planned="1">📅 Planlanmış sınavlar${state.calendar ? ' <span class="planned-count">' + state.calendar.sessions.filter((x) => Object.keys(x.exams).length).length + '</span>' : ''}</button>${text}`;
   }
   /** "Planlanmış sınavlar" penceresi: takvimden gelen bütün sınavlar tek tabloda. */
   function renderPlanned() {
@@ -851,10 +851,12 @@
     const all = state.classes.filter((c) => c.students.length > 0);
     const total = all.reduce((a, c) => a + c.students.length, 0);
     const groups = byLevel(state.classes);
-    sum.innerHTML = `<span><strong>${groups.length}</strong> sınıf düzeyi</span>` +
-      `<span><strong>${state.classes.length}</strong> şube</span>` +
-      `<span><strong>${total}</strong> öğrenci</span>` +
-      `<span>Bir şubeye tıklayarak listesini kontrol edin ve düzeltin.</span>`;
+    sum.innerHTML = `<dl class="class-totals">
+      <div><dt>Sınıf düzeyi</dt><dd>${groups.length}</dd></div>
+      <div><dt>Şube</dt><dd>${state.classes.length}</dd></div>
+      <div><dt>Öğrenci</dt><dd>${total}</dd></div>
+    </dl>
+    <span>Listeyi incelemek veya düzenlemek için bir şube seçin.</span>`;
     list.innerHTML = groups.map((g) => `
       <div class="level-group">
         <h3 class="level-title">${esc(g.label)} <span>${g.classes.length} şube · ${g.classes.reduce((a, c) => a + c.students.length, 0)} öğrenci</span></h3>
@@ -880,7 +882,7 @@
     const total = inc.reduce((a, c) => a + c.students.length, 0);
     box.innerHTML = `
       <div class="pick-head">
-        <strong>Öğrencileri sınava girecek şubeler</strong>
+        <strong>Seçili şubeler</strong>
         <span class="hint">${inc.length} şube seçili · ${total} öğrenci</span>
         <span class="spacer"></span>
         <button type="button" class="btn ghost small" data-pick="all">Tümünü seç</button>
@@ -944,7 +946,7 @@
       : `Salonlar: <b>${on.length} salon seçildi</b>${inc.filter((c) => !onIds.has(c.id)).length ? ' · salon olmayan: ' + esc(inc.filter((c) => !onIds.has(c.id)).map((c) => c.name).join(', ')) : ''}${on.filter((c) => !inc.includes(c)).length ? ' · ek salon: ' + esc(on.filter((c) => !inc.includes(c)).map((c) => c.name).join(', ')) : ''}`) + lockNote;
     if (!roomsOpen) {
       box.className = 'picker rooms-picker closed no-print';
-      box.innerHTML = `<div class="rooms-summary"><span class="rooms-icon" aria-hidden="true">🚪</span><strong>Sınav salonları</strong><span class="rooms-text">${summary}</span><span class="spacer"></span><button type="button" class="btn small" data-rooms-toggle="1">Değiştir</button></div>`;
+      box.innerHTML = `<div class="rooms-summary"><span class="rooms-icon" aria-hidden="true">🚪</span><strong>Sınav salonları</strong><span class="rooms-text">${summary}</span><span class="spacer"></span><button type="button" class="btn small" data-rooms-toggle="1" aria-expanded="false">Salonları değiştir</button></div>`;
       return;
     }
     box.className = 'picker rooms-picker open no-print';
@@ -955,7 +957,7 @@
         <span class="spacer"></span>
         <button type="button" class="btn ghost small" data-room-pick="all">Tümünü seç</button>
         <button type="button" class="btn ghost small" data-room-pick="same">Sınava girenlerle aynı</button>
-        <button type="button" class="btn small" data-rooms-toggle="1">Kapat</button>
+        <button type="button" class="btn small" data-rooms-toggle="1" aria-expanded="true">Salon seçimini kapat</button>
       </div>
       <div class="room-tiles">${byLevel(all).map((g) => `
         <div class="room-group"><span class="room-group-h">${esc(g.label)}</span>
@@ -980,6 +982,8 @@
     const box = $('#capacity');
     const inc = included();
     if (!inc.length) { box.innerHTML = ''; return; }
+    const previousOptions = $('#capacity-options');
+    const optionsOpen = previousOptions && previousOptions.open;
     const on = roomLayoutOn();
     const mode = isLayoutCap() ? 'layout' : isCustomCap() ? 'custom' : 'class';
     const custom = mode === 'custom';
@@ -987,7 +991,11 @@
     const gen = state.settings.deskCols || 3;
     let html = `
       <div class="pick-head"><strong>Salon kapasitesi</strong>
-        <span class="hint">${mode === 'layout' ? 'Şu an: sınıfın bütün sıraları kullanılıyor (dizi × sıra sayısı).' : custom ? 'Salonlara sizin yazdığınız sayıda öğrenci oturacak.' : 'Şu an: her salona sınıf mevcudu kadar öğrenci oturur (varsayılan kural).'}</span></div>`;
+        <span class="hint">${mode === 'layout' ? 'Sınıfın bütün sıraları kullanılıyor.' : custom ? 'Kapasiteler elle belirleniyor.' : 'Her salonun kapasitesi şube mevcudu kadar.'}</span></div>
+      <div class="cap-sum" id="cap-sum">${capSummaryHtml()}</div>
+      <details class="capacity-options" id="capacity-options"${optionsOpen ? ' open' : ''}>
+        <summary>Kapasite ve sıra düzenini değiştir</summary>
+        <div class="capacity-options-body">`;
     if (!on) {
       // Varsayılan (önceki) arayüz
       html += `<label class="check cap-toggle"><input type="checkbox" id="cap-custom" ${custom ? 'checked' : ''}>
@@ -1017,7 +1025,6 @@
         </div>
       </div>`).join('')}`;
     }
-    html += `<div class="cap-sum" id="cap-sum">${capSummaryHtml()}</div>`;
     // Ek ayar: sınıfa özel sıra düzeni (elle açılır)
     const special = roomClasses().filter((c) => c.deskCols || c.deskRows);
     const status = on ? `<span class="pill ok">Açık</span> ${special.length ? special.length + ' salonda özel düzen' : 'henüz salon ayarlanmadı'}` : '<span class="pill">Kapalı</span> bütün salonlar genel ayarı (' + gen + "'lü dizi) kullanıyor";
@@ -1051,7 +1058,7 @@
       }
       html += '</div>';
     }
-    html += '</div>';
+    html += '</div></div></details>';
     box.innerHTML = html;
   }
 
@@ -1157,6 +1164,7 @@
     $('#s-own').checked = !!s.avoidOwnRoom;
     renderThemePreview();
     renderCalendar();
+    renderWorkspaceExam();
   }
   /** Planlanmış sınav seçiliyken tarih/ders saati elle değiştirilirse bağlantı kaldırılır (elle giriş). */
   function unlinkIfManual(st) {
@@ -1285,7 +1293,18 @@
     toast(mode === 'doorR' ? 'Kaydedildi: öğretmen masasından bakınca pencereler sağda. Planda pencere solda, kapı sağda görünür.'
       : mode === 'doorL' ? 'Kaydedildi: öğretmen masasından bakınca pencereler solda. Planda kapı solda, pencere sağda görünür.' : 'Kaydedildi: kapı ve pencere yazılmayacak.');
   }
+  function renderWorkspaceExam() {
+    const { exam, date, time, lesson } = state.settings;
+    $('#workspace-exam-name').textContent = exam || 'Sınav adı girilmedi';
+    $('#workspace-exam-date').textContent = date ? fmtDay(parseDay(date), {
+      day: 'numeric', month: 'short', year: 'numeric', weekday: 'short',
+    }) : '—';
+    $('#workspace-exam-time').textContent = time || '—';
+    $('#workspace-exam-lesson').textContent = lesson ? lesson + '. ders' : '—';
+  }
+
   function updateReminder() {
+    renderWorkspaceExam();
     renderSidesCheck();
     const miss = [!state.settings.exam && 'sınav adı', !state.settings.date && 'tarih'].filter(Boolean);
     const rem = $('#exam-reminder');
@@ -1293,15 +1312,31 @@
     if (miss.length) rem.innerHTML = `${esc(miss.join(' ve ').replace(/^./, (c) => c.toLocaleUpperCase('tr-TR')))} girilmedi; çıktılarda görünmeyecek. <button type="button" class="link-btn" data-open-quick-exam="1">Sınav bilgilerini gir</button>`;
   }
 
+  function renderDistributionLaunch(has = !state.stale && resultValid()) {
+    const locked = !!(state.result && state.result.locked);
+    const ready = has && !state.stale;
+    const run = $('#btn-run');
+    const review = $('#btn-view-result');
+    review.hidden = !ready && !locked;
+    run.hidden = locked;
+    run.classList.toggle('primary', !ready);
+    run.classList.toggle('secondary', ready);
+    run.textContent = ready ? 'Yeniden dağıt' : state.result ? 'Dağıtımı yeniden oluştur' : 'Dağıtımı oluştur';
+    $('#distribution-launch-note').textContent = locked ? 'Dağıtım kilitli. Kilidi sonuç ekranından açabilirsiniz.'
+      : ready ? 'Dağıtım hazır. Oturma planını ve evrakları sonuç ekranından açabilirsiniz.'
+      : state.result ? 'Listeler veya ayarlar değişti. Güncel sonuç için dağıtımı yeniden oluşturun.'
+      : 'Seçtiğiniz şube ve salonlarla oturma planı oluşturun.';
+  }
+
   function renderResult() {
     const r = state.result;
     const has = !!r && resultValid();
     $('#btn-lock').hidden = !r;
     $('#btn-lock').textContent = r && r.locked ? '🔓 Dağıtım kilidini aç' : '🔒 Dağıtımı kilitle';
-    $('#more-menu').hidden = !has;
+    $('#distribution-management').hidden = !has && !(r && r.locked);
+    $('#distribution-export').hidden = !has;
     $('#btn-lock').classList.toggle('is-locked', !!(r && r.locked));
     $('#btn-lock').setAttribute('aria-pressed', String(!!(r && r.locked)));
-    $('#btn-view-result').hidden = !has;
     $('#btn-print').hidden = !has;
     $('#btn-pack').hidden = !has;
     $('#btn-csv').hidden = !has;
@@ -1309,13 +1344,13 @@
     $('#tabs').hidden = !has;
     $('#nav-result').textContent = has ? '✓' : '';
     $('#nav-result').title = has ? 'Dağıtım hazır' : '';
-    $('#btn-run').textContent = has ? 'Yeniden karıştır ve dağıt' : 'Kelebek dağıtımını yap';
+    renderDistributionLaunch(has);
     updateReminder();
     const status = $('#result-status');
     if (!has) {
       status.innerHTML = r ? '<div class="log-item warn">Listelerde değişiklik yapıldığı için önceki dağıtım geçersiz. Yeniden dağıtım yapın.</div>' : '';
       $('#report').innerHTML = state.classes.length
-        ? '<div class="empty">Listeler hazır olduğunda “Kelebek dağıtımını yap” düğmesine basın.</div>'
+        ? '<div class="empty">Listeler hazır olduğunda “Dağıtımı oluştur” düğmesine basın.</div>'
         : '<div class="empty">Dağıtım için önce sınıf listelerini yükleyin.</div>';
       return;
     }
@@ -1917,13 +1952,17 @@
     const ch = packChoice();
     $('#pack-title').textContent = title;
     $('#pack-list').innerHTML = PACK_PARTS.map((p) => `
-      <label class="check pack-item"><input type="checkbox" data-pack="${p.key}" ${ch[p.key] ? 'checked' : ''}>
-        <span><b>${p.label}</b> <span class="pill">${counts[p.key]} sayfa</span><br><span class="hint">${p.hint}</span></span></label>`).join('');
+      <label class="pack-item">
+        <input type="checkbox" data-pack="${p.key}" ${ch[p.key] ? 'checked' : ''}>
+        <span class="pack-item-copy"><b>${p.label}</b><span class="pack-description">${p.hint}</span></span>
+        <span class="pack-page-count">${counts[p.key]} sayfa</span>
+      </label>`).join('');
     $('#pack-duplex').checked = (packEntry ? packEntry.settings : state.settings).duplex !== false;
     updatePackTotal(counts);
     const dlg = $('#pack-dlg');
     dlg._counts = counts;
     if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    $('#pack-dlg .editor-body').scrollTop = 0;
   }
   function currentPackChoice() {
     const c = {};
@@ -2609,7 +2648,7 @@
               <div class="arch-what"><span>${n} öğrenci · ${a.result.rooms.length} salon</span>${examPassed(a, now) ? '<strong class="past-exam">Zamanı geçti</strong>' : ''}</div>
               <div class="arch-act">
                 <button type="button" class="btn small print-mark" aria-pressed="${a.printed === true}" data-arch-mark="${esc(a.id)}">${a.printed === true ? '✓ Çıktısı alındı' : 'Çıktı alındı olarak işaretle'}</button>
-                <button type="button" class="btn small${isOpen ? ' primary' : ''}" data-arch-open="${esc(a.id)}">${isOpen ? 'Açık' : 'Aç'}</button>
+                <button type="button" class="btn small${isOpen ? ' secondary' : ''}" data-arch-open="${esc(a.id)}">${isOpen ? 'Açık' : 'Aç'}</button>
                 <button type="button" class="btn ghost small danger" data-arch-del="${esc(a.id)}">Sil</button>
               </div>
             </div>`;
@@ -2629,7 +2668,7 @@
       <div class="arch-head no-print">
         <div><div class="sheet-sub">Kayıtlı sınav</div>${withEntry(entry, () => headerMeta())}</div>
         <span class="spacer"></span>
-        <button type="button" class="btn primary" data-arch-pack="1">Sınav evrakını yazdır</button>
+        <button type="button" class="btn secondary" data-arch-pack="1">Sınav evrakını yazdır</button>
         <button type="button" class="btn" data-arch-print="1">Bu bölümü yazdır</button>
         <button type="button" class="btn" data-arch-csv="1">Excel'e aktar (CSV)</button>
         <button type="button" class="btn ghost" data-arch-close="1">Kapat</button>
@@ -2698,13 +2737,37 @@
     });
   }
 
+  function bindSidebar() {
+    const workspace = $('#workspace');
+    const menu = $('#side-menu');
+    const toggle = $('#side-toggle');
+    const narrow = window.matchMedia('(max-width: 760px)');
+    const setOpen = (open) => {
+      menu.hidden = !open;
+      workspace.classList.toggle('sidebar-closed', !open);
+      const label = open ? 'Menüyü daralt' : 'Menüyü aç';
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', label);
+      toggle.title = label;
+    };
+    setOpen(!narrow.matches);
+    const onLayoutChange = (event) => setOpen(!event.matches);
+    if (narrow.addEventListener) narrow.addEventListener('change', onLayoutChange);
+    else narrow.addListener(onLayoutChange);
+    toggle.addEventListener('click', () => setOpen(menu.hidden));
+    menu.addEventListener('click', (event) => {
+      if (narrow.matches && event.target.closest('[data-go], [data-view]')) {
+        setOpen(false);
+        toggle.focus({ preventScroll: true });
+      }
+    });
+  }
+
   function bind() {
+    bindSidebar();
     bindQuickExam();
     document.addEventListener('click', (e) => {
       if (e.target.closest('[data-open-quick-exam]')) { $('#quick-exam-launch').click(); return; }
-      // "Diğer" menüsü: bir seçenek seçilince ya da dışarı tıklanınca kapanır
-      const menu = $('#more-menu');
-      if (menu && menu.open && (!menu.contains(e.target) || e.target.closest('.more-list button'))) menu.open = false;
     });
     let archiveMinute = '';
     setInterval(() => {
@@ -2868,6 +2931,7 @@
         if (cell) cell.innerHTML = seats == null ? '<span class="cap-warn">Sıra sayısını yazın · şimdilik mevcut ' + c.students.length + '</span>'
           : colsOf(c) + ' × ' + c.deskRows + ' × ' + (state.settings.seatsPerDesk === 1 ? 1 : 2) + ' = <b>' + seats + '</b> koltuk · mevcut ' + c.students.length;
         $('#cap-sum').innerHTML = capSummaryHtml();
+        renderDistributionLaunch();
         return;
       }
       const id = e.target.dataset.cap;
@@ -2877,16 +2941,23 @@
       c.roomCap = e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10) || 0);
       markStale(); save();
       $('#cap-sum').innerHTML = capSummaryHtml();
+      renderDistributionLaunch();
     });
     capBox.addEventListener('click', (e) => {
-      if (e.target.closest('[data-layout-toggle]')) { layoutOpen = !layoutOpen; renderCapacity(); return; }
+      if (e.target.closest('#capacity-options > summary')) return;
+      if (e.target.closest('[data-layout-toggle]')) {
+        layoutOpen = !layoutOpen;
+        renderCapacity();
+        $('#capacity [data-layout-toggle]').focus({ preventScroll: true });
+        return;
+      }
       if (!editAllowed()) { renderCapacity(); return; }
       if (e.target.id === 'lay-all-btn') {
         const cols = parseInt($('#lay-all-cols').value, 10), rows = parseInt($('#lay-all-rows').value, 10);
         if (!(cols >= 1) && !(rows >= 1)) { toast('Önce dizi ya da sıra sayısı seçin.'); return; }
         if ($('#lay-all-rows').value && !(rows >= 1 && rows <= 20)) { toast('Sıra sayısı 1 ile 20 arasında olmalı.'); return; }
         for (const c of roomClasses()) { if (cols >= 1) c.deskCols = cols; if (rows >= 1) c.deskRows = rows; }
-        markStale(); save(); renderCapacity(); renderRoomPicker(); return;
+        markStale(); save(); renderCapacity(); renderRoomPicker(); renderDistributionLaunch(); return;
       }
       if (e.target.id === 'cap-all-btn') {
         const n = parseInt($('#cap-all-n').value, 10);
@@ -2895,7 +2966,7 @@
       } else if (e.target.id === 'cap-reset') {
         for (const c of state.classes) c.roomCap = null;
       } else return;
-      markStale(); save(); renderCapacity();
+      markStale(); save(); renderCapacity(); renderDistributionLaunch();
     });
 
     // salon seçimi
@@ -2911,13 +2982,17 @@
       markStale(); save(); renderRoomPicker(); renderCapacity(); renderResult();
     });
     $('#rooms-picker').addEventListener('click', (e) => {
-      if (e.target.closest('[data-rooms-toggle]')) { roomsOpen = !roomsOpen; renderRoomPicker(); return; }
+      if (e.target.closest('[data-rooms-toggle]')) {
+        roomsOpen = !roomsOpen;
+        renderRoomPicker();
+        $('#rooms-picker [data-rooms-toggle]').focus({ preventScroll: true });
+        return;
+      }
       const ap = e.target.closest('[data-approve-room]');
       if (ap) { e.preventDefault(); setRoomApproval(ap.dataset.approveRoom, true); return; }
       const un = e.target.closest('[data-unapprove-room]');
       if (un) { e.preventDefault(); setRoomApproval(un.dataset.unapproveRoom, false); return; }
       if (!editAllowed()) { renderRoomPicker(); return; }
-      if (e.target.closest('[data-rooms-toggle]')) { roomsOpen = !roomsOpen; renderRoomPicker(); return; }
       const b = e.target.closest('[data-room-pick]');
       if (!b) return;
       for (const c of state.classes) c.useAsRoom = b.dataset.roomPick === 'all' ? true : c.selected !== false;
@@ -3036,6 +3111,7 @@
     const changed = p !== page;
     page = p;
     if (isReport) { view = p; selectedSeat = null; renderResult(); }
+    else if (sectionPage === 'dagitim') renderDistributionLaunch();
     document.querySelectorAll('[data-page]').forEach((sec) => { sec.hidden = sec.dataset.page !== sectionPage; });
     document.querySelectorAll('[data-distribution-setup]').forEach((el) => { el.hidden = isReport; });
     document.querySelectorAll('[data-report-actions]').forEach((el) => { el.hidden = !isReport; });
@@ -3044,7 +3120,7 @@
     updateReminder();
     $('#h-result').textContent = isReport ? REPORT_PAGES[p] : 'Dağıtım';
     $('#distribution-help').textContent = isReport
-      ? 'Seçtiğiniz çıktı aşağıdadır. Diğer çıktılara sol menüden, salon seçimlerine “Dağıtım ayarları” düğmesinden ulaşabilirsiniz.'
+      ? 'Seçtiğiniz çıktı aşağıdadır. Diğer çıktılara sol menüden, salon seçimlerine “Dağıtım hazırlığına dön” düğmesinden ulaşabilirsiniz.'
       : 'Sınava girecek şubeleri ve kullanılacak salonları seçin; ardından dağıtımı başlatın.';
     document.querySelectorAll('#side-nav .nav-item').forEach((b) => {
       if (b.dataset.go === sectionPage) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');

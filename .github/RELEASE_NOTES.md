@@ -10,7 +10,14 @@
 
 Kurulum ve internet gerekmez. Öğrenci listeleri bilgisayardan dışarı çıkmaz.
 
-## Bu sürümde (v1.35.0)
+## Bu sürümde (v1.36.0)
+
+- Füme yan menü daraltılabiliyor. Etkin sınavın adı, tarihi, saati ve ders sırası her sayfanın üstünde görünüyor.
+- PDF yükleme, sınıf ve öğrenci işlemleri, sınav ayarları ve çıktı önizlemesi ortak kart düzenine geçti.
+- Dağıtım hazırlığında şubeler, salonlar ve kapasite ayrı adımlarda. Sonuç ekranında arşiv ve kilit işlemleri, yazdırma ve Excel aktarımından ayrı gruplandı.
+- Yazdırma penceresinde evraklar sayfa sayılarıyla listeleniyor. Liste kayarken toplam sayfa bilgisi ve Yazdır düğmesi görünür kalıyor.
+
+## Önceki sürümde (v1.35.0)
 
 - **Örnek afişin başlığı soru oldu:** "Sınavda yerimi nasıl bulurum?". Altındaki üç adım (adınızı bulun → yüzünüzü tahtaya dönün → numaraları sayın) bu sorunun cevabı olarak okunuyor.
 
