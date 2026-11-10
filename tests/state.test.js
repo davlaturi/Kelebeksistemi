@@ -27,7 +27,9 @@ function harness(initial) {
   vm.runInContext(normalized.replace(boot, `
     renderAll = renderArchive = renderResult = renderReportOnly = () => {};
     globalThis.api = { validateState, importBackup, load, save, saveToArchive,
-      onSeatClick, localDateKey, weekStart, csvCell, withEntry, openPack,
+      onSeatClick, localDateKey, weekStart, csvCell, withEntry, openPack, printPack, openArchive,
+      capturePrint() { renderSettings = () => {}; printHtml = html => { globalThis.lastPrinted = html; }; },
+      printed() { return globalThis.lastPrinted; },
       paperShareData, paperShareText, paperSharePreview, renderByClass, renderPapers,
       renderSharePanel, renderPosters, confirmSides, seatNumbers, searchRows, studentDeleteRows, deleteStudent, addStudent, undoDelete, buildPack,
       openEditor, saveEditor, get editing() { return editing; },
@@ -130,6 +132,45 @@ const copy = (x) => JSON.parse(JSON.stringify(x));
   a.state.settings.duplex = true;
   a.openPack(a.state.archive[0]);
   assert.equal(h.node('#pack-duplex').checked, false, 'Arşivin baskı ayarı seçilmeli');
+  // Arşiv kartının tarihi ile iç ayarlar farklıysa basılı belge kartla aynı sınavı göstermeli.
+  const mismatched = copy(a.state.archive[0]);
+  mismatched.date = '2026-11-10'; mismatched.time = '12:20'; mismatched.exam = '2. Dönem 1. Sınav';
+  const mismatchHtml = a.withEntry(mismatched, () => a.buildPack({ plan: true, imza: true, yer: true, tablo: true, zarf: true, odaSalon: true }));
+  assert.match(mismatchHtml, /10 Kasım 2026/);
+  assert.match(mismatchHtml, /12:20/);
+  assert.match(mismatchHtml, /2. Dönem 1. Sınav/);
+  assert.doesNotMatch(mismatchHtml, /3 Kasım 2026/);
+  // Dün arşivden basıldıktan sonra çalışma alanından basmak eski kaydı kullanmamalı.
+  const workspaceBeforeNavigation = JSON.stringify(a.state);
+  a.state.archive.push(mismatched);
+  mismatched.id = 'different-day';
+  a.openArchive('different-day');
+  for (const route of ['yoklama', 'sinif', 'evrak', 'ara', 'plan']) {
+    a.showPage(route);
+    assert.equal(sections.find(s => s.dataset.page === 'arsiv').hidden, false, 'Sol menü kayıtlı sınavda kalmalı');
+    assert.equal(sections.find(s => s.dataset.page === 'dagitim').hidden, true);
+    assert.match(h.node('#archive-view').innerHTML, /10 Kasım 2026/);
+    assert.doesNotMatch(h.node('#archive-view').innerHTML, /3 Kasım 2026/);
+  }
+  assert.match(h.node('#workspace-exam-date').textContent, /10/);
+  a.showPage('dagitim'); a.showPage('yoklama');
+  assert.equal(sections.find(s => s.dataset.page === 'dagitim').hidden, false, 'Hazırlığa dönüş çalışma alanını açmalı');
+  a.state.archive.pop();
+  assert.equal(JSON.stringify(a.state), workspaceBeforeNavigation, 'Arşiv gezinmesi çalışma alanını değiştirmemeli');
+  const beforePrintScenarios = copy(a.state);
+  a.capturePrint();
+  h.groups.set('#pack-list [data-pack]', [{ dataset: { pack: 'imza' }, checked: true }]);
+  a.openPack(a.state.archive[0]); a.printPack();
+  assert.match(a.printed(), /3 Kasım 2026/);
+  a.state.settings.date = '2026-11-10'; a.state.settings.time = '14:00'; a.state.settings.lesson = '6';
+  a.openPack(null);
+  assert.match(h.node('#pack-title').textContent, /Etkin dağıtım.*10 Kasım 2026.*14:00.*6. ders/);
+  a.printPack();
+  assert.match(a.printed(), /10 Kasım 2026/);
+  assert.match(a.printed(), /14:00/);
+  assert.match(a.printed(), /6. ders/);
+  assert.doesNotMatch(a.printed(), /3 Kasım 2026/);
+  a.state = beforePrintScenarios;
   const exported = { ...copy(a.state), app: 'kelebek-sinav', rulesVersion: 2 };
   const restored = harness();
   await restored.api.importBackup({ text: async () => JSON.stringify(exported) });

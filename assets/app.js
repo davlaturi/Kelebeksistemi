@@ -1948,7 +1948,12 @@
     packEntry = entry || null;
     const run = (fn) => (packEntry ? withEntry(packEntry, fn) : fn());
     const counts = run(packCounts);
-    const title = packEntry ? packEntry.exam : (state.settings.exam || 'Bu dağıtım');
+    const title = run(() => {
+      const st = state.settings;
+      return [packEntry ? 'Kayıtlı sınav' : 'Etkin dağıtım', st.exam || 'Sınav adı belirtilmedi',
+        st.date ? fmtDay(parseDay(st.date), { day: 'numeric', month: 'long', year: 'numeric' }) : 'Tarih belirtilmedi',
+        st.time ? 'Saat ' + st.time : 'Saat belirtilmedi', st.lesson ? st.lesson + '. ders' : 'Ders belirtilmedi'].join(' · ');
+    });
     const ch = packChoice();
     $('#pack-title').textContent = title;
     $('#pack-list').innerHTML = PACK_PARTS.map((p) => `
@@ -2549,6 +2554,12 @@
 
   // ---------- kayıtlı sınavlar ----------
   let archiveView = null;      // açık kaydın id'si
+  let archiveNavigation = false;
+  function openArchive(id) {
+    if (!state.archive.some(a => a.id === id)) return;
+    archiveView = id; archiveNavigation = true;
+    showPage('plan');
+  }
   let archiveTab = 'plan';
   let archiveFilter = 'upcoming';
 
@@ -2557,7 +2568,11 @@
     const keep = { classes: state.classes, result: state.result, settings: state.settings, stale: state.stale };
     state.classes = entry.classes;
     state.result = entry.result;
+    // Arşiv kartı ve belgeler aynı sınav kimliğini kullanmalı.
     state.settings = { ...DEFAULT_SETTINGS, ...entry.settings };
+    for (const key of ['exam', 'date', 'time']) {
+      if (typeof entry[key] === 'string') state.settings[key] = entry[key];
+    }
     state.stale = false;
     const keepSel = selectedSeat; selectedSeat = null;
     try { return fn(); } finally { Object.assign(state, keep); selectedSeat = keepSel; }
@@ -2663,7 +2678,7 @@
     const entry = state.archive.find((a) => a.id === archiveView);
     if (!entry) { box.innerHTML = ''; archiveView = null; return; }
 
-    const body = withEntry(entry, () => (archiveTab === 'plan' ? renderPlans() : archiveTab === 'yoklama' ? renderRoll() : archiveTab === 'evrak' ? renderPapers() : renderByClass()));
+    const body = withEntry(entry, () => (archiveTab === 'plan' ? renderPlans() : archiveTab === 'yoklama' ? renderRoll() : archiveTab === 'evrak' ? renderPapers() : archiveTab === 'ara' ? renderSearch().replace(/\bq-out\b/g, 'arch-q-out').replace(/"q"/g, '"arch-q"') : renderByClass()));
     box.innerHTML = `
       <div class="arch-head no-print">
         <div><div class="sheet-sub">Kayıtlı sınav</div>${withEntry(entry, () => headerMeta())}</div>
@@ -2674,7 +2689,7 @@
         <button type="button" class="btn ghost" data-arch-close="1">Kapat</button>
       </div>
       <nav class="tabs no-print" role="tablist">
-        ${[['plan', 'Oturma planları'], ['yoklama', 'Öğrenci imza listeleri'], ['sinif', 'Sınıflara göre sınav yerleri'], ['evrak', 'Dağıtımı paylaş/dışarı aktar']].map(([v, l]) =>
+        ${[['plan', 'Oturma planları'], ['yoklama', 'Öğrenci imza listeleri'], ['sinif', 'Sınıflara göre sınav yerleri'], ['evrak', 'Dağıtımı paylaş/dışarı aktar'], ['ara', 'Öğrenci ara']].map(([v, l]) =>
           `<button type="button" role="tab" data-arch-tab="${v}" aria-selected="${v === archiveTab}">${l}</button>`).join('')}
       </nav>
       <div class="arch-report">${body}</div>`;
@@ -2875,8 +2890,7 @@
       }
       const o = e.target.closest('[data-arch-open]');
       if (o) {
-        archiveView = o.dataset.archOpen; archiveTab = 'plan';
-        renderArchive();
+        openArchive(o.dataset.archOpen);
         $('#archive-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
@@ -2889,8 +2903,8 @@
       const t = e.target.closest('button');
       if (!t) return;
       if (onPaperClick(e)) return;
-      if (t.dataset.archTab) { archiveTab = t.dataset.archTab; renderArchiveView(); }
-      else if (t.dataset.archClose) { archiveView = null; renderArchive(); }
+      if (t.dataset.archTab) { archiveNavigation = true; showPage(t.dataset.archTab); }
+      else if (t.dataset.archClose) { archiveView = null; archiveNavigation = false; showPage('arsiv'); renderArchive(); }
       else if (t.dataset.archCsv) withEntry(entry, exportCsv);
       else if (t.dataset.archPack) openPack(entry);
       else if (t.dataset.archPrint) {
@@ -3043,6 +3057,11 @@
       target.addEventListener('click', toggleClassList);
     }
     $('#archive-view').addEventListener('change', onPaperCheck);
+    $('#archive-view').addEventListener('input', e => {
+      if (e.target.id !== 'arch-q') return;
+      const entry = state.archive.find(a => a.id === archiveView);
+      if (entry) $('#arch-q-out').innerHTML = withEntry(entry, () => searchRows(e.target.value));
+    });
     $('#sd-q').addEventListener('input', renderStudentDelete);
     $('#sides-check').addEventListener('click', (e) => { const b = e.target.closest('[data-sides]'); if (b) confirmSides(b.dataset.sides); });
     const ver = $('#app-version'); if (ver) ver.textContent = 'Sürüm v' + APP_VERSION;
@@ -3102,15 +3121,28 @@
   const isReportPage = (p) => Object.prototype.hasOwnProperty.call(REPORT_PAGES, p);
   function pageFromHash() {
     const h = (location.hash || '').replace('#', '');
+    const archived = /^arsiv\/([^/]+)\/([^/]+)$/.exec(h);
+    if (archived) {
+      let id;
+      try { id = decodeURIComponent(archived[1]); } catch (e) { return 'arsiv'; }
+      archiveNavigation = state.archive.some(a => a.id === id) && isReportPage(archived[2]);
+      if (archiveNavigation) { archiveView = id; return archived[2]; }
+      return 'arsiv';
+    }
+    if (isReportPage(h)) archiveNavigation = false;
     return PAGES.includes(h) || isReportPage(h) ? h : null;
   }
   function showPage(p, fromHash) {
     if (!PAGES.includes(p) && !isReportPage(p)) p = 'listeler';
     const isReport = isReportPage(p);
-    const sectionPage = isReport ? 'dagitim' : p;
+    if (!isReport && p !== 'arsiv') archiveNavigation = false;
+    const archiveEntry = archiveNavigation && state.archive.find(a => a.id === archiveView);
+    const archiveReport = isReport && !!archiveEntry;
+    const sectionPage = archiveReport ? 'arsiv' : isReport ? 'dagitim' : p;
     const changed = p !== page;
     page = p;
-    if (isReport) { view = p; selectedSeat = null; renderResult(); }
+    if (archiveReport) { archiveTab = p; renderArchiveView(); }
+    else if (isReport) { view = p; selectedSeat = null; renderResult(); }
     else if (sectionPage === 'dagitim') renderDistributionLaunch();
     document.querySelectorAll('[data-page]').forEach((sec) => { sec.hidden = sec.dataset.page !== sectionPage; });
     document.querySelectorAll('[data-distribution-setup]').forEach((el) => { el.hidden = isReport; });
@@ -3118,6 +3150,10 @@
     $('#report').hidden = !isReport;
     $('#result-status').hidden = !isReport;
     updateReminder();
+    if (archiveReport) withEntry(archiveEntry, renderWorkspaceExam);
+    $('#archive-list').hidden = archiveReport;
+    $('#archive-filter').hidden = archiveReport;
+    if (archiveReport) $('#tabs').hidden = false;
     $('#h-result').textContent = isReport ? REPORT_PAGES[p] : 'Dağıtım';
     $('#distribution-help').textContent = isReport
       ? 'Seçtiğiniz çıktı aşağıdadır. Diğer çıktılara sol menüden, salon seçimlerine “Dağıtım hazırlığına dön” düğmesinden ulaşabilirsiniz.'
@@ -3125,10 +3161,11 @@
     document.querySelectorAll('#side-nav .nav-item').forEach((b) => {
       if (b.dataset.go === sectionPage) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
-    $('#tabs').classList.toggle('active', sectionPage === 'dagitim');
+    $('#tabs').classList.toggle('active', sectionPage === 'dagitim' || archiveReport);
     document.querySelectorAll('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(isReport && b.dataset.view === p)));
-    if (!fromHash && location.hash !== '#' + p) {
-      try { history.replaceState(null, '', '#' + p); } catch (e) { /* file:// bazı tarayıcılarda */ }
+    const routeHash = archiveReport ? '#arsiv/' + encodeURIComponent(archiveView) + '/' + p : '#' + p;
+    if (!fromHash && location.hash !== routeHash) {
+      try { history.replaceState(null, '', routeHash); } catch (e) { /* file:// bazı tarayıcılarda */ }
     }
     if (sectionPage === 'bilgiler') fitThemePreview();
     if (changed) window.scrollTo(0, 0);
